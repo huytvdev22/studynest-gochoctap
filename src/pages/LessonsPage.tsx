@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import type {
+  Assignment,
   ClassMember,
   Lesson,
   LessonKeyword,
@@ -32,6 +33,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClassContext } from '@/contexts/ClassContext';
 import {
   getStudentSrsStates,
+  listAssignments,
   listClassMembers,
   listLessons,
   saveAssignment,
@@ -71,6 +73,8 @@ export function LessonsPage() {
   const [srsStates, setSrsStates] = useState<Record<string, SrsCardProgress>>(
     {}
   );
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [addingLessonId, setAddingLessonId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Bộ lọc Giáo trình (subject) & Unit
@@ -142,11 +146,13 @@ export function LessonsPage() {
     if (!studyClass || !user || !role) return;
     setLoading(true);
     try {
-      const [les, mems] = await Promise.all([
+      const [les, mems, asgs] = await Promise.all([
         listLessons(studyClass.id, role),
         listClassMembers(studyClass.id),
+        listAssignments(studyClass.id, user.uid, role),
       ]);
       setLessons(les);
+      setAssignments(asgs);
       const studentList = mems.filter((m) => m.role === 'student');
       setStudents(studentList);
 
@@ -227,6 +233,36 @@ export function LessonsPage() {
   const todayStr = studyClass
     ? formatDateInTimezone(new Date(), studyClass.timezone)
     : '2026-11-08';
+
+  const handleAddLessonToToday = async (targetLesson: Lesson) => {
+    if (!studyClass || !user) return;
+    setAddingLessonId(targetLesson.id);
+    try {
+      const lang = inferDefaultTtsLang(targetLesson.subject, targetLesson.ttsLang);
+      const newAsg = await saveAssignment(studyClass.id, user.uid, {
+        sessionId: null,
+        lessonId: targetLesson.id,
+        title: `Học bài: ${targetLesson.title}`,
+        description:
+          targetLesson.goal ||
+          `Học và luyện tập từ vựng bài "${targetLesson.title}" (${targetLesson.subject}).`,
+        dueDate: todayStr,
+        assignedStudentUids: ['ALL'],
+        starsReward: 2,
+        taskType: targetLesson.keywords.length > 0 ? 'flashcard' : 'standard',
+        subject: targetLesson.subject,
+        unitTitle: targetLesson.unitTitle || '',
+        ttsLang: lang,
+        flashcards: targetLesson.keywords,
+      });
+      setAssignments((prev) => [
+        ...prev.filter((a) => a.id !== newAsg.id),
+        newAsg,
+      ]);
+    } finally {
+      setAddingLessonId(null);
+    }
+  };
 
   // Các thẻ nguồn dùng để tạo Đề kiểm tra trắc nghiệm AI
   const quizSourceCards = useMemo(() => {
@@ -788,6 +824,9 @@ export function LessonsPage() {
                       lesson.subject,
                       lesson.ttsLang
                     );
+                    const isAddedToToday = assignments.some(
+                      (a) => a.lessonId === lesson.id && a.dueDate === todayStr
+                    );
                     return (
                       <div
                         key={lesson.id}
@@ -882,7 +921,7 @@ export function LessonsPage() {
                         </div>
 
                         <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {lesson.keywords.length > 0 && (
                               <button
                                 type="button"
@@ -907,6 +946,25 @@ export function LessonsPage() {
                                 Học {lesson.keywords.length} Flashcard
                               </button>
                             )}
+
+                            {isInstructorOrOwner && (
+                              isAddedToToday ? (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                  <Check className="h-3.5 w-3.5" /> Đã thêm vào hôm nay
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={addingLessonId === lesson.id}
+                                  onClick={() => void handleAddLessonToToday(lesson)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                  {addingLessonId === lesson.id ? 'Đang thêm...' : 'Thêm vào hôm nay'}
+                                </button>
+                              )
+                            )}
+
                             {lesson.resourceUrl && (
                               <span className="inline-flex items-center gap-1 text-sky-600">
                                 <ExternalLink className="h-3 w-3" /> Tài liệu

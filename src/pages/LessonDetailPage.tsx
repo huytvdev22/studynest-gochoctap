@@ -17,7 +17,6 @@ import {
   Pencil,
   Plus,
   Save,
-  Send,
   Sparkles,
   Target,
   Trash2,
@@ -44,7 +43,7 @@ import {
   saveLessonWithTeacherNote,
   saveStudentSrsStates,
 } from '@/services/studyNestService';
-import { addDaysToDateStr, formatDateInTimezone } from '@/lib/date';
+import { formatDateInTimezone } from '@/lib/date';
 import {
   TTS_LANGUAGE_OPTIONS,
   buildFlashcardAiPrompt,
@@ -371,7 +370,7 @@ export function LessonDetailPage() {
         lessonId: lesson.id,
         title: `Học Flashcard: ${lesson.unitTitle ? `${lesson.unitTitle} - ` : ''}${lesson.title}`,
         description: `Ôn tập ${lesson.keywords.length} thẻ ghi nhớ trong bài "${lesson.title}" (${lesson.subject}).`,
-        dueDate: addDaysToDateStr(todayStr, 1),
+        dueDate: todayStr,
         assignedStudentUids: ['ALL'],
         starsReward: 3,
         taskType: 'flashcard',
@@ -381,7 +380,7 @@ export function LessonDetailPage() {
         flashcards: lesson.keywords,
       });
       setAssignMessage(
-        'Đã giao bộ Flashcard này vào danh sách Nhiệm vụ của học sinh!'
+        'Đã thêm bài học này vào mục "Hôm nay học gì" của học sinh!'
       );
       setTimeout(() => setAssignMessage(null), 3500);
     } finally {
@@ -424,8 +423,8 @@ export function LessonDetailPage() {
               onClick={() => void handleAssignFlashcardDeck()}
               className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
             >
-              <Send className="h-3.5 w-3.5" />
-              Giao Flashcard cho học sinh
+              <Plus className="h-3.5 w-3.5" />
+              Thêm vào bài học hôm nay
             </button>
           )}
 

@@ -12,7 +12,7 @@ import {
   Calendar,
   Check,
   ChevronsUpDown,
-  Clock,
+  ClipboardCheck,
   FolderKanban,
   LayoutDashboard,
   Menu,
@@ -168,8 +168,8 @@ function ClassLayoutInner() {
         {
           to: `${baseUrl}/sessions`,
           end: false,
-          label: 'Buổi học & Nhiệm vụ',
-          icon: Clock,
+          label: 'Nhiệm vụ & Bài tập',
+          icon: ClipboardCheck,
         },
         {
           to: `${baseUrl}/lessons`,
