@@ -56,6 +56,11 @@ export function ClassDashboardPage() {
   const [exceptions, setExceptions] = useState<ScheduleException[]>([]);
   const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  // Mặc định mọi thành viên vào lớp đều hiển thị giao diện Góc học tập (giống học sinh);
+  // Người hướng dẫn / Chủ lớp có thể chuyển sang tab Quản lý lớp khi cần.
+  const [dashboardMode, setDashboardMode] = useState<'learning' | 'managing'>(
+    'learning'
+  );
 
   // State cho học sinh nộp bài nhanh
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
@@ -194,12 +199,51 @@ export function ClassDashboardPage() {
     );
   }
 
+  const pendingActionCount = unverifiedRecords.length + pendingRequests.length;
+  const modeToggleBar = isInstructorOrOwner ? (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        Chế độ hiển thị trang tổng quan:
+      </span>
+      <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+        <button
+          type="button"
+          onClick={() => setDashboardMode('learning')}
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+            dashboardMode === 'learning'
+              ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+          }`}
+        >
+          Góc học tập (Mặc định)
+        </button>
+        <button
+          type="button"
+          onClick={() => setDashboardMode('managing')}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+            dashboardMode === 'managing'
+              ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+          }`}
+        >
+          <span>Dành cho người hướng dẫn</span>
+          {pendingActionCount > 0 && (
+            <span className="rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">
+              {pendingActionCount}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   // =========================================================================
-  // STUDENT DASHBOARD ("Hôm nay học gì?")
+  // STUDENT DASHBOARD ("Hôm nay học gì?" - Mặc định cho mọi thành viên trong lớp)
   // =========================================================================
-  if (isStudent) {
+  if (isStudent || dashboardMode === 'learning') {
     return (
       <div className="space-y-6">
+        {modeToggleBar}
         {/* Hàng thẻ chỉ số Sao & Streak cho học sinh */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/50 dark:bg-amber-950/30">
@@ -530,6 +574,7 @@ export function ClassDashboardPage() {
   // =========================================================================
   return (
     <div className="space-y-6">
+      {modeToggleBar}
       {/* Thống kê nhanh cho người hướng dẫn */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">

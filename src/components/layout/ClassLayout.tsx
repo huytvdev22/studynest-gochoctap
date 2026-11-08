@@ -18,7 +18,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  PlusCircle,
   ShieldAlert,
   Trophy,
   Users,
@@ -156,7 +155,7 @@ function ClassLayoutInner() {
         {
           to: baseUrl,
           end: true,
-          label: role === 'student' ? 'Góc học hôm nay' : 'Tổng quan lớp',
+          label: 'Góc học hôm nay',
           icon: LayoutDashboard,
         },
         {
@@ -191,12 +190,12 @@ function ClassLayoutInner() {
       ],
     },
     {
-      groupTitle: 'Quản trị Workspace',
+      groupTitle: role === 'student' ? 'Thông tin lớp' : 'Quản trị Workspace',
       items: [
         {
           to: `${baseUrl}/members`,
           end: false,
-          label: 'Thành viên & Cài đặt',
+          label: role === 'student' ? 'Thành viên lớp' : 'Thành viên & Cài đặt',
           icon: Users,
         },
       ],
@@ -319,8 +318,8 @@ function ClassLayoutInner() {
                     to="/app/classes"
                     className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
                   >
-                    <PlusCircle className="h-4 w-4" />
-                    Tạo mới / Quản lý tất cả Workspace
+                    <FolderKanban className="h-4 w-4" />
+                    Danh sách góc học tập của tôi
                   </Link>
                 </div>
               </div>

@@ -3,11 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
-  GraduationCap,
   KeyRound,
   Plus,
-  Sparkles,
-  Users,
   X,
 } from 'lucide-react';
 import type {
@@ -48,7 +45,7 @@ export function MyClassesPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form tạo lớp mới
+  // Form tạo lớp mới (Chức năng phụ dành cho người hướng dẫn)
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -58,7 +55,8 @@ export function MyClassesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Ô nhập nhanh link / token tham gia lớp
+  // Ô nhập nhanh link / token tham gia lớp (Mặc định ẩn nếu đã có lớp để giao diện gọn cho học sinh)
+  const [showJoinBox, setShowJoinBox] = useState<boolean>(false);
   const [joinInput, setJoinInput] = useState('');
 
   const loadClasses = useCallback(async () => {
@@ -80,11 +78,6 @@ export function MyClassesPage() {
   useEffect(() => {
     void loadClasses();
   }, [loadClasses]);
-
-  const teachingClasses = items.filter(
-    (x) => x.membership.role === 'owner' || x.membership.role === 'instructor'
-  );
-  const learningClasses = items.filter((x) => x.membership.role === 'student');
 
   const toggleStudyDay = (day: number) => {
     setStudyDays((prev) =>
@@ -184,14 +177,14 @@ export function MyClassesPage() {
             {studyClass.name}
           </h3>
           <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
-            {studyClass.description || 'Chưa có mô tả cho lớp học này.'}
+            {studyClass.description || 'Bấm vào để xem lịch học và bài tập hôm nay.'}
           </p>
         </div>
 
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
           <span>Lịch học: {studyDaysText}</span>
-          <span className="inline-flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
-            Vào lớp
+          <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 font-bold text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/60 dark:text-emerald-300 dark:group-hover:bg-emerald-600 dark:group-hover:text-white">
+            Vào học ngay
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
@@ -200,70 +193,82 @@ export function MyClassesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header trang Lớp của tôi */}
+    <div className="space-y-6">
+      {/* Header trang Góc học tập của bạn: Giao diện mặc định ưu tiên việc vào học */}
       <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
-            Lớp học của tôi
+            Góc học tập của tôi
           </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Quản lý các lớp bạn đang hướng dẫn và các lớp bạn đang tham gia học tập.
+            Chọn lớp học để xem thời khóa biểu, chuẩn bị sách vở và bắt đầu buổi học hôm nay.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Các hành động phụ: Nhập mã tham gia lớp khác & Tạo lớp mới (được làm dịu nhẹ) */}
+        <div className="flex flex-wrap items-center gap-2">
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowJoinBox((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              <KeyRound className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              Nhập mã vào lớp khác
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
           >
-            <Plus className="h-4 w-4" />
-            Tạo lớp học mới
+            <Plus className="h-3.5 w-3.5" />
+            Tạo lớp mới
           </button>
         </div>
       </div>
 
-      {/* Thanh tham gia lớp bằng đường link / token lời mời */}
-      <form
-        onSubmit={handleQuickJoinNavigate}
-        className="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/50 dark:bg-emerald-950/20"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-            <KeyRound className="h-5 w-5" />
+      {/* Thanh tham gia lớp bằng đường link / token lời mời (Chỉ hiện khi chưa có lớp nào hoặc khi bấm nút "Nhập mã vào lớp khác") */}
+      {(showJoinBox || (!loading && items.length === 0)) && (
+        <form
+          onSubmit={handleQuickJoinNavigate}
+          className="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/50 dark:bg-emerald-950/20"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <KeyRound className="h-5 w-5" />
+            </div>
+            <div>
+              <label
+                htmlFor="quick-join-input"
+                className="block text-sm font-bold text-slate-900 dark:text-white"
+              >
+                Tham gia lớp học bằng mã lời mời
+              </label>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Dán đường link lời mời hoặc mã token được gửi từ người hướng dẫn để vào lớp.
+              </p>
+            </div>
           </div>
-          <div>
-            <label
-              htmlFor="quick-join-input"
-              className="block text-sm font-bold text-slate-900 dark:text-white"
-            >
-              Bạn được mời tham gia một lớp học?
-            </label>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Dán đường link lời mời hoặc mã token (ví dụ:{' '}
-              <code>cls_toan_tv_lop3.inv_lop3_demo_token_2026</code>) để nhập mã tham gia.
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="quick-join-input"
-            type="text"
-            value={joinInput}
-            onChange={(e) => setJoinInput(e.target.value)}
-            placeholder="Dán link lời mời hoặc token..."
-            className="w-full sm:w-72 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-          />
-          <button
-            type="submit"
-            className="shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-          >
-            Mở lời mời
-          </button>
-        </div>
-      </form>
+          <div className="flex items-center gap-2">
+            <input
+              id="quick-join-input"
+              type="text"
+              value={joinInput}
+              onChange={(e) => setJoinInput(e.target.value)}
+              placeholder="Dán link lời mời hoặc token..."
+              className="w-full sm:w-72 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              Mở lời mời
+            </button>
+          </div>
+        </form>
+      )}
 
       {error && (
         <div
@@ -283,72 +288,28 @@ export function MyClassesPage() {
             />
           ))}
         </div>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={<BookOpen className="h-6 w-6" />}
+          title="Bạn chưa tham gia lớp học nào"
+          description="Nếu bạn là học sinh, hãy dán đường link lời mời ở ô phía trên để vào lớp. Nếu bạn là phụ huynh hoặc người hướng dẫn, bạn có thể tạo góc học tập mới."
+          action={
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <Plus className="h-4 w-4" />
+              Dành cho người hướng dẫn: Tạo lớp học mới
+            </button>
+          }
+        />
       ) : (
-        <div className="space-y-10">
-          {/* Nhóm 1: Tôi hướng dẫn */}
-          <section aria-labelledby="heading-teaching">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <h2
-                  id="heading-teaching"
-                  className="text-lg font-extrabold text-slate-900 dark:text-white"
-                >
-                  Tôi hướng dẫn ({teachingClasses.length})
-                </h2>
-              </div>
-            </div>
-
-            {teachingClasses.length === 0 ? (
-              <EmptyState
-                icon={<Sparkles className="h-6 w-6" />}
-                title="Bạn chưa hướng dẫn lớp học nào"
-                description="Tạo một góc học tập mới để lên thời khóa biểu, soạn bài học và đồng hành 60 phút mỗi tối cùng học sinh."
-                action={
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Tạo lớp đầu tiên
-                  </button>
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {teachingClasses.map(renderClassCard)}
-              </div>
-            )}
-          </section>
-
-          {/* Nhóm 2: Tôi tham gia */}
-          <section aria-labelledby="heading-learning">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <GraduationCap className="h-5 w-5 text-amber-500" />
-                <h2
-                  id="heading-learning"
-                  className="text-lg font-extrabold text-slate-900 dark:text-white"
-                >
-                  Tôi tham gia ({learningClasses.length})
-                </h2>
-              </div>
-            </div>
-
-            {learningClasses.length === 0 ? (
-              <EmptyState
-                icon={<BookOpen className="h-6 w-6" />}
-                title="Bạn chưa tham gia lớp học nào với vai trò Học sinh"
-                description="Khi người hướng dẫn gửi đường link lời mời và mã tham gia, hãy mở đường link đó để gửi yêu cầu vào lớp."
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {learningClasses.map(renderClassCard)}
-              </div>
-            )}
-          </section>
-        </div>
+        <section aria-label="Danh sách lớp học của tôi">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map(renderClassCard)}
+          </div>
+        </section>
       )}
 
       {/* Modal tạo lớp mới */}
@@ -522,4 +483,3 @@ export function MyClassesPage() {
     </div>
   );
 }
-
