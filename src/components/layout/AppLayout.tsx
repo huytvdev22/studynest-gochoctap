@@ -7,6 +7,7 @@ import {
   Moon,
   RefreshCw,
   RotateCcw,
+  Settings,
   ShieldAlert,
   Sparkles,
   Sun,
@@ -19,6 +20,7 @@ import {
   getCurrentVersionInfo,
 } from '@/services/versionService';
 import { UpdateNotification } from '@/components/layout/UpdateNotification';
+import { AppSettingsModal } from '@/components/layout/AppSettingsModal';
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const {
@@ -37,6 +39,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
     location.pathname !== '/app/classes';
 
   const versionInfo = getCurrentVersionInfo();
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateStatusMsg, setUpdateStatusMsg] = useState<string | null>(null);
 
@@ -183,6 +186,16 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
+              onClick={() => setShowSettingsModal(true)}
+              aria-label="Cài đặt & Cập nhật ứng dụng (PWA)"
+              title="Cài đặt & Cập nhật ứng dụng (PWA)"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 transition"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
               onClick={() => setDark((d) => !d)}
               aria-label={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -243,6 +256,15 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
             <span>•</span>
             <button
               type="button"
+              onClick={() => setShowSettingsModal(true)}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 transition"
+              title="Mở bảng cài đặt và kiểm tra cập nhật ứng dụng PWA"
+            >
+              <Settings className="h-3 w-3" />
+              <span>Cập nhật & Cài đặt</span>
+            </button>
+            <button
+              type="button"
               disabled={checkingUpdate}
               onClick={() => void handleManualCheckUpdate()}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 transition"
@@ -253,7 +275,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
                   checkingUpdate ? 'animate-spin text-emerald-600' : ''
                 }`}
               />
-              <span>{checkingUpdate ? 'Đang kiểm tra...' : 'Kiểm tra bản cập nhật'}</span>
+              <span>{checkingUpdate ? 'Đang kiểm tra...' : 'Kiểm tra nhanh'}</span>
             </button>
             <button
               type="button"
@@ -275,6 +297,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
           </div>
         )}
       </footer>
+
+      {/* Modal Cài đặt & Cập nhật ứng dụng (PWA & Web) */}
+      <AppSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
 
       {/* Thông báo tự động khi phát hiện bản cập nhật mới trên server */}
       <UpdateNotification />
