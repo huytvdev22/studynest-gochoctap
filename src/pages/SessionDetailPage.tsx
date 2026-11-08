@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Square,
   Star,
+  Target,
   Timer,
   Trash2,
 } from 'lucide-react';
@@ -322,8 +323,9 @@ export function SessionDetailPage() {
               {session.title}
             </h1>
             {session.goal && (
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                🎯 Mục tiêu: {session.goal}
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                <Target className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Mục tiêu: {session.goal}</span>
               </p>
             )}
 

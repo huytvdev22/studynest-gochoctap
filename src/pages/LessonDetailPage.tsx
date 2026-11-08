@@ -17,6 +17,7 @@ import {
   Save,
   Send,
   Sparkles,
+  Target,
   Trash2,
   Turtle,
   Volume2,
@@ -459,8 +460,11 @@ export function LessonDetailPage() {
       {/* Thanh nhắc khi bài học đang ở Bản nháp hoặc chưa có thẻ Flashcard */}
       {isInstructorOrOwner && !isEditing && lesson.status === 'draft' && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs sm:text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-          <div className="font-semibold">
-            📝 Bài học này đang ở trạng thái <strong>Bản nháp</strong> (Học sinh chưa nhìn thấy). Bạn có thể chỉnh sửa nội dung, bổ sung thẻ Flashcard bằng AI rồi bấm Công bố.
+          <div className="font-semibold flex items-center gap-2">
+            <FileEdit className="h-4 w-4 shrink-0 text-amber-600" />
+            <span>
+              Bài học này đang ở trạng thái <strong>Bản nháp</strong> (Học sinh chưa nhìn thấy). Bạn có thể chỉnh sửa nội dung, bổ sung thẻ Flashcard bằng AI rồi bấm Công bố.
+            </span>
           </div>
           <button
             type="button"
@@ -481,8 +485,9 @@ export function LessonDetailPage() {
         <section className="rounded-3xl border-2 border-emerald-400 bg-white p-6 shadow-md space-y-5 dark:border-emerald-700 dark:bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                ✏️ Chỉnh sửa Bài học & Bộ thẻ Flashcard
+              <h2 className="flex items-center gap-2 text-lg font-extrabold text-slate-900 dark:text-white">
+                <Pencil className="h-5 w-5 text-emerald-600" />
+                Chỉnh sửa Bài học & Bộ thẻ Flashcard
               </h2>
               <p className="text-xs text-slate-500">
                 Chọn Giáo trình / Unit từ danh sách có sẵn, cập nhật thẻ Flashcard thủ công hoặc dùng AI.
@@ -538,7 +543,7 @@ export function LessonDetailPage() {
                   >
                     {existingCurriculums.map((c) => (
                       <option key={c} value={c}>
-                        📚 {c}
+                        {c}
                       </option>
                     ))}
                     <option value="__NEW__">+ Tạo giáo trình mới...</option>
@@ -638,7 +643,7 @@ export function LessonDetailPage() {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Chế độ Loa đọc phát âm 🔊
+                Chế độ Loa đọc phát âm
               </label>
               <select
                 value={editTtsLang}
@@ -837,8 +842,9 @@ export function LessonDetailPage() {
           {/* Mục tiêu & Nội dung giải thích ngữ pháp */}
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                🎯 Mục tiêu bài học
+              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <Target className="h-3.5 w-3.5 text-emerald-600" />
+                Mục tiêu bài học
               </label>
               <input
                 type="text"
@@ -850,8 +856,9 @@ export function LessonDetailPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                📖 Hướng dẫn & Ghi chú ngữ pháp / kiến thức chi tiết
+              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                Hướng dẫn & Ghi chú ngữ pháp / kiến thức chi tiết
               </label>
               <textarea
                 rows={4}
@@ -920,7 +927,10 @@ export function LessonDetailPage() {
 
           {lesson.goal && (
             <div className="mt-4 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 text-sm sm:text-base text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
-              <strong className="font-bold">🎯 Mục tiêu bài học:</strong>{' '}
+              <strong className="inline-flex items-center gap-1.5 font-bold">
+                <Target className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                Mục tiêu bài học:
+              </strong>{' '}
               {lesson.goal}
             </div>
           )}

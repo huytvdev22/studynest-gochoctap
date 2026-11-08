@@ -741,8 +741,9 @@ export function LessonsPage() {
           {/* 4 ô trạng thái nhớ */}
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 dark:border-slate-800 dark:bg-slate-800/70">
-              <div className="text-xs font-bold text-slate-500">
-                ⚪ Mới học (Chưa ôn)
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-slate-400" />
+                Mới học (Chưa ôn)
               </div>
               <div className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">
                 {srsOverview.counts.new} thẻ
@@ -750,8 +751,9 @@ export function LessonsPage() {
             </div>
 
             <div className="rounded-2xl border border-rose-200/80 bg-rose-50/70 p-3 dark:border-rose-900/50 dark:bg-rose-950/30">
-              <div className="text-xs font-bold text-rose-800 dark:text-rose-300">
-                🔴 Hay quên (Ôn +1 ngày)
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-300">
+                <span className="h-2 w-2 rounded-full bg-rose-500" />
+                Hay quên (Ôn +1 ngày)
               </div>
               <div className="mt-1 text-xl font-extrabold text-rose-700 dark:text-rose-300">
                 {srsOverview.counts.struggling} thẻ
@@ -759,8 +761,9 @@ export function LessonsPage() {
             </div>
 
             <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
-              <div className="text-xs font-bold text-amber-900 dark:text-amber-300">
-                🟡 Sắp quên / Đến hạn ôn
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Sắp quên / Đến hạn ôn
               </div>
               <div className="mt-1 text-xl font-extrabold text-amber-700 dark:text-amber-300">
                 {srsOverview.counts.due_soon} thẻ
@@ -768,8 +771,9 @@ export function LessonsPage() {
             </div>
 
             <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-              <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                🟢 Đã nhớ kỹ (14–30 ngày)
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Đã nhớ kỹ (14–30 ngày)
               </div>
               <div className="mt-1 text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
                 {srsOverview.counts.mastered} thẻ
@@ -1170,7 +1174,7 @@ export function LessonsPage() {
                       >
                         {curriculums.map((c) => (
                           <option key={c} value={c}>
-                            📚 {c}
+                            {c}
                           </option>
                         ))}
                         <option value="__NEW_CURRICULUM__">
@@ -1290,7 +1294,7 @@ export function LessonsPage() {
                     htmlFor="les-tts-lang"
                     className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                   >
-                    Chế độ Loa đọc phát âm trên Flashcard 🔊
+                    Chế độ Loa đọc phát âm trên Flashcard
                   </label>
                   <select
                     id="les-tts-lang"
@@ -1526,7 +1530,7 @@ export function LessonsPage() {
                     >
                       {[1, 2, 3, 4, 5].map((s) => (
                         <option key={s} value={s}>
-                          +{s} ⭐
+                          +{s} sao
                         </option>
                       ))}
                     </select>
@@ -1763,7 +1767,7 @@ export function LessonsPage() {
                     >
                       {[2, 3, 5, 8, 10].map((s) => (
                         <option key={s} value={s}>
-                          Thưởng +{s} ⭐
+                          Thưởng +{s} sao
                         </option>
                       ))}
                     </select>

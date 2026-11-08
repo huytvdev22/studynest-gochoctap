@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  BookOpen,
   CheckCircle2,
   ClipboardCheck,
   Clock,
@@ -427,13 +428,15 @@ export function SessionsAndTasksPage() {
                           </span>
                         )}
                         {task.subject && (
-                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                            📚 {task.subject}
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            <BookOpen className="h-3 w-3 text-slate-500" />
+                            {task.subject}
                             {task.unitTitle ? ` • ${task.unitTitle}` : ''}
                           </span>
                         )}
-                        <span className="rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-extrabold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
-                          ⭐ Thưởng {task.starsReward} sao
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-extrabold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                          Thưởng {task.starsReward} sao
                         </span>
                         <span className="text-xs text-slate-500">
                           Hạn: {formatVietnameseDate(task.dueDate, false)}
@@ -609,9 +612,10 @@ export function SessionsAndTasksPage() {
                                     onClick={() =>
                                       void handleQuickConfirmTask(task, st, rec)
                                     }
-                                    className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700"
+                                    className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700"
                                   >
-                                    Xác nhận +{task.starsReward}⭐
+                                    <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
+                                    Xác nhận +{task.starsReward} sao
                                   </button>
                                 )}
                               </div>

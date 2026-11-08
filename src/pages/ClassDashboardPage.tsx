@@ -474,8 +474,9 @@ export function ClassDashboardPage() {
                         {task.taskType === 'flashcard' &&
                           (task.flashcards?.length || 0) > 0 && (
                             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-                              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                                🃏 Bộ Flashcard: {task.flashcards?.length} thẻ
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                                <Layers className="h-3.5 w-3.5 text-emerald-600" />
+                                Bộ Flashcard: {task.flashcards?.length} thẻ
                                 {task.subject ? ` (${task.subject})` : ''}
                               </span>
                               <button
@@ -494,8 +495,9 @@ export function ClassDashboardPage() {
                         {task.taskType === 'quiz' &&
                           (task.quizQuestions?.length || 0) > 0 && (
                             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-900/50 dark:bg-violet-950/30">
-                              <span className="text-xs font-bold text-violet-900 dark:text-violet-200">
-                                📝 Đề trắc nghiệm: {task.quizQuestions?.length} câu
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-900 dark:text-violet-200">
+                                <ClipboardCheck className="h-3.5 w-3.5 text-violet-600" />
+                                Đề trắc nghiệm: {task.quizQuestions?.length} câu
                                 {rec?.quizTotal
                                   ? ` • Đã đạt: ${rec.quizScore}/${rec.quizTotal} câu đúng`
                                   : ''}
@@ -905,7 +907,7 @@ export function ClassDashboardPage() {
                         >
                           {[1, 2, 3, 4, 5].map((s) => (
                             <option key={s} value={s}>
-                              Thưởng {s} ⭐
+                              Thưởng +{s} sao
                             </option>
                           ))}
                         </select>

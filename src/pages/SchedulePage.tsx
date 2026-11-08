@@ -6,14 +6,18 @@ import {
   Check,
   CheckSquare,
   ClipboardPaste,
+  CloudSun,
   Copy,
   Edit3,
   Eye,
+  Moon,
   Plus,
   Sparkles,
   Square,
+  Sun,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react';
 import type {
   ScheduleException,
@@ -770,12 +774,23 @@ export function SchedulePage() {
                     : null;
                 const isNewSection = prevSession !== slot.sessionOfDay;
 
-                const sectionBannerTitle =
-                  slot.sessionOfDay === 'morning'
-                    ? '☀️ BUỔI SÁNG (5 tiết)'
-                    : slot.sessionOfDay === 'afternoon'
-                    ? '🌤️ BUỔI CHIỀU (5 tiết)'
-                    : '🌙 BUỔI TỐI – GÓC HỌC TẬP TẠI NHÀ';
+                const sectionBanner =
+                  slot.sessionOfDay === 'morning' ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Sun className="h-3.5 w-3.5 text-amber-500" />
+                      BUỔI SÁNG (5 tiết)
+                    </span>
+                  ) : slot.sessionOfDay === 'afternoon' ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <CloudSun className="h-3.5 w-3.5 text-amber-600" />
+                      BUỔI CHIỀU (5 tiết)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Moon className="h-3.5 w-3.5 text-sky-500" />
+                      BUỔI TỐI – GÓC HỌC TẬP TẠI NHÀ
+                    </span>
+                  );
 
                 return (
                   <React.Fragment
@@ -787,7 +802,7 @@ export function SchedulePage() {
                           colSpan={8}
                           className="px-4 py-1.5 text-[11px] font-extrabold tracking-wider text-slate-600 dark:text-slate-300"
                         >
-                          {sectionBannerTitle}
+                          {sectionBanner}
                         </td>
                       </tr>
                     )}
@@ -920,8 +935,9 @@ export function SchedulePage() {
 
             {subjectBrushes.length > 0 && (
               <div className="mt-4">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  ⚡ Chọn nhanh môn có sẵn trong thời khóa biểu ({subjectBrushes.length} môn):
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <Zap className="h-3 w-3 text-amber-500" />
+                  Chọn nhanh môn có sẵn trong thời khóa biểu ({subjectBrushes.length} môn):
                 </span>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {subjectBrushes.map((brush) => (
@@ -1432,8 +1448,9 @@ export function SchedulePage() {
                       Tiết {item.periodNumber}: {item.subject}
                     </span>
                     {item.materialsNote && (
-                      <div className="mt-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                        🎒 {item.materialsNote}
+                      <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                        <Backpack className="h-3 w-3 text-emerald-600 shrink-0" />
+                        <span>{item.materialsNote}</span>
                       </div>
                     )}
                   </div>

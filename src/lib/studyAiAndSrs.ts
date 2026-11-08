@@ -20,38 +20,38 @@ export const TTS_LANGUAGE_OPTIONS: Array<{
   },
   {
     value: 'en-US',
-    label: 'Tiếng Anh – Mỹ (en-US) 🔊',
-    shortBadge: 'EN-US 🔊',
+    label: 'Tiếng Anh – Mỹ (en-US)',
+    shortBadge: 'EN-US',
   },
   {
     value: 'en-GB',
-    label: 'Tiếng Anh – Anh (en-GB) 🔊',
-    shortBadge: 'EN-GB 🔊',
+    label: 'Tiếng Anh – Anh (en-GB)',
+    shortBadge: 'EN-GB',
   },
   {
     value: 'zh-CN',
-    label: 'Tiếng Trung – Phổ thông (zh-CN) 🔊',
-    shortBadge: 'ZH-CN 🔊',
+    label: 'Tiếng Trung – Phổ thông (zh-CN)',
+    shortBadge: 'ZH-CN',
   },
   {
     value: 'ja-JP',
-    label: 'Tiếng Nhật (ja-JP) 🔊',
-    shortBadge: 'JA-JP 🔊',
+    label: 'Tiếng Nhật (ja-JP)',
+    shortBadge: 'JA-JP',
   },
   {
     value: 'ko-KR',
-    label: 'Tiếng Hàn (ko-KR) 🔊',
-    shortBadge: 'KO-KR 🔊',
+    label: 'Tiếng Hàn (ko-KR)',
+    shortBadge: 'KO-KR',
   },
   {
     value: 'fr-FR',
-    label: 'Tiếng Pháp (fr-FR) 🔊',
-    shortBadge: 'FR-FR 🔊',
+    label: 'Tiếng Pháp (fr-FR)',
+    shortBadge: 'FR-FR',
   },
   {
     value: 'vi-VN',
-    label: 'Tiếng Việt (vi-VN) 🔊',
-    shortBadge: 'VI-VN 🔊',
+    label: 'Tiếng Việt (vi-VN)',
+    shortBadge: 'VI-VN',
   },
 ];
 

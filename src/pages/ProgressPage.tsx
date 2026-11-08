@@ -227,8 +227,9 @@ export function ProgressPage() {
             </span>
             <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
           </div>
-          <div className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-white">
-            {summary.totalStars} ⭐
+          <div className="mt-2 flex items-center gap-2 text-3xl font-extrabold text-slate-900 dark:text-white">
+            <span>{summary.totalStars}</span>
+            <Star className="h-6 w-6 fill-amber-400 text-amber-500" />
           </div>
           <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Từ {summary.confirmedRecordsCount} mục đã xác nhận
@@ -352,7 +353,7 @@ export function ProgressPage() {
               >
                 {[1, 2, 3, 4, 5, 6, 8, 10].map((s) => (
                   <option key={s} value={s}>
-                    +{s} sao ⭐
+                    +{s} sao
                   </option>
                 ))}
               </select>
@@ -451,8 +452,9 @@ export function ProgressPage() {
                   <div className="flex items-center gap-2">
                     {isConfirmed ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-extrabold text-white">
-                        <CheckCircle2 className="h-3.5 w-3.5" />+{rec.starsAwarded} ⭐
-                        Đã xác nhận
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+                        +{rec.starsAwarded} sao • Đã xác nhận
                       </span>
                     ) : (
                       <>
@@ -464,9 +466,10 @@ export function ProgressPage() {
                             type="button"
                             disabled={savingAward}
                             onClick={() => void handleConfirmPendingRecord(rec)}
-                            className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+                            className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
                           >
-                            Xác nhận +3⭐
+                            <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+                            Xác nhận +3 sao
                           </button>
                         )}
                       </>

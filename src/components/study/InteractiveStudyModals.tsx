@@ -38,9 +38,10 @@ export function SrsStatusBadge({
     return (
       <span
         title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
-        className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800 dark:bg-rose-950/70 dark:text-rose-300"
+        className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800 dark:bg-rose-950/70 dark:text-rose-300"
       >
-        🔴 Hay quên
+        <span className="h-2 w-2 rounded-full bg-rose-500" />
+        Hay quên
       </span>
     );
   }
@@ -48,9 +49,10 @@ export function SrsStatusBadge({
     return (
       <span
         title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
-        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900 dark:bg-amber-950/70 dark:text-amber-300"
+        className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900 dark:bg-amber-950/70 dark:text-amber-300"
       >
-        🟡 Sắp quên / Cần ôn
+        <span className="h-2 w-2 rounded-full bg-amber-500" />
+        Sắp quên / Cần ôn
       </span>
     );
   }
@@ -58,15 +60,17 @@ export function SrsStatusBadge({
     return (
       <span
         title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
-        className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
       >
-        🟢 Đã nhớ kỹ
+        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        Đã nhớ kỹ
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-      ⚪ Mới học
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+      <span className="h-2 w-2 rounded-full bg-slate-400" />
+      Mới học
     </span>
   );
 }
@@ -227,8 +231,9 @@ export function FlashcardStudyModal({
                       .length
                   }
                 </div>
-                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">
-                  🟢 Nhớ kỹ (+14 ngày)
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Nhớ kỹ (+14 ngày)
                 </div>
               </div>
               <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900 dark:bg-amber-950/30">
@@ -238,8 +243,9 @@ export function FlashcardStudyModal({
                       .length
                   }
                 </div>
-                <div className="text-xs font-bold text-amber-800 dark:text-amber-400">
-                  🟡 Tạm nhớ (+3 ngày)
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Tạm nhớ (+3 ngày)
                 </div>
               </div>
               <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-3 dark:border-rose-900 dark:bg-rose-950/30">
@@ -249,8 +255,9 @@ export function FlashcardStudyModal({
                       .length
                   }
                 </div>
-                <div className="text-xs font-bold text-rose-800 dark:text-rose-400">
-                  🔴 Cần ôn (+1 ngày)
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-400">
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                  Cần ôn (+1 ngày)
                 </div>
               </div>
             </div>
@@ -413,8 +420,9 @@ export function FlashcardStudyModal({
                   onClick={() => handleRateCard('forgot')}
                   className="flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-rose-900 transition hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
                 >
-                  <span className="text-xs font-extrabold">
-                    🔴 Chưa thuộc / Hay quên
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    Chưa thuộc / Hay quên
                   </span>
                   <span className="mt-0.5 text-[11px] opacity-80">
                     Ôn lại vào ngày mai (+1 ngày)
@@ -426,8 +434,9 @@ export function FlashcardStudyModal({
                   onClick={() => handleRateCard('good')}
                   className="flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-amber-950 transition hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
                 >
-                  <span className="text-xs font-extrabold">
-                    🟡 Tạm nhớ
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
+                    <span className="h-2 w-2 rounded-full bg-amber-500" />
+                    Tạm nhớ
                   </span>
                   <span className="mt-0.5 text-[11px] opacity-80">
                     Ôn lại sau 3 – 7 ngày
@@ -439,8 +448,9 @@ export function FlashcardStudyModal({
                   onClick={() => handleRateCard('easy')}
                   className="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-emerald-950 transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200"
                 >
-                  <span className="text-xs font-extrabold">
-                    🟢 Đã nhớ kỹ
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Đã nhớ kỹ
                   </span>
                   <span className="mt-0.5 text-[11px] opacity-80">
                     Ôn lại sau 14 – 30 ngày
@@ -633,7 +643,7 @@ export function QuizTakeModal({
                 {Math.round((correctCount / (questions.length || 1)) * 100)}%)
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300">
-                Các từ/mẫu câu làm sai đã tự động được đánh dấu 🔴 Hay quên để nhắc em ôn lại vào ngày mai.
+                Các từ/mẫu câu làm sai đã tự động được xếp vào nhóm Hay quên để nhắc em ôn lại vào ngày mai.
               </p>
             </div>
             <button
