@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Clock,
+  Eye,
   Flame,
   Layers,
   Plus,
@@ -54,6 +55,7 @@ import {
   FlashcardStudyModal,
   QuizTakeModal,
 } from '@/components/study/InteractiveStudyModals';
+import { SubmissionDetailModal } from '@/components/study/SubmissionDetailModal';
 
 export function ClassDashboardPage() {
   const { user } = useAuth();
@@ -88,6 +90,7 @@ export function ClassDashboardPage() {
     {}
   );
   const [reviewStars, setReviewStars] = useState<Record<string, number>>({});
+  const [viewingRecord, setViewingRecord] = useState<LearningRecord | null>(null);
 
   const loadDashboardData = useCallback(async () => {
     if (!studyClass || !user || !role) return;
@@ -186,11 +189,16 @@ export function ClassDashboardPage() {
     }
   };
 
-  const handleInstructorConfirm = async (rec: LearningRecord) => {
+  const handleInstructorConfirm = async (
+    rec: LearningRecord,
+    customStars?: number,
+    customComment?: string
+  ) => {
     setConfirmingRecordId(rec.id);
     try {
-      const stars = reviewStars[rec.id] ?? 3;
+      const stars = customStars ?? reviewStars[rec.id] ?? 3;
       const comment =
+        customComment?.trim() ||
         reviewComments[rec.id]?.trim() ||
         'Hoàn thành tốt nhiệm vụ! Tiếp tục phát huy nhé!';
       await confirmOrReviewLearningRecord({
@@ -737,6 +745,21 @@ export function ClassDashboardPage() {
   // =========================================================================
   const activeSelectedStudent = students.find((s) => s.uid === selectedStudentUid);
 
+  const viewingAssignment = viewingRecord?.assignmentId
+    ? assignments.find((a) => a.id === viewingRecord.assignmentId)
+    : null;
+  const viewingLesson = viewingAssignment?.lessonId
+    ? lessons.find((l) => l.id === viewingAssignment.lessonId)
+    : lessons.find(
+        (l) =>
+          viewingRecord &&
+          l.title &&
+          viewingRecord.title.toLowerCase().includes(l.title.toLowerCase())
+      );
+  const viewingStudent = viewingRecord
+    ? students.find((s) => s.uid === viewingRecord.studentUid)
+    : null;
+
   return (
     <div className="space-y-6">
       {/* Thống kê nhanh cho người hướng dẫn */}
@@ -1022,13 +1045,26 @@ export function ClassDashboardPage() {
                                 <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
                                   {rec.studentName} • {formatVietnameseDate(rec.date, false)}
                                 </span>
-                                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                                <h3
+                                  onClick={() => setViewingRecord(rec)}
+                                  className="text-base font-extrabold text-slate-900 hover:text-emerald-700 hover:underline cursor-pointer dark:text-white dark:hover:text-emerald-400 transition"
+                                  title="Bấm để xem chi tiết bài làm"
+                                >
                                   {rec.title}
                                 </h3>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setViewingRecord(rec)}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-amber-900 shadow-2xs hover:bg-amber-100 dark:border-amber-700 dark:bg-slate-800 dark:text-amber-200 transition"
+                                title="Xem toàn bộ câu hỏi, từ vựng hoặc nội dung học sinh đã nộp"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>Xem bài làm</span>
+                              </button>
                               {isFlashcard ? (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
                                   <Layers className="h-3 w-3" />
@@ -1054,7 +1090,17 @@ export function ClassDashboardPage() {
                           {/* Chi tiết nội dung kết quả làm bài */}
                           {rec.studentNote && (
                             <div
-                              className={`mt-3 rounded-xl p-3 text-xs ${
+                              onClick={() => setViewingRecord(rec)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setViewingRecord(rec);
+                                }
+                              }}
+                              title="Bấm để xem chi tiết bài làm"
+                              className={`mt-3 rounded-xl p-3 text-xs cursor-pointer hover:shadow-xs transition ${
                                 isFlashcard
                                   ? 'border border-emerald-200/80 bg-emerald-50/70 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200'
                                   : isQuiz
@@ -1175,13 +1221,28 @@ export function ClassDashboardPage() {
                               </span>
                             </div>
 
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-                              +{rec.starsAwarded} sao
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setViewingRecord(rec)}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-2xs hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300 transition"
+                                title="Xem toàn bộ câu hỏi, từ vựng hoặc nội dung học sinh đã nộp"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>Xem bài làm</span>
+                              </button>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                                +{rec.starsAwarded} sao
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="text-sm font-bold text-slate-900 dark:text-white">
+                          <div
+                            onClick={() => setViewingRecord(rec)}
+                            className="text-sm font-bold text-slate-900 hover:text-emerald-700 hover:underline cursor-pointer dark:text-white dark:hover:text-emerald-400 transition"
+                            title="Bấm để xem chi tiết bài làm"
+                          >
                             {rec.title}
                           </div>
 
@@ -1316,6 +1377,26 @@ export function ClassDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Modal xem chi tiết bài làm học sinh */}
+      {viewingRecord && studyClass && (
+        <SubmissionDetailModal
+          record={viewingRecord}
+          studyClass={studyClass}
+          assignment={viewingAssignment}
+          lesson={viewingLesson}
+          student={viewingStudent}
+          isInstructorOrOwner={isInstructorOrOwner}
+          onClose={() => setViewingRecord(null)}
+          onConfirm={async (rec, stars, comment) => {
+            setReviewStars((prev) => ({ ...prev, [rec.id]: stars }));
+            setReviewComments((prev) => ({ ...prev, [rec.id]: comment }));
+            await handleInstructorConfirm(rec, stars, comment);
+            setViewingRecord(null);
+          }}
+          isConfirming={confirmingRecordId === viewingRecord.id}
+        />
+      )}
     </div>
   );
 }
