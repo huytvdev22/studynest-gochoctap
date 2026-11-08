@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Backpack,
+  BookOpen,
   Bot,
+  Calendar,
   CalendarOff,
   Check,
   CheckSquare,
@@ -12,6 +14,7 @@ import {
   Eye,
   Moon,
   Plus,
+  RotateCcw,
   Sparkles,
   Square,
   Sun,
@@ -346,6 +349,10 @@ export function SchedulePage() {
     (s) => s.dayOfWeek === tomorrowDayOfWeek
   );
 
+  const regularCount = schedules.filter((s) => s.type === 'regular').length;
+  const extraCount = schedules.filter((s) => s.type === 'extra').length;
+  const tutoringCount = schedules.filter((s) => s.type === 'tutoring').length;
+
   const filteredSchedules = schedules.filter((s) => {
     if (filterType !== 'all' && s.type !== filterType) return false;
     if (
@@ -612,113 +619,97 @@ export function SchedulePage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 mr-1">
-            Lọc theo môn học ({subjectBrushes.length} môn):
-          </span>
-          {subjectBrushes.length === 0 ? (
-            <span className="text-xs italic text-slate-400">
-              Chưa có môn học nào trong lịch.
-            </span>
-          ) : (
-            <>
+        {/* Bộ lọc hiển thị: Droplist Loại lịch & Droplist Môn học */}
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+            isInstructorOrOwner
+              ? 'border-t border-slate-100 pt-3.5 dark:border-slate-800'
+              : ''
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Droplist 1: Loại lịch */}
+            <div className="flex items-center gap-1.5">
+              <label
+                htmlFor="schedule-filter-type"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap"
+              >
+                <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                Lịch:
+              </label>
+              <select
+                id="schedule-filter-type"
+                value={filterType}
+                onChange={(e) =>
+                  setFilterType(e.target.value as 'all' | ScheduleType)
+                }
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+              >
+                <option value="all">Tất cả lịch ({schedules.length})</option>
+                <option value="regular">
+                  Lịch chính ở trường ({regularCount})
+                </option>
+                <option value="extra">Lịch học thêm ({extraCount})</option>
+                <option value="tutoring">Lịch học ở nhà ({tutoringCount})</option>
+              </select>
+            </div>
+
+            {/* Droplist 2: Môn học */}
+            <div className="flex items-center gap-1.5">
+              <label
+                htmlFor="schedule-filter-subject"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                Môn học:
+              </label>
+              <select
+                id="schedule-filter-subject"
+                value={filterSubject || 'ALL'}
+                onChange={(e) =>
+                  setFilterSubject(
+                    e.target.value === 'ALL' ? null : e.target.value
+                  )
+                }
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+              >
+                <option value="ALL">
+                  Tất cả môn ({subjectBrushes.length} môn)
+                </option>
+                {subjectBrushes.map((brush) => (
+                  <option key={brush.subject} value={brush.subject}>
+                    {brush.subject} ({brush.count} tiết)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nút Bỏ lọc */}
+            {(filterType !== 'all' || filterSubject !== null) && (
               <button
                 type="button"
-                onClick={() => setFilterSubject(null)}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-                  filterSubject === null
-                    ? 'border-slate-900 bg-slate-900 text-white shadow-xs dark:border-white dark:bg-white dark:text-slate-900'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                }`}
+                onClick={() => {
+                  setFilterType('all');
+                  setFilterSubject(null);
+                }}
+                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                title="Bỏ lọc và hiển thị tất cả"
               >
-                Tất cả môn
-              </button>
-
-              {subjectBrushes.map((brush) => {
-                const isSelected =
-                  filterSubject?.toLowerCase() ===
-                  brush.subject.toLowerCase();
-                return (
-                  <button
-                    key={brush.subject}
-                    type="button"
-                    onClick={() =>
-                      setFilterSubject(isSelected ? null : brush.subject)
-                    }
-                    title={`Lọc môn ${brush.subject} (${brush.count} tiết)`}
-                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-                      isSelected
-                        ? 'ring-2 ring-slate-900 ring-offset-2 scale-105 shadow-xs dark:ring-white ' +
-                          brush.colorClass
-                        : brush.colorClass + ' opacity-85 hover:opacity-100'
-                    }`}
-                  >
-                    {isSelected && <Check className="h-3.5 w-3.5" />}
-                    <span>{brush.subject}</span>
-                    <span className="rounded-md bg-black/10 px-1.5 py-0.2 text-[10px] font-extrabold dark:bg-white/15">
-                      {brush.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Bộ lọc hiển thị */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setFilterType('all')}
-            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              filterType === 'all'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
-            }`}
-          >
-            Tất cả lịch ({schedules.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterType('regular')}
-            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              filterType === 'regular'
-                ? 'bg-sky-600 text-white'
-                : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
-            }`}
-          >
-            Lịch chính khóa ở trường
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterType('tutoring')}
-            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              filterType === 'tutoring'
-                ? 'bg-emerald-600 text-white'
-                : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
-            }`}
-          >
-            Lịch kèm học tại nhà
-          </button>
-        </div>
-
-        <div className="text-xs text-slate-500">
-          {filterSubject ? (
-            <span className="inline-flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
-              <span>Đang lọc môn: “{filterSubject}”</span>
-              <button
-                type="button"
-                onClick={() => setFilterSubject(null)}
-                className="underline hover:text-rose-600"
-              >
+                <RotateCcw className="h-3.5 w-3.5" />
                 Bỏ lọc
               </button>
-            </span>
-          ) : (
-            <span>Bấm vào ô bất kỳ để thêm hoặc sửa môn học</span>
-          )}
+            )}
+          </div>
+
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {filterSubject || filterType !== 'all' ? (
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                Đang hiển thị {filteredSchedules.length} / {schedules.length} tiết
+              </span>
+            ) : (
+              <span>Bấm vào ô bất kỳ để thêm hoặc sửa môn học</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -851,9 +842,21 @@ export function SchedulePage() {
                               >
                                 <div>
                                   <div className="flex items-start justify-between gap-1">
-                                    <span className="text-xs font-extrabold leading-tight">
-                                      {primaryItem.subject}
-                                    </span>
+                                    <div className="flex flex-wrap items-center gap-1">
+                                      <span className="text-xs font-extrabold leading-tight">
+                                        {primaryItem.subject}
+                                      </span>
+                                      {primaryItem.type === 'extra' && (
+                                        <span className="rounded bg-amber-500/20 px-1 py-0.2 text-[9px] font-extrabold text-amber-900 dark:text-amber-200">
+                                          Học thêm
+                                        </span>
+                                      )}
+                                      {primaryItem.type === 'tutoring' && (
+                                        <span className="rounded bg-emerald-500/20 px-1 py-0.2 text-[9px] font-extrabold text-emerald-900 dark:text-emerald-200">
+                                          Ở nhà
+                                        </span>
+                                      )}
+                                    </div>
 
                                     {isInstructorOrOwner && (
                                       <button
@@ -992,8 +995,9 @@ export function SchedulePage() {
                     onChange={(e) => setCellType(e.target.value as ScheduleType)}
                     className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <option value="regular">Ở trường</option>
-                    <option value="tutoring">Kèm tại nhà</option>
+                    <option value="regular">Lịch chính ở trường</option>
+                    <option value="extra">Lịch học thêm</option>
+                    <option value="tutoring">Lịch học ở nhà (Kèm tại nhà)</option>
                   </select>
                 </div>
 
@@ -1336,7 +1340,8 @@ export function SchedulePage() {
                               className="rounded-lg border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800"
                             >
                               <option value="regular">Ở trường</option>
-                              <option value="tutoring">Kèm tại nhà</option>
+                              <option value="extra">Học thêm</option>
+                              <option value="tutoring">Học ở nhà</option>
                             </select>
                           </td>
 

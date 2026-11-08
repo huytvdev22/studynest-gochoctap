@@ -45,7 +45,7 @@ Quy tắc bắt buộc khi trích xuất:
    - "evening" (Buổi tối / học kèm ở nhà)
 3. "periodNumber" (kiểu số nguyên từ 1 đến 5): thứ tự tiết trong buổi đó (ví dụ Tiết 1 buổi chiều thì sessionOfDay = "afternoon" và periodNumber = 1; nếu ảnh ghi Tiết 6, 7, 8, 9, 10 của buổi chiều thì quy đổi thành periodNumber 1, 2, 3, 4, 5 của "afternoon"). Không cần ghi giờ bắt đầu hay kết thúc của tiết.
 4. "subject": Tên môn học rõ ràng bằng tiếng Việt (VD: "Toán", "Tiếng Việt", "Tiếng Anh", "Tự nhiên & Xã hội", "Tin học", "Đạo đức", "Giáo dục thể chất", "Âm nhạc", "Mỹ thuật", "Hoạt động trải nghiệm"...).
-5. "type": "regular" (lịch học chính khóa ở trường) hoặc "tutoring" (lịch học kèm buổi tối tại nhà).
+5. "type": "regular" (lịch chính khóa ở trường), "extra" (lịch học thêm), hoặc "tutoring" (lịch học ở nhà / kèm tối).
 6. "materialsNote": Tự động gợi ý ngắn gọn sách vở/dụng cụ học sinh cần mang theo cho môn đó (VD: "SGK Toán, vở ô ly, thước kẻ").
 
 Chỉ trả về khối \`\`\`json ... \`\`\`, không cần giải thích dài dòng.`;
@@ -201,10 +201,16 @@ export function parseScheduleJsonFromAiResponse(rawText: string): {
     }
     periodNumber = Math.min(12, Math.max(1, Math.round(periodNumber)));
 
+    const rawType = String(obj.type || '').toLowerCase();
     const type: ScheduleType =
-      obj.type === 'tutoring' || sessionOfDay === 'evening'
-        ? 'tutoring'
-        : 'regular';
+      rawType === 'extra' || rawType.includes('thêm')
+        ? 'extra'
+        : rawType === 'tutoring' ||
+            rawType.includes('kèm') ||
+            rawType.includes('nhà') ||
+            sessionOfDay === 'evening'
+          ? 'tutoring'
+          : 'regular';
 
     const startTime =
       typeof obj.startTime === 'string' && obj.startTime.trim()

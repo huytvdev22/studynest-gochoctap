@@ -324,6 +324,14 @@ Dưới đây là kết quả trích xuất thời khóa biểu từ ảnh bạn
     "startTime": "",
     "endTime": "",
     "type": "school"
+  },
+  {
+    "dayOfWeek": 3,
+    "sessionOfDay": "afternoon",
+    "periodNumber": 2,
+    "subject": "Tiếng Anh tăng cường",
+    "materialsNote": "Vở bài tập",
+    "type": "extra"
   }
 ]
 \`\`\`
@@ -331,16 +339,21 @@ Hy vọng thông tin này giúp ích cho bạn!`;
 
     const parsed = parseScheduleJsonFromAiResponse(sampleAiOutput);
     expect(parsed.error).toBeUndefined();
-    expect(parsed.items).toHaveLength(2);
+    expect(parsed.items).toHaveLength(3);
     expect(parsed.items[0].dayOfWeek).toBe(1);
     expect(parsed.items[0].sessionOfDay).toBe('morning');
     expect(parsed.items[0].periodNumber).toBe(1);
     expect(parsed.items[0].subject).toBe('Chào cờ');
+    expect(parsed.items[0].type).toBe('regular');
 
     expect(parsed.items[1].dayOfWeek).toBe(2);
     expect(parsed.items[1].sessionOfDay).toBe('afternoon');
     expect(parsed.items[1].periodNumber).toBe(1); // Tiết 6 buổi chiều -> Tiết 1 buổi chiều
     expect(parsed.items[1].startTime).toBe('');
+    expect(parsed.items[1].type).toBe('regular');
+
+    expect(parsed.items[2].dayOfWeek).toBe(3);
+    expect(parsed.items[2].type).toBe('extra');
   });
 
   it('tính đúng Đường cong quên lãng Ebbinghaus (SRS) và bóc tách JSON Flashcard + Quiz đa ngôn ngữ', () => {

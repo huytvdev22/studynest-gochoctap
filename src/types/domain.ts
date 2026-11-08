@@ -8,7 +8,7 @@ export type ClassThemeIcon = 'book-open' | 'star' | 'compass' | 'sparkles' | 'gr
 
 export type SessionOfDay = 'morning' | 'afternoon' | 'evening';
 
-export type ScheduleType = 'regular' | 'tutoring';
+export type ScheduleType = 'regular' | 'tutoring' | 'extra';
 
 export type LessonStatus = 'draft' | 'published';
 
@@ -90,7 +90,7 @@ export interface ScheduleItem {
   sessionOfDay: SessionOfDay;
   periodNumber: number; // 1..12
   subject: string;
-  type: ScheduleType; // 'regular' (Chính khóa) | 'tutoring' (Kèm học tại nhà)
+  type: ScheduleType; // 'regular' (Chính khóa ở trường) | 'extra' (Học thêm) | 'tutoring' (Học ở nhà)
   teacherName: string;
   materialsNote: string; // Sách vở / dụng cụ cần chuẩn bị
   startTime: string; // Optional e.g. '19:30'

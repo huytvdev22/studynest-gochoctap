@@ -258,7 +258,7 @@ service cloud.firestore {
           && request.resource.data.periodNumber is int
           && request.resource.data.periodNumber >= 1
           && request.resource.data.periodNumber <= 12
-          && request.resource.data.type in ['regular', 'tutoring']
+          && request.resource.data.type in ['regular', 'tutoring', 'extra']
           && isValidString(request.resource.data.subject, 1, 80);
         allow delete: if isClassInstructorOrOwner(classId);
       }
