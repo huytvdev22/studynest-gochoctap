@@ -129,67 +129,104 @@ const OUTLOOK_TIME_SLOTS: TimeSlotRow[] = [
   },
 ];
 
-const QUICK_SUBJECT_PRESETS: Array<{
+interface SubjectBrushItem {
   subject: string;
   materials: string;
+  teacherName: string;
   colorClass: string;
-  type?: ScheduleType;
-}> = [
-  {
-    subject: 'Toán',
-    materials: 'SGK Toán 3, vở bài tập Toán, thước kẻ',
-    colorClass:
-      'bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/70 dark:text-sky-200 dark:border-sky-800',
-  },
-  {
-    subject: 'Tiếng Việt',
-    materials: 'SGK Tiếng Việt 3, vở chính tả, vở Tập làm văn',
-    colorClass:
-      'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-800',
-  },
-  {
-    subject: 'Tiếng Anh',
-    materials: 'Sách Tiếng Anh Global Success 3, vở từ vựng',
-    colorClass:
-      'bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-950/70 dark:text-violet-200 dark:border-violet-800',
-  },
-  {
-    subject: 'Tự nhiên & Xã hội',
-    materials: 'SGK Tự nhiên & Xã hội 3',
-    colorClass:
-      'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-800',
-  },
-  {
-    subject: 'Tin học & Công nghệ',
-    materials: 'SGK Tin học & Công nghệ 3',
-    colorClass:
-      'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/70 dark:text-cyan-200 dark:border-cyan-800',
-  },
-  {
-    subject: 'Đạo đức',
-    materials: 'SGK Đạo đức 3',
-    colorClass:
-      'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200 dark:border-rose-800',
-  },
-  {
-    subject: 'Mỹ thuật / Âm nhạc',
-    materials: 'Vở vẽ, hộp bút màu / SGK Âm nhạc',
-    colorClass:
-      'bg-pink-100 text-pink-900 border-pink-300 dark:bg-pink-950/70 dark:text-pink-200 dark:border-pink-800',
-  },
-  {
-    subject: 'Giáo dục thể chất',
-    materials: 'Đồng phục thể dục, giày thể thao, bình nước',
-    colorClass:
-      'bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950/70 dark:text-orange-200 dark:border-orange-800',
-  },
-  {
-    subject: 'Kèm Toán & Tiếng Việt (60p)',
-    materials: 'Vở ô ly rèn chữ, vở bài tập Toán, bút mực',
-    colorClass: 'bg-emerald-600 text-white border-emerald-700',
-    type: 'tutoring',
-  },
+  type: ScheduleType;
+  count: number;
+}
+
+const SUBJECT_COLOR_PALETTE: string[] = [
+  'border-sky-300 bg-sky-50/95 text-sky-950 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100',
+  'border-emerald-300 bg-emerald-50/95 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
+  'border-violet-300 bg-violet-50/95 text-violet-950 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
+  'border-amber-300 bg-amber-50/95 text-amber-950 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
+  'border-cyan-300 bg-cyan-50/95 text-cyan-950 dark:border-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-100',
+  'border-rose-300 bg-rose-50/95 text-rose-950 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-100',
+  'border-pink-300 bg-pink-50/95 text-pink-950 dark:border-pink-800 dark:bg-pink-950/60 dark:text-pink-100',
+  'border-orange-300 bg-orange-50/95 text-orange-950 dark:border-orange-800 dark:bg-orange-950/60 dark:text-orange-100',
+  'border-indigo-300 bg-indigo-50/95 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-100',
+  'border-teal-300 bg-teal-50/95 text-teal-950 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-100',
 ];
+
+function getSubjectCardColor(subject: string, type: ScheduleType): string {
+  const lower = subject.trim().toLowerCase();
+  if (lower.includes('toán')) return SUBJECT_COLOR_PALETTE[0];
+  if (
+    lower.includes('việt') ||
+    lower.includes('văn') ||
+    lower.includes('chính tả')
+  ) {
+    return SUBJECT_COLOR_PALETTE[1];
+  }
+  if (lower.includes('anh')) return SUBJECT_COLOR_PALETTE[2];
+  if (lower.includes('tự nhiên') || lower.includes('khoa học')) {
+    return SUBJECT_COLOR_PALETTE[3];
+  }
+  if (lower.includes('tin học') || lower.includes('công nghệ')) {
+    return SUBJECT_COLOR_PALETTE[4];
+  }
+  if (lower.includes('đạo đức') || lower.includes('đời sống')) {
+    return SUBJECT_COLOR_PALETTE[5];
+  }
+  if (lower.includes('mỹ thuật') || lower.includes('âm nhạc') || lower.includes('nghệ thuật')) {
+    return SUBJECT_COLOR_PALETTE[6];
+  }
+  if (lower.includes('thể chất') || lower.includes('thể dục')) {
+    return SUBJECT_COLOR_PALETTE[7];
+  }
+  if (lower.includes('trải nghiệm') || lower.includes('thực hành')) {
+    return SUBJECT_COLOR_PALETTE[8];
+  }
+  if (lower.includes('đọc sách') || lower.includes('thư viện')) {
+    return SUBJECT_COLOR_PALETTE[9];
+  }
+  if (type === 'tutoring') {
+    return SUBJECT_COLOR_PALETTE[1];
+  }
+
+  let hash = 0;
+  for (let i = 0; i < lower.length; i += 1) {
+    hash = (hash * 31 + lower.charCodeAt(i)) >>> 0;
+  }
+  return SUBJECT_COLOR_PALETTE[hash % SUBJECT_COLOR_PALETTE.length];
+}
+
+function deriveSubjectBrushesFromSchedules(
+  schedules: ScheduleItem[]
+): SubjectBrushItem[] {
+  const map = new Map<string, SubjectBrushItem>();
+
+  for (const item of schedules) {
+    const cleanSubject = item.subject.trim();
+    if (!cleanSubject) continue;
+    const key = cleanSubject.toLowerCase();
+    const existing = map.get(key);
+
+    if (!existing) {
+      map.set(key, {
+        subject: cleanSubject,
+        materials: item.materialsNote?.trim() || '',
+        teacherName: item.teacherName?.trim() || '',
+        colorClass: getSubjectCardColor(cleanSubject, item.type),
+        type: item.type,
+        count: 1,
+      });
+    } else {
+      existing.count += 1;
+      if (!existing.materials && item.materialsNote?.trim()) {
+        existing.materials = item.materialsNote.trim();
+      }
+      if (!existing.teacherName && item.teacherName?.trim()) {
+        existing.teacherName = item.teacherName.trim();
+      }
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.count - a.count);
+}
 
 const SAMPLE_AI_RESPONSE = `\`\`\`json
 [
@@ -232,30 +269,6 @@ const SAMPLE_AI_RESPONSE = `\`\`\`json
 ]
 \`\`\``;
 
-function getSubjectCardColor(subject: string, type: ScheduleType): string {
-  if (type === 'tutoring') {
-    return 'border-emerald-300 bg-emerald-50/90 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100';
-  }
-  const lower = subject.toLowerCase();
-  if (lower.includes('toán')) {
-    return 'border-sky-300 bg-sky-50/90 text-sky-950 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-100';
-  }
-  if (
-    lower.includes('việt') ||
-    lower.includes('văn') ||
-    lower.includes('chính tả')
-  ) {
-    return 'border-teal-300 bg-teal-50/90 text-teal-950 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-100';
-  }
-  if (lower.includes('anh')) {
-    return 'border-violet-300 bg-violet-50/90 text-violet-950 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-100';
-  }
-  if (lower.includes('tự nhiên') || lower.includes('khoa học')) {
-    return 'border-amber-300 bg-amber-50/90 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100';
-  }
-  return 'border-slate-300 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-}
-
 interface ActiveCellState {
   dayOfWeek: number;
   slot: TimeSlotRow;
@@ -271,12 +284,9 @@ export function SchedulePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [filterType, setFilterType] = useState<'all' | ScheduleType>('all');
 
-  // Chế độ "Cọ điền nhanh 1 chạm" (Quick Stamp)
-  const [quickStampSubject, setQuickStampSubject] = useState<{
-    subject: string;
-    materials: string;
-    type?: ScheduleType;
-  } | null>(null);
+  // Chế độ "Cọ điền nhanh 1 chạm" (Quick Stamp) trích xuất trực tiếp từ các môn trong TKB
+  const [quickStampSubject, setQuickStampSubject] =
+    useState<SubjectBrushItem | null>(null);
 
   // Ô đang được click để thêm/sửa trực tiếp giống Outlook Calendar
   const [activeCell, setActiveCell] = useState<ActiveCellState | null>(null);
@@ -337,6 +347,9 @@ export function SchedulePage() {
     filterType === 'all' ? true : s.type === filterType
   );
 
+  // Danh sách cọ môn học được tổng hợp trực tiếp từ các môn hiện có trong Thời khóa biểu
+  const subjectBrushes = deriveSubjectBrushesFromSchedules(schedules);
+
   // Mở popup chỉnh sửa/thêm nhanh ngay khi bấm vào một ô trên lịch tuần
   const handleCellClick = async (
     dayOfWeek: number,
@@ -354,7 +367,7 @@ export function SchedulePage() {
           periodNumber: slot.periodNumber,
           subject: quickStampSubject.subject,
           type: quickStampSubject.type || slot.defaultType,
-          teacherName: '',
+          teacherName: quickStampSubject.teacherName || '',
           materialsNote: quickStampSubject.materials,
           startTime: '',
           endTime: '',
@@ -375,19 +388,23 @@ export function SchedulePage() {
 
   const handleSaveCell = async (
     e?: React.FormEvent,
-    overridePreset?: { subject: string; materials: string; type?: ScheduleType }
+    overrideBrush?: SubjectBrushItem
   ) => {
     if (e) e.preventDefault();
     if (!activeCell) return;
 
-    const finalSubject = (overridePreset?.subject ?? cellSubject).trim();
+    const finalSubject = (overrideBrush?.subject ?? cellSubject).trim();
     if (!finalSubject) return;
 
     const finalMaterials =
-      overridePreset && !cellMaterials.trim()
-        ? overridePreset.materials
+      overrideBrush && !cellMaterials.trim()
+        ? overrideBrush.materials
         : cellMaterials.trim();
-    const finalType = overridePreset?.type || cellType;
+    const finalTeacher =
+      overrideBrush && !cellTeacher.trim()
+        ? overrideBrush.teacherName
+        : cellTeacher.trim();
+    const finalType = overrideBrush?.type || cellType;
 
     setSavingCell(true);
     try {
@@ -398,7 +415,7 @@ export function SchedulePage() {
         periodNumber: activeCell.slot.periodNumber,
         subject: finalSubject,
         type: finalType,
-        teacherName: cellTeacher.trim(),
+        teacherName: finalTeacher,
         materialsNote: finalMaterials,
         startTime: '',
         endTime: '',
@@ -618,30 +635,45 @@ export function SchedulePage() {
 
           <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-xs font-bold text-slate-500 mr-1">
-              Cọ điền nhanh 1 chạm:
+              Cọ điền nhanh 1 chạm ({subjectBrushes.length} môn trong TKB):
             </span>
-            {QUICK_SUBJECT_PRESETS.map((preset) => {
-              const isSelected =
-                quickStampSubject?.subject === preset.subject;
-              return (
-                <button
-                  key={preset.subject}
-                  type="button"
-                  onClick={() =>
-                    setQuickStampSubject(isSelected ? null : preset)
-                  }
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-                    isSelected
-                      ? 'ring-2 ring-slate-900 ring-offset-2 scale-105 shadow-xs dark:ring-white ' +
-                        preset.colorClass
-                      : preset.colorClass + ' opacity-85 hover:opacity-100'
-                  }`}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5" />}
-                  {preset.subject}
-                </button>
-              );
-            })}
+            {subjectBrushes.length === 0 ? (
+              <span className="text-xs italic text-slate-400">
+                Chưa có môn học nào. Hãy bấm trực tiếp vào một ô bên dưới hoặc dùng nút “Dán JSON từ AI & Preview” để tạo lịch, các môn sẽ tự động hiện ở đây.
+              </span>
+            ) : (
+              subjectBrushes.map((brush) => {
+                const isSelected =
+                  quickStampSubject?.subject.toLowerCase() ===
+                  brush.subject.toLowerCase();
+                return (
+                  <button
+                    key={brush.subject}
+                    type="button"
+                    onClick={() =>
+                      setQuickStampSubject(isSelected ? null : brush)
+                    }
+                    title={
+                      brush.materials
+                        ? `${brush.subject} (${brush.count} tiết) • Sách vở: ${brush.materials}`
+                        : `${brush.subject} (${brush.count} tiết)`
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
+                      isSelected
+                        ? 'ring-2 ring-slate-900 ring-offset-2 scale-105 shadow-xs dark:ring-white ' +
+                          brush.colorClass
+                        : brush.colorClass + ' opacity-90 hover:opacity-100'
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3.5 w-3.5" />}
+                    <span>{brush.subject}</span>
+                    <span className="rounded-md bg-black/10 px-1.5 py-0.2 text-[10px] font-extrabold dark:bg-white/15">
+                      {brush.count}
+                    </span>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       )}
@@ -903,24 +935,26 @@ export function SchedulePage() {
               </button>
             </div>
 
-            <div className="mt-4">
-              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                ⚡ Chạm 1 lần để điền nhanh môn học vào ô này:
-              </span>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {QUICK_SUBJECT_PRESETS.map((preset) => (
-                  <button
-                    key={preset.subject}
-                    type="button"
-                    disabled={savingCell}
-                    onClick={() => void handleSaveCell(undefined, preset)}
-                    className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition hover:scale-105 ${preset.colorClass}`}
-                  >
-                    {preset.subject}
-                  </button>
-                ))}
+            {subjectBrushes.length > 0 && (
+              <div className="mt-4">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  ⚡ Chọn nhanh môn có sẵn trong thời khóa biểu ({subjectBrushes.length} môn):
+                </span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {subjectBrushes.map((brush) => (
+                    <button
+                      key={brush.subject}
+                      type="button"
+                      disabled={savingCell}
+                      onClick={() => void handleSaveCell(undefined, brush)}
+                      className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition hover:scale-105 ${brush.colorClass}`}
+                    >
+                      {brush.subject}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <form
               onSubmit={(e) => void handleSaveCell(e)}
