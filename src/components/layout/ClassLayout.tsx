@@ -20,7 +20,6 @@ import {
   PanelLeftOpen,
   PlusCircle,
   ShieldAlert,
-  Sparkles,
   Trophy,
   Users,
   X,
@@ -29,7 +28,6 @@ import type { ClassMember, StudyClass } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClassProvider, useClassContext } from '@/contexts/ClassContext';
 import { listUserClassesWithMembership } from '@/services/studyNestService';
-import { DAY_OF_WEEK_SHORT_LABELS } from '@/lib/date';
 import {
   ClassIconView,
   RoleBadge,
@@ -40,7 +38,6 @@ interface WorkspaceNavItem {
   to: string;
   end: boolean;
   label: string;
-  sublabel: string;
   icon: typeof LayoutDashboard;
 }
 
@@ -160,28 +157,24 @@ function ClassLayoutInner() {
           to: baseUrl,
           end: true,
           label: role === 'student' ? 'Góc học hôm nay' : 'Tổng quan lớp',
-          sublabel: 'Điều phối 60p & Soạn cặp',
           icon: LayoutDashboard,
         },
         {
           to: `${baseUrl}/schedule`,
           end: false,
           label: 'Thời khóa biểu',
-          sublabel: 'Lịch tuần & Nhập AI',
           icon: Calendar,
         },
         {
           to: `${baseUrl}/sessions`,
           end: false,
           label: 'Buổi học & Nhiệm vụ',
-          sublabel: 'Nhật ký 60p & Bài tập',
           icon: Clock,
         },
         {
           to: `${baseUrl}/lessons`,
           end: false,
           label: 'Thư viện bài học',
-          sublabel: 'Bài giảng & Ôn tập',
           icon: BookOpen,
         },
       ],
@@ -193,7 +186,6 @@ function ClassLayoutInner() {
           to: `${baseUrl}/progress`,
           end: false,
           label: 'Sao & Chuỗi ngày học',
-          sublabel: 'Bảng vàng & Streak',
           icon: Trophy,
         },
       ],
@@ -205,7 +197,6 @@ function ClassLayoutInner() {
           to: `${baseUrl}/members`,
           end: false,
           label: 'Thành viên & Cài đặt',
-          sublabel: 'Mã mời & Cấu hình lớp',
           icon: Users,
         },
       ],
@@ -241,13 +232,6 @@ function ClassLayoutInner() {
     }
   };
 
-  const studyDaysText =
-    studyClass.studyDaysOfWeek && studyClass.studyDaysOfWeek.length > 0
-      ? studyClass.studyDaysOfWeek
-          .map((d) => DAY_OF_WEEK_SHORT_LABELS[d] || `T${d + 1}`)
-          .join(', ')
-      : 'Linh hoạt';
-
   const renderSidebarContent = (isMobileDrawer = false) => {
     const isMini = !isMobileDrawer && collapsed;
 
@@ -272,14 +256,10 @@ function ClassLayoutInner() {
               {!isMini && (
                 <>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
-                        Workspace
-                      </span>
-                      <span className="text-slate-300 dark:text-slate-600">•</span>
-                      <RoleBadge role={role} />
-                    </div>
-                    <p className="mt-0.5 truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                    <span className="block text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+                      Workspace
+                    </span>
+                    <p className="truncate text-sm font-extrabold text-slate-900 dark:text-white">
                       {studyClass.name}
                     </p>
                   </div>
@@ -367,7 +347,7 @@ function ClassLayoutInner() {
                         key={item.to}
                         to={item.to}
                         end={item.end}
-                        title={isMini ? `${item.label} — ${item.sublabel}` : undefined}
+                        title={isMini ? item.label : undefined}
                         className={({ isActive }) =>
                           `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                             isMini ? 'justify-center' : ''
@@ -388,20 +368,9 @@ function ClassLayoutInner() {
                               }`}
                             />
                             {!isMini && (
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate leading-tight">
-                                  {item.label}
-                                </div>
-                                <div
-                                  className={`truncate text-[11px] leading-tight mt-0.5 ${
-                                    isActive
-                                      ? 'text-emerald-100 font-normal'
-                                      : 'text-slate-400 dark:text-slate-500'
-                                  }`}
-                                >
-                                  {item.sublabel}
-                                </div>
-                              </div>
+                              <span className="truncate leading-tight">
+                                {item.label}
+                              </span>
                             )}
                           </>
                         )}
@@ -414,25 +383,8 @@ function ClassLayoutInner() {
           </nav>
         </div>
 
-        {/* Phần chân Sidebar: Thông tin nhanh Workspace & nút thu gọn */}
-        <div className="mt-6 space-y-2 border-t border-slate-200/80 pt-3 dark:border-slate-800">
-          {!isMini && (
-            <div className="rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-800/60">
-              <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
-                <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Lịch sinh hoạt Workspace</span>
-              </div>
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                Ngày học định kỳ: <strong className="text-slate-700 dark:text-slate-200">{studyDaysText}</strong>
-              </p>
-              {studyClass.description && (
-                <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  {studyClass.description}
-                </p>
-              )}
-            </div>
-          )}
-
+        {/* Phần chân Sidebar: Nút quay về danh sách Workspace & thu gọn */}
+        <div className="mt-6 border-t border-slate-200/80 pt-3 dark:border-slate-800">
           <div className="flex items-center justify-between gap-1">
             <Link
               to="/app/classes"
