@@ -5,6 +5,7 @@ import {
   BookOpen,
   Bot,
   Check,
+  CheckCircle2,
   ClipboardCheck,
   Copy,
   ExternalLink,
@@ -13,8 +14,8 @@ import {
   Layers,
   Plus,
   RotateCcw,
+  RotateCw,
   Search,
-  Sparkles,
   Trash2,
   Volume2,
   X,
@@ -49,6 +50,7 @@ import {
   buildFlashcardAiPrompt,
   buildQuizAiPrompt,
   inferDefaultTtsLang,
+  makeSrsCardKey,
   parseFlashcardAiResponse,
   parseQuizAiResponse,
   speakTextWithTts,
@@ -56,10 +58,64 @@ import {
 } from '@/lib/studyAiAndSrs';
 import {
   FlashcardStudyModal,
-  SrsStatusBadge,
   type StudyDeckCard,
 } from '@/components/study/InteractiveStudyModals';
 import { EmptyState } from '@/components/ui/ThemeBadges';
+
+function getLessonStudyStats(
+  lesson: Lesson,
+  srsStates: Record<string, SrsCardProgress>
+) {
+  const validKeywords = lesson.keywords.filter((kw) => kw.term.trim());
+  const totalCards = validKeywords.length;
+  if (totalCards === 0) {
+    return {
+      totalCards: 0,
+      studiedCardsCount: 0,
+      masteredCardsCount: 0,
+      status: 'no_cards' as const,
+    };
+  }
+
+  let studiedCardsCount = 0;
+  let masteredCardsCount = 0;
+
+  for (const kw of validKeywords) {
+    const cardKey = makeSrsCardKey(lesson.id, kw.term);
+    const srs = srsStates[cardKey];
+    if (srs && (srs.level > 0 || Boolean(srs.lastReviewedDate))) {
+      studiedCardsCount++;
+      if (srs.level >= 3) {
+        masteredCardsCount++;
+      }
+    }
+  }
+
+  if (studiedCardsCount === totalCards) {
+    return {
+      totalCards,
+      studiedCardsCount,
+      masteredCardsCount,
+      status: 'completed' as const,
+    };
+  }
+
+  if (studiedCardsCount > 0) {
+    return {
+      totalCards,
+      studiedCardsCount,
+      masteredCardsCount,
+      status: 'in_progress' as const,
+    };
+  }
+
+  return {
+    totalCards,
+    studiedCardsCount: 0,
+    masteredCardsCount: 0,
+    status: 'unstudied' as const,
+  };
+}
 
 export function LessonsPage() {
   const { user } = useAuth();
@@ -83,6 +139,9 @@ export function LessonsPage() {
   const [subjectFilter, setSubjectFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | LessonStatus>('ALL');
+  const [studyFilter, setStudyFilter] = useState<
+    'ALL' | 'completed' | 'in_progress' | 'unstudied'
+  >('ALL');
 
   // Modal luyện tập Flashcard tương tác
   const [activeStudyDeck, setActiveStudyDeck] = useState<{
@@ -294,6 +353,10 @@ export function LessonsPage() {
     const u = l.unitTitle?.trim() || 'Chưa phân Unit';
     if (unitFilter !== 'ALL' && u !== unitFilter) return false;
     if (statusFilter !== 'ALL' && l.status !== statusFilter) return false;
+    if (studyFilter !== 'ALL') {
+      const stats = getLessonStudyStats(l, srsStates);
+      if (stats.status !== studyFilter) return false;
+    }
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       const matchTitle = l.title.toLowerCase().includes(q);
@@ -661,6 +724,39 @@ export function LessonsPage() {
             ))}
           </select>
 
+          {/* Droplist Lọc theo tiến độ học Flashcard */}
+          <select
+            aria-label="Lọc theo trạng thái học Flashcard"
+            value={studyFilter}
+            onChange={(e) =>
+              setStudyFilter(
+                e.target.value as 'ALL' | 'completed' | 'in_progress' | 'unstudied'
+              )
+            }
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <option value="ALL">Mọi tiến độ</option>
+            <option value="completed">Đã học xong</option>
+            <option value="in_progress">Đang học dở</option>
+            <option value="unstudied">Chưa học</option>
+          </select>
+
+          {/* Droplist chọn học sinh để theo dõi (khi giáo viên có nhiều học sinh) */}
+          {isInstructorOrOwner && students.length > 1 && (
+            <select
+              aria-label="Xem tiến độ theo học sinh"
+              value={selectedSrsStudentUid}
+              onChange={(e) => setSelectedSrsStudentUid(e.target.value)}
+              className="rounded-xl border border-emerald-300 bg-emerald-50/70 px-3 py-2 text-xs font-bold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+            >
+              {students.map((st) => (
+                <option key={st.uid} value={st.uid}>
+                  Học sinh: {st.displayName}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Droplist Trạng thái (cho Instructor) */}
           {isInstructorOrOwner && (
             <select
@@ -702,7 +798,8 @@ export function LessonsPage() {
           {(searchTerm ||
             subjectFilter !== 'ALL' ||
             unitFilter !== 'ALL' ||
-            statusFilter !== 'ALL') && (
+            statusFilter !== 'ALL' ||
+            studyFilter !== 'ALL') && (
             <button
               type="button"
               onClick={() => {
@@ -710,6 +807,7 @@ export function LessonsPage() {
                 setSubjectFilter('ALL');
                 setUnitFilter('ALL');
                 setStatusFilter('ALL');
+                setStudyFilter('ALL');
               }}
               title="Đặt lại bộ lọc"
               className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 shrink-0"
@@ -755,10 +853,20 @@ export function LessonsPage() {
               }));
             });
 
+            const unitTotalCards = unitCards.length;
+            const unitStudiedCards = unitCards.filter((c) => {
+              const cardKey = makeSrsCardKey(c.lessonId, c.keyword.term);
+              const s = srsStates[cardKey];
+              return s && (s.level > 0 || Boolean(s.lastReviewedDate));
+            }).length;
+            const isUnitCompleted =
+              unitTotalCards > 0 && unitStudiedCards === unitTotalCards;
+            const isUnitInProgress = unitStudiedCards > 0 && !isUnitCompleted;
+
             return (
               <section key={groupHeader} className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 bg-slate-100/80 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-lg bg-emerald-600 px-2.5 py-0.5 text-xs font-extrabold text-white">
                       {firstLes.subject}
                     </span>
@@ -766,6 +874,16 @@ export function LessonsPage() {
                       {firstLes.unitTitle?.trim() || 'Các bài học chung'} (
                       {unitLessons.length} bài • {unitCards.length} thẻ)
                     </h2>
+                    {isUnitCompleted ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold dark:bg-emerald-950 dark:text-emerald-300">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                        Đã học xong Unit
+                      </span>
+                    ) : isUnitInProgress ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold dark:bg-amber-950 dark:text-amber-300">
+                        Đã học {unitStudiedCards}/{unitTotalCards} thẻ
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -828,45 +946,89 @@ export function LessonsPage() {
                     const isAddedToToday = assignments.some(
                       (a) => a.lessonId === lesson.id && a.dueDate === todayStr
                     );
+                    const studyStats = getLessonStudyStats(lesson, srsStates);
+                    const isCompleted = studyStats.status === 'completed';
+                    const isInProgress = studyStats.status === 'in_progress';
+
                     return (
                       <div
                         key={lesson.id}
-                        className="group flex flex-col justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs transition hover:border-emerald-400 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900"
+                        className={`group flex flex-col justify-between gap-2.5 rounded-2xl border p-3.5 sm:p-4 shadow-2xs transition hover:shadow-xs ${
+                          isCompleted
+                            ? 'border-emerald-300 bg-emerald-50/25 hover:border-emerald-500 dark:border-emerald-900/60 dark:bg-emerald-950/15'
+                            : isInProgress
+                            ? 'border-amber-200 bg-amber-50/20 hover:border-amber-400 dark:border-amber-900/50 dark:bg-amber-950/10'
+                            : 'border-slate-200 bg-white hover:border-emerald-400 dark:border-slate-800 dark:bg-slate-900'
+                        }`}
                       >
-                        {/* Hàng 1: Icon + Tên bài học + Trạng thái */}
+                        {/* Hàng 1: Icon + Tên bài học + Trạng thái đã học Flashcard */}
                         <div className="flex items-start justify-between gap-2">
                           <Link
                             to={`/app/classes/${studyClass.id}/lessons/${lesson.id}`}
                             className="flex items-center gap-2.5 min-w-0 flex-1"
                           >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/60 dark:text-emerald-300">
-                              <BookOpen className="h-4 w-4" />
-                            </span>
+                            {isCompleted ? (
+                              <span
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs"
+                                title={`Đã học xong toàn bộ ${studyStats.totalCards} thẻ Flashcard`}
+                              >
+                                <Check className="h-4 w-4 stroke-[3]" />
+                              </span>
+                            ) : isInProgress ? (
+                              <span
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                title={`Đang học (${studyStats.studiedCardsCount}/${studyStats.totalCards} thẻ)`}
+                              >
+                                <BookOpen className="h-4 w-4" />
+                              </span>
+                            ) : (
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/60 dark:text-emerald-300">
+                                <BookOpen className="h-4 w-4" />
+                              </span>
+                            )}
                             <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-emerald-700 transition truncate dark:text-white dark:group-hover:text-emerald-400">
                               {lesson.title}
                             </h3>
                           </Link>
 
-                          {/* Trạng thái bài học cho giáo viên */}
-                          {isInstructorOrOwner && (
-                            <span
-                              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                lesson.status === 'published'
-                                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
-                                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                              }`}
-                            >
-                              {lesson.status === 'published' ? (
-                                <>
-                                  <Eye className="h-2.5 w-2.5" /> Đã công bố
-                                </>
-                              ) : (
-                                <>
-                                  <FileEdit className="h-2.5 w-2.5" /> Bản nháp
-                                </>
-                              )}
-                            </span>
-                          )}
+                          {/* Nhóm huy hiệu trạng thái */}
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            {isCompleted ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold dark:bg-emerald-950 dark:text-emerald-300">
+                                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Đã học ({studyStats.studiedCardsCount}/{studyStats.totalCards})</span>
+                              </span>
+                            ) : isInProgress ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold dark:bg-amber-950 dark:text-amber-300">
+                                <span>Đang học ({studyStats.studiedCardsCount}/{studyStats.totalCards})</span>
+                              </span>
+                            ) : studyStats.totalCards > 0 ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[10px] font-medium dark:bg-slate-800 dark:text-slate-400">
+                                <span>Chưa học</span>
+                              </span>
+                            ) : null}
+
+                            {/* Trạng thái bài học cho giáo viên */}
+                            {isInstructorOrOwner && (
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                  lesson.status === 'published'
+                                    ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
+                                    : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                                }`}
+                              >
+                                {lesson.status === 'published' ? (
+                                  <>
+                                    <Eye className="h-2.5 w-2.5" /> Đã công bố
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileEdit className="h-2.5 w-2.5" /> Bản nháp
+                                  </>
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Hàng 2: Thông số ngắn gọn + Nút thao tác nhanh */}
@@ -890,7 +1052,13 @@ export function LessonsPage() {
                                     })),
                                   })
                                 }
-                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 transition dark:bg-emerald-950/60 dark:text-emerald-300"
+                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold active:scale-95 transition ${
+                                  isCompleted
+                                    ? 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/80 dark:text-emerald-200'
+                                    : isInProgress
+                                    ? 'bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-950/80 dark:text-amber-200'
+                                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                }`}
                               >
                                 <Layers className="h-3 w-3" />
                                 {lesson.keywords.length} thẻ
@@ -932,9 +1100,24 @@ export function LessonsPage() {
 
                           <Link
                             to={`/app/classes/${studyClass.id}/lessons/${lesson.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 transition"
+                            className={`inline-flex items-center gap-1 text-xs font-bold transition ${
+                              isCompleted
+                                ? 'text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300'
+                                : 'text-slate-600 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300'
+                            }`}
                           >
-                            <span>{isInstructorOrOwner ? 'Chi tiết' : 'Vào học'}</span>
+                            {isInstructorOrOwner ? (
+                              <span>Chi tiết</span>
+                            ) : isCompleted ? (
+                              <>
+                                <RotateCw className="h-3 w-3" />
+                                <span>Ôn lại</span>
+                              </>
+                            ) : isInProgress ? (
+                              <span>Học tiếp</span>
+                            ) : (
+                              <span>Vào học</span>
+                            )}
                             <ArrowRight className="h-3 w-3" />
                           </Link>
                         </div>
@@ -1848,4 +2031,3 @@ export function LessonsPage() {
     </div>
   );
 }
-export { SrsStatusBadge, Sparkles };
