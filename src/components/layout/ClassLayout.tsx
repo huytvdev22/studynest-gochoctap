@@ -81,10 +81,11 @@ function ClassLayoutInner() {
     }
   }, [collapsed]);
 
-  // Đóng menu mobile & switcher khi đổi route
+  // Đóng menu mobile & switcher, reset vị trí cuộn lên đầu trang khi đổi route
   useEffect(() => {
     setMobileMenuOpen(false);
     setSwitcherOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [location.pathname]);
 
   // Tải danh sách tất cả các lớp (workspaces) của user để chuyển nhanh
@@ -524,7 +525,7 @@ function ClassLayoutInner() {
       {/* Left Sidebar cố định trên Desktop (>= lg) */}
       <aside
         aria-label="Thanh điều hướng Workspace bên trái"
-        className={`hidden lg:block lg:sticky lg:top-20 lg:h-[calc(100vh-6.5rem)] shrink-0 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all duration-200 dark:border-slate-800 dark:bg-slate-900 ${
+        className={`hidden lg:block lg:sticky lg:top-[5.5rem] lg:h-[calc(100vh-7rem)] shrink-0 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-[width] duration-200 ease-in-out dark:border-slate-800 dark:bg-slate-900 ${
           collapsed ? 'lg:w-[68px] p-2.5' : 'lg:w-64 p-3.5'
         }`}
       >
@@ -532,7 +533,7 @@ function ClassLayoutInner() {
       </aside>
 
       {/* Vùng nội dung chính của Workspace bên phải */}
-      <div className="min-w-0 flex-1 space-y-5">
+      <div className="min-w-0 flex-1 space-y-5 lg:min-h-[calc(100vh-7rem)]">
         {/* Thanh ngữ cảnh (Breadcrumb Bar) gọn gàng phía trên trang con */}
         <div className="hidden lg:flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-5 py-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2.5 text-sm">
