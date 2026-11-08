@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Backpack,
+  Bot,
   CalendarOff,
   Check,
   CheckSquare,
+  ClipboardPaste,
   Clock,
+  Copy,
   Edit3,
+  Eye,
   Plus,
   Sparkles,
   Square,
@@ -35,6 +39,11 @@ import {
   getTodayAndTomorrow,
   ORDERED_DAYS_OF_WEEK,
 } from '@/lib/date';
+import {
+  AI_TIMETABLE_PROMPT,
+  parseScheduleJsonFromAiResponse,
+  type ParsedScheduleDraft,
+} from '@/lib/scheduleAiParser';
 
 interface TimeSlotRow {
   sessionOfDay: SessionOfDay;
@@ -140,42 +149,50 @@ const QUICK_SUBJECT_PRESETS: Array<{
   {
     subject: 'Toán',
     materials: 'SGK Toán 3, vở bài tập Toán, thước kẻ',
-    colorClass: 'bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/70 dark:text-sky-200 dark:border-sky-800',
+    colorClass:
+      'bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/70 dark:text-sky-200 dark:border-sky-800',
   },
   {
     subject: 'Tiếng Việt',
     materials: 'SGK Tiếng Việt 3, vở chính tả, vở Tập làm văn',
-    colorClass: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-800',
+    colorClass:
+      'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-800',
   },
   {
     subject: 'Tiếng Anh',
     materials: 'Sách Tiếng Anh Global Success 3, vở từ vựng',
-    colorClass: 'bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-950/70 dark:text-violet-200 dark:border-violet-800',
+    colorClass:
+      'bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-950/70 dark:text-violet-200 dark:border-violet-800',
   },
   {
     subject: 'Tự nhiên & Xã hội',
     materials: 'SGK Tự nhiên & Xã hội 3',
-    colorClass: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-800',
+    colorClass:
+      'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-800',
   },
   {
     subject: 'Tin học & Công nghệ',
     materials: 'SGK Tin học & Công nghệ 3',
-    colorClass: 'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/70 dark:text-cyan-200 dark:border-cyan-800',
+    colorClass:
+      'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/70 dark:text-cyan-200 dark:border-cyan-800',
   },
   {
     subject: 'Đạo đức',
     materials: 'SGK Đạo đức 3',
-    colorClass: 'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200 dark:border-rose-800',
+    colorClass:
+      'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200 dark:border-rose-800',
   },
   {
     subject: 'Mỹ thuật / Âm nhạc',
     materials: 'Vở vẽ, hộp bút màu / SGK Âm nhạc',
-    colorClass: 'bg-pink-100 text-pink-900 border-pink-300 dark:bg-pink-950/70 dark:text-pink-200 dark:border-pink-800',
+    colorClass:
+      'bg-pink-100 text-pink-900 border-pink-300 dark:bg-pink-950/70 dark:text-pink-200 dark:border-pink-800',
   },
   {
     subject: 'Giáo dục thể chất',
     materials: 'Đồng phục thể dục, giày thể thao, bình nước',
-    colorClass: 'bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950/70 dark:text-orange-200 dark:border-orange-800',
+    colorClass:
+      'bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950/70 dark:text-orange-200 dark:border-orange-800',
   },
   {
     subject: 'Kèm Toán & Tiếng Việt (60p)',
@@ -185,6 +202,55 @@ const QUICK_SUBJECT_PRESETS: Array<{
   },
 ];
 
+const SAMPLE_AI_RESPONSE = `\`\`\`json
+[
+  {
+    "dayOfWeek": 1,
+    "sessionOfDay": "morning",
+    "periodNumber": 1,
+    "subject": "Toán",
+    "type": "regular",
+    "teacherName": "Cô Thu Hà",
+    "materialsNote": "SGK Toán 3, vở bài tập Toán, thước kẻ",
+    "startTime": "07:30",
+    "endTime": "08:05"
+  },
+  {
+    "dayOfWeek": 1,
+    "sessionOfDay": "morning",
+    "periodNumber": 2,
+    "subject": "Tiếng Việt",
+    "type": "regular",
+    "teacherName": "Cô Thu Hà",
+    "materialsNote": "SGK Tiếng Việt 3, vở chính tả",
+    "startTime": "08:15",
+    "endTime": "08:50"
+  },
+  {
+    "dayOfWeek": 2,
+    "sessionOfDay": "morning",
+    "periodNumber": 1,
+    "subject": "Tiếng Anh",
+    "type": "regular",
+    "teacherName": "Thầy Nam",
+    "materialsNote": "Sách Tiếng Anh Global Success 3, vở từ vựng",
+    "startTime": "07:30",
+    "endTime": "08:05"
+  },
+  {
+    "dayOfWeek": 3,
+    "sessionOfDay": "afternoon",
+    "periodNumber": 1,
+    "subject": "Tin học & Công nghệ",
+    "type": "regular",
+    "teacherName": "",
+    "materialsNote": "SGK Tin học & Công nghệ 3",
+    "startTime": "14:00",
+    "endTime": "14:35"
+  }
+]
+\`\`\``;
+
 function getSubjectCardColor(subject: string, type: ScheduleType): string {
   if (type === 'tutoring') {
     return 'border-emerald-300 bg-emerald-50/90 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100';
@@ -193,7 +259,11 @@ function getSubjectCardColor(subject: string, type: ScheduleType): string {
   if (lower.includes('toán')) {
     return 'border-sky-300 bg-sky-50/90 text-sky-950 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-100';
   }
-  if (lower.includes('việt') || lower.includes('văn') || lower.includes('chính tả')) {
+  if (
+    lower.includes('việt') ||
+    lower.includes('văn') ||
+    lower.includes('chính tả')
+  ) {
     return 'border-teal-300 bg-teal-50/90 text-teal-950 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-100';
   }
   if (lower.includes('anh')) {
@@ -220,7 +290,7 @@ export function SchedulePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [filterType, setFilterType] = useState<'all' | ScheduleType>('all');
 
-  // Chế độ "Cọ điền nhanh 1 chạm" (Quick Stamp): Chọn môn ở trên rồi bấm vào ô bất kỳ để điền ngay
+  // Chế độ "Cọ điền nhanh 1 chạm" (Quick Stamp)
   const [quickStampSubject, setQuickStampSubject] = useState<{
     subject: string;
     materials: string;
@@ -236,6 +306,16 @@ export function SchedulePage() {
   const [cellEnd, setCellEnd] = useState<string>('');
   const [cellType, setCellType] = useState<ScheduleType>('regular');
   const [savingCell, setSavingCell] = useState<boolean>(false);
+
+  // Modal Nhập TKB từ Ảnh qua AI (Copy Prompt -> Dán JSON -> Preview & Edit -> Lưu)
+  const [showAiImportModal, setShowAiImportModal] = useState<boolean>(false);
+  const [promptCopied, setPromptCopied] = useState<boolean>(false);
+  const [showPromptDetail, setShowPromptDetail] = useState<boolean>(false);
+  const [rawAiInput, setRawAiInput] = useState<string>('');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [previewDrafts, setPreviewDrafts] = useState<ParsedScheduleDraft[]>([]);
+  const [replaceAllExisting, setReplaceAllExisting] = useState<boolean>(false);
+  const [importingBulk, setImportingBulk] = useState<boolean>(false);
 
   // Checklist chuẩn bị sách vở ngày mai
   const [packedItems, setPackedItems] = useState<Record<string, boolean>>({});
@@ -286,7 +366,6 @@ export function SchedulePage() {
   ) => {
     if (!isInstructorOrOwner) return;
 
-    // Nếu đang bật "Chế độ điền nhanh 1 chạm" (Quick Stamp) và bấm vào ô
     if (quickStampSubject && !existingItem) {
       setSavingCell(true);
       try {
@@ -317,7 +396,6 @@ export function SchedulePage() {
     setCellType(existingItem?.type || slot.defaultType);
   };
 
-  // Lưu ngay khi chọn 1 chip môn học trong popup hoặc bấm Lưu
   const handleSaveCell = async (
     e?: React.FormEvent,
     overridePreset?: { subject: string; materials: string; type?: ScheduleType }
@@ -372,6 +450,114 @@ export function SchedulePage() {
     }
   };
 
+  // =========================================================================
+  // Xử lý Copy Prompt AI -> Parse JSON -> Preview & Edit -> Lưu hàng loạt
+  // =========================================================================
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(AI_TIMETABLE_PROMPT);
+      setPromptCopied(true);
+      setTimeout(() => setPromptCopied(false), 2500);
+    } catch {
+      setShowPromptDetail(true);
+    }
+  };
+
+  const handleParseAiResponse = (customText?: string) => {
+    setParseError(null);
+    const source = customText !== undefined ? customText : rawAiInput;
+    const { items, error } = parseScheduleJsonFromAiResponse(source);
+    if (error) {
+      setParseError(error);
+      return;
+    }
+    setPreviewDrafts(items);
+  };
+
+  const handleUpdateDraftField = <K extends keyof ParsedScheduleDraft>(
+    tempId: string,
+    field: K,
+    value: ParsedScheduleDraft[K]
+  ) => {
+    setPreviewDrafts((prev) =>
+      prev.map((d) => (d.tempId === tempId ? { ...d, [field]: value } : d))
+    );
+  };
+
+  const handleRemoveDraftRow = (tempId: string) => {
+    setPreviewDrafts((prev) => prev.filter((d) => d.tempId !== tempId));
+  };
+
+  const handleAddBlankDraftRow = () => {
+    setPreviewDrafts((prev) => [
+      ...prev,
+      {
+        tempId: `draft_manual_${Date.now()}`,
+        dayOfWeek: 1,
+        sessionOfDay: 'morning',
+        periodNumber: 1,
+        subject: 'Toán',
+        type: 'regular',
+        teacherName: '',
+        materialsNote: 'SGK Toán, vở bài tập',
+        startTime: '07:30',
+        endTime: '08:05',
+      },
+    ]);
+  };
+
+  const handleSaveAllPreviewDrafts = async () => {
+    if (previewDrafts.length === 0) return;
+    setImportingBulk(true);
+    setParseError(null);
+    try {
+      if (replaceAllExisting) {
+        for (const existing of schedules) {
+          await deleteScheduleItem(studyClass.id, existing.id);
+        }
+      }
+
+      for (const draft of previewDrafts) {
+        if (!draft.subject.trim()) continue;
+        // Tìm xem đã có tiết học nào trùng Thứ + Buổi + Tiết chưa để cập nhật đè vào đúng ô đó
+        const matchingSlotItem = !replaceAllExisting
+          ? schedules.find(
+              (s) =>
+                s.dayOfWeek === draft.dayOfWeek &&
+                s.sessionOfDay === draft.sessionOfDay &&
+                s.periodNumber === draft.periodNumber
+            )
+          : undefined;
+
+        await saveScheduleItem(studyClass.id, user.uid, {
+          id: matchingSlotItem?.id,
+          dayOfWeek: draft.dayOfWeek,
+          sessionOfDay: draft.sessionOfDay,
+          periodNumber: draft.periodNumber,
+          subject: draft.subject.trim(),
+          type: draft.type,
+          teacherName: draft.teacherName.trim(),
+          materialsNote: draft.materialsNote.trim(),
+          startTime: draft.startTime.trim(),
+          endTime: draft.endTime.trim(),
+        });
+      }
+
+      setShowAiImportModal(false);
+      setPreviewDrafts([]);
+      setRawAiInput('');
+      await loadScheduleData();
+    } catch (err: unknown) {
+      setParseError(
+        err instanceof Error
+          ? err.message
+          : 'Có lỗi khi lưu danh sách tiết học.'
+      );
+    } finally {
+      setImportingBulk(false);
+    }
+  };
+
   const handleAddException = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exDate || !exReason.trim()) return;
@@ -396,35 +582,64 @@ export function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      {/* Thanh công cụ Điền nhanh 1 chạm (Giống lịch tuần Outlook + Gợi ý môn tiểu học) */}
+      {/* Thanh công cụ Điền nhanh 1 chạm + Nhập từ Ảnh bằng AI */}
       {isInstructorOrOwner && (
         <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-emerald-600" />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-2.5">
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
               <div>
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                  Lịch tuần trực quan (Bấm trực tiếp vào bất kỳ ô trống nào trên bảng để thêm tiết học)
+                  Lịch tuần trực quan (Bấm trực tiếp vào ô trên bảng hoặc Nhập tự động từ ảnh chụp TKB)
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Mẹo: Chọn một <strong>Thẻ môn học điền nhanh</strong> bên dưới rồi click liên tiếp vào các ô trên bảng để xếp thời khóa biểu chỉ trong vài giây!
+                  Chọn một <strong>Thẻ môn học</strong> bên dưới rồi click vào các ô trên bảng để điền 1 chạm, hoặc bấm nút <strong>Nhập TKB từ ảnh bằng AI</strong> để nhập cả tuần cùng lúc.
                 </p>
               </div>
             </div>
 
-            {quickStampSubject && (
+            <div className="flex flex-wrap items-center gap-2">
+              {quickStampSubject && (
+                <button
+                  type="button"
+                  onClick={() => setQuickStampSubject(null)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800 hover:bg-rose-200 dark:bg-rose-950 dark:text-rose-200"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Tắt cọ ({quickStampSubject.subject})
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setQuickStampSubject(null)}
-                className="inline-flex items-center gap-1.5 self-start rounded-xl bg-rose-100 px-3 py-1.5 text-xs font-bold text-rose-800 hover:bg-rose-200 dark:bg-rose-950 dark:text-rose-200"
+                onClick={handleCopyPrompt}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-2 text-xs font-extrabold text-violet-900 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-200"
               >
-                <X className="h-3.5 w-3.5" />
-                Tắt cọ điền nhanh ({quickStampSubject.subject})
+                {promptCopied ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-600" />
+                    Đã Copy Prompt cho AI!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 text-violet-600" />
+                    Copy Prompt gửi kèm ảnh TKB
+                  </>
+                )}
               </button>
-            )}
+
+              <button
+                type="button"
+                onClick={() => setShowAiImportModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-violet-700"
+              >
+                <Bot className="h-4 w-4" />
+                Dán JSON từ AI & Preview
+              </button>
+            </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-xs font-bold text-slate-500 mr-1">
               Cọ điền nhanh 1 chạm:
             </span>
@@ -578,7 +793,6 @@ export function SchedulePage() {
                     )}
 
                     <tr className="group/row hover:bg-slate-50/40 dark:hover:bg-slate-800/20">
-                      {/* Cột nhãn Tiết & Giờ */}
                       <td className="border-r border-slate-200 bg-slate-50/40 px-3 py-2.5 align-top dark:border-slate-800 dark:bg-slate-900/50">
                         <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
                           {slot.label}
@@ -589,7 +803,6 @@ export function SchedulePage() {
                         </div>
                       </td>
 
-                      {/* 7 Ô tương ứng Thứ Hai -> Chủ Nhật */}
                       {ORDERED_DAYS_OF_WEEK.map((dow) => {
                         const cellItems = filteredSchedules.filter(
                           (item) =>
@@ -690,7 +903,7 @@ export function SchedulePage() {
         </div>
       )}
 
-      {/* Hộp thoại nhỏ (Quick Popover Modal) khi click trực tiếp vào 1 ô trên lịch tuần */}
+      {/* MODAL 1: Hộp thoại nhỏ khi click trực tiếp vào 1 ô trên lịch tuần */}
       {isInstructorOrOwner && activeCell && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-xs"
@@ -720,7 +933,6 @@ export function SchedulePage() {
               </button>
             </div>
 
-            {/* 1-Click chọn môn học phổ biến (Bấm là lưu luôn!) */}
             <div className="mt-4">
               <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 ⚡ Chạm 1 lần để điền nhanh môn học vào ô này:
@@ -882,6 +1094,365 @@ export function SchedulePage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Nhập Thời khóa biểu từ Ảnh chụp thông qua AI (Copy Prompt -> Dán JSON -> Preview & Edit -> Lưu) */}
+      {isInstructorOrOwner && showAiImportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-ai-import-title"
+        >
+          <div className="my-8 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto space-y-5">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-sm">
+                  <Bot className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2
+                    id="modal-ai-import-title"
+                    className="text-lg font-extrabold text-slate-900 dark:text-white"
+                  >
+                    Nhập Thời khóa biểu từ Ảnh chụp bằng công cụ AI
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Bước 1: Copy câu lệnh mẫu gửi kèm ảnh TKB cho ChatGPT/Gemini • Bước 2: Dán kết quả JSON vào đây • Bước 3: Kiểm tra & Lưu
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAiImportModal(false)}
+                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* BƯỚC 1: COPY PROMPT */}
+            <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 dark:border-violet-900/50 dark:bg-violet-950/20">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-violet-800 dark:text-violet-300">
+                    Bước 1: Copy câu lệnh (Prompt) và gửi kèm ảnh chụp TKB vào ChatGPT / Gemini / Claude
+                  </span>
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                    Câu lệnh đã định nghĩa sẵn cấu trúc JSON chuẩn của StudyNest để AI trả về chính xác Thứ, Buổi, Tiết và gợi ý sách vở.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPromptDetail((v) => !v)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-violet-300 bg-white px-3 py-1.5 text-xs font-bold text-violet-800 hover:bg-violet-100 dark:border-violet-700 dark:bg-slate-900 dark:text-violet-200"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    {showPromptDetail ? 'Ẩn câu lệnh' : 'Xem câu lệnh'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyPrompt()}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-1.5 text-xs font-extrabold text-white hover:bg-violet-700"
+                  >
+                    {promptCopied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" /> Đã Copy Prompt!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" /> Copy Prompt
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {showPromptDetail && (
+                <pre className="mt-3 max-h-44 overflow-y-auto whitespace-pre-wrap rounded-xl border border-violet-200 bg-white p-3 font-mono text-[11px] text-slate-700 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-200">
+                  {AI_TIMETABLE_PROMPT}
+                </pre>
+              )}
+            </div>
+
+            {/* BƯỚC 2: DÁN KẾT QUẢ JSON TỪ AI */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label
+                  htmlFor="ai-json-textarea"
+                  className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+                >
+                  Bước 2: Dán câu trả lời của AI (Hỗ trợ cả khối ```json ... ``` hoặc JSON thuần)
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRawAiInput(SAMPLE_AI_RESPONSE);
+                    handleParseAiResponse(SAMPLE_AI_RESPONSE);
+                  }}
+                  className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                >
+                  + Thử với dữ liệu JSON mẫu
+                </button>
+              </div>
+
+              <textarea
+                id="ai-json-textarea"
+                rows={4}
+                value={rawAiInput}
+                onChange={(e) => setRawAiInput(e.target.value)}
+                placeholder={'Dán nguyên đoạn codeblock ```json [ ... ] ``` mà ChatGPT / Gemini trả về vào đây...'}
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-3.5 font-mono text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleParseAiResponse()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                >
+                  <ClipboardPaste className="h-3.5 w-3.5" />
+                  Đọc dữ liệu & Hiển thị bảng Preview
+                </button>
+              </div>
+
+              {parseError && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-800 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-200"
+                >
+                  {parseError}
+                </div>
+              )}
+            </div>
+
+            {/* BƯỚC 3: BẢNG PREVIEW, CHỈNH SỬA TRỰC TIẾP & LƯU */}
+            {previewDrafts.length > 0 && (
+              <div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                      Bước 3: Xem trước & Chỉnh sửa ({previewDrafts.length} tiết học)
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Bạn có thể sửa trực tiếp Thứ, Buổi, Tiết, Tên môn hoặc Sách vở ngay trên bảng dưới đây trước khi bấm Lưu.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddBlankDraftRow}
+                    className="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Thêm 1 dòng
+                  </button>
+                </div>
+
+                <div className="max-h-72 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <table className="w-full border-collapse text-left text-xs">
+                    <thead className="sticky top-0 bg-slate-100 text-[11px] font-extrabold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      <tr>
+                        <th className="p-2.5">Thứ</th>
+                        <th className="p-2.5">Buổi</th>
+                        <th className="p-2.5 w-16">Tiết</th>
+                        <th className="p-2.5">Môn học *</th>
+                        <th className="p-2.5">Sách vở chuẩn bị</th>
+                        <th className="p-2.5 w-24">Giờ</th>
+                        <th className="p-2.5 w-28">Phân loại</th>
+                        <th className="p-2.5 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {previewDrafts.map((draft) => (
+                        <tr
+                          key={draft.tempId}
+                          className="bg-white hover:bg-slate-50/80 dark:bg-slate-900"
+                        >
+                          <td className="p-2">
+                            <select
+                              aria-label="Thứ"
+                              value={draft.dayOfWeek}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'dayOfWeek',
+                                  Number(e.target.value)
+                                )
+                              }
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-bold dark:border-slate-700 dark:bg-slate-800"
+                            >
+                              {ORDERED_DAYS_OF_WEEK.map((d) => (
+                                <option key={d} value={d}>
+                                  {DAY_OF_WEEK_LABELS[d]}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          <td className="p-2">
+                            <select
+                              aria-label="Buổi"
+                              value={draft.sessionOfDay}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'sessionOfDay',
+                                  e.target.value as SessionOfDay
+                                )
+                              }
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800"
+                            >
+                              <option value="morning">Sáng</option>
+                              <option value="afternoon">Chiều</option>
+                              <option value="evening">Tối</option>
+                            </select>
+                          </td>
+
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              aria-label="Tiết"
+                              min={1}
+                              max={10}
+                              value={draft.periodNumber}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'periodNumber',
+                                  Number(e.target.value)
+                                )
+                              }
+                              className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center font-bold dark:border-slate-700 dark:bg-slate-800"
+                            />
+                          </td>
+
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              aria-label="Tên môn học"
+                              value={draft.subject}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'subject',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full min-w-[120px] rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-bold dark:border-slate-700 dark:bg-slate-800"
+                            />
+                          </td>
+
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              aria-label="Sách vở"
+                              value={draft.materialsNote}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'materialsNote',
+                                  e.target.value
+                                )
+                              }
+                              placeholder="SGK, vở..."
+                              className="w-full min-w-[150px] rounded-lg border border-slate-300 bg-white px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800"
+                            />
+                          </td>
+
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              aria-label="Giờ bắt đầu"
+                              value={draft.startTime}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'startTime',
+                                  e.target.value
+                                )
+                              }
+                              className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center dark:border-slate-700 dark:bg-slate-800"
+                            />
+                          </td>
+
+                          <td className="p-2">
+                            <select
+                              aria-label="Phân loại"
+                              value={draft.type}
+                              onChange={(e) =>
+                                handleUpdateDraftField(
+                                  draft.tempId,
+                                  'type',
+                                  e.target.value as ScheduleType
+                                )
+                              }
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800"
+                            >
+                              <option value="regular">Ở trường</option>
+                              <option value="tutoring">Kèm tại nhà</option>
+                            </select>
+                          </td>
+
+                          <td className="p-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDraftRow(draft.tempId)}
+                              aria-label="Xóa dòng này"
+                              className="rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={replaceAllExisting}
+                      onChange={(e) => setReplaceAllExisting(e.target.checked)}
+                      className="rounded border-slate-300 text-emerald-600"
+                    />
+                    <span>
+                      Xóa toàn bộ thời khóa biểu cũ trước khi lưu danh sách mới này
+                    </span>
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAiImportModal(false)}
+                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      disabled={importingBulk}
+                      onClick={() => void handleSaveAllPreviewDrafts()}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" />
+                      {importingBulk
+                        ? 'Đang lưu vào Thời khóa biểu...'
+                        : `Lưu tất cả ${previewDrafts.length} tiết học`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

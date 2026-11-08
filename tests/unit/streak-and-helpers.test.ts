@@ -24,6 +24,7 @@ import {
   validateLessonInput,
   validateSessionInput,
 } from '@/lib/validation';
+import { parseScheduleJsonFromAiResponse } from '@/lib/scheduleAiParser';
 
 describe('Date & Timezone Helpers (Asia/Ho_Chi_Minh)', () => {
   it('chuyển đổi chính xác UTC sang ngày theo múi giờ Asia/Ho_Chi_Minh (+07:00)', () => {
@@ -288,6 +289,50 @@ describe('Crypto, Invitation Token & Form Validation Helpers', () => {
         assignedStudentUids: ['ALL'],
       }).valid
     ).toBe(true);
+  });
+
+  it('bóc tách chính xác JSON từ phản hồi codeblock của AI và chuẩn hóa tiết chiều 6-8 về 1-3', () => {
+    const sampleAiOutput = `
+Dưới đây là kết quả trích xuất thời khóa biểu từ ảnh bạn gửi:
+
+\`\`\`json
+[
+  {
+    "dayOfWeek": "Thứ Hai",
+    "sessionOfDay": "morning",
+    "periodNumber": 1,
+    "subject": "Chào cờ",
+    "materialsNote": "Đội mũ ca lô",
+    "startTime": "07:00",
+    "endTime": "07:35",
+    "type": "school"
+  },
+  {
+    "dayOfWeek": 2,
+    "sessionOfDay": "Chiều",
+    "periodNumber": 6,
+    "subject": "Tiếng Anh",
+    "materialsNote": "SGK Tiếng Anh",
+    "startTime": "",
+    "endTime": "",
+    "type": "school"
+  }
+]
+\`\`\`
+Hy vọng thông tin này giúp ích cho bạn!`;
+
+    const parsed = parseScheduleJsonFromAiResponse(sampleAiOutput);
+    expect(parsed.error).toBeUndefined();
+    expect(parsed.items).toHaveLength(2);
+    expect(parsed.items[0].dayOfWeek).toBe(1);
+    expect(parsed.items[0].sessionOfDay).toBe('morning');
+    expect(parsed.items[0].periodNumber).toBe(1);
+    expect(parsed.items[0].subject).toBe('Chào cờ');
+
+    expect(parsed.items[1].dayOfWeek).toBe(2);
+    expect(parsed.items[1].sessionOfDay).toBe('afternoon');
+    expect(parsed.items[1].periodNumber).toBe(1); // Tiết 6 buổi chiều -> Tiết 1 buổi chiều
+    expect(parsed.items[1].startTime).toBe('14:00');
   });
 });
 
