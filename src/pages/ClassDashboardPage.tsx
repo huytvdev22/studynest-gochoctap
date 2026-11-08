@@ -11,7 +11,9 @@ import {
   Eye,
   Flame,
   Layers,
+  PartyPopper,
   Plus,
+  RotateCw,
   Send,
   Sparkles,
   Star,
@@ -49,7 +51,7 @@ import {
   getTodayAndTomorrow,
 } from '@/lib/date';
 import { calculateStudentProgressAndStreak } from '@/lib/streak';
-import { inferDefaultTtsLang } from '@/lib/studyAiAndSrs';
+import { inferDefaultTtsLang, makeSrsCardKey } from '@/lib/studyAiAndSrs';
 import { UserAvatar } from '@/components/ui/ThemeBadges';
 import {
   FlashcardStudyModal,
@@ -142,6 +144,35 @@ export function ClassDashboardPage() {
   const todaySchedules = schedules.filter((s) => s.dayOfWeek === todayDayOfWeek);
 
   const dayOffDates = exceptions.filter((e) => e.isDayOff).map((e) => e.date);
+
+  // Hàm tìm bản ghi hoàn thành của học sinh cho 1 bài học / nhiệm vụ
+  const findTaskRecord = (task: Assignment) => {
+    return records.find((r) => {
+      if (r.studentUid !== user.uid) return false;
+      if (r.assignmentId && r.assignmentId === task.id) return true;
+      if (task.lessonId && r.assignmentId === task.lessonId) return true;
+      if (task.title && r.title && r.date === today) {
+        const cleanTaskTitle = task.title.trim().toLowerCase();
+        const cleanRecTitle = r.title.trim().toLowerCase();
+        if (cleanTaskTitle === cleanRecTitle) return true;
+        if (
+          cleanRecTitle.includes(cleanTaskTitle) ||
+          cleanTaskTitle.includes(cleanRecTitle)
+        ) {
+          return true;
+        }
+      }
+      return false;
+    });
+  };
+
+  const completedTodayTasksCount = todayTasks.filter((t) => {
+    const r = findTaskRecord(t);
+    return r?.instructorStatus === 'confirmed';
+  }).length;
+
+  const allTodayTasksCompleted =
+    todayTasks.length > 0 && completedTodayTasksCount === todayTasks.length;
 
   const streakSummary = calculateStudentProgressAndStreak({
     records,
@@ -306,27 +337,72 @@ export function ClassDashboardPage() {
           <div className="space-y-6 lg:col-span-7">
             {/* Hôm nay học gì? */}
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <Sparkles className="h-5 w-5 text-emerald-600" />
                   <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
                     Hôm nay học gì?
                   </h2>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  {todayTasks.length} bài học & nhiệm vụ
-                </span>
+                {allTodayTasksCompleted ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1 text-xs font-black text-white shadow-xs">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Đã hoàn thành tất cả ({completedTodayTasksCount}/{todayTasks.length})
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    {completedTodayTasksCount > 0
+                      ? `Đã xong ${completedTodayTasksCount}/${todayTasks.length} bài`
+                      : `${todayTasks.length} bài học & nhiệm vụ`}
+                  </span>
+                )}
               </div>
+
+              {allTodayTasksCompleted && (
+                <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-100/80 via-teal-50 to-white p-4.5 flex items-center gap-3.5 shadow-2xs dark:border-emerald-800 dark:from-emerald-950/50 dark:to-slate-900">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs">
+                    <PartyPopper className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm sm:text-base font-black text-emerald-950 dark:text-emerald-200">
+                      Xuất sắc! Em đã hoàn thành toàn bộ bài học hôm nay
+                    </div>
+                    <p className="text-xs text-emerald-800/90 dark:text-emerald-400 mt-0.5">
+                      Toàn bộ nhiệm vụ đã được xác nhận và cộng đủ sao thưởng. Em có thể bấm vào thẻ để ôn lại từ vựng bất cứ lúc nào nhé!
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {todayTasks.length > 0 ? (
                 <div className="space-y-4">
                   {todayTasks.map((task) => {
-                    const rec = records.find(
-                      (r) =>
-                        r.assignmentId === task.id && r.studentUid === user.uid
-                    );
+                    const rec = findTaskRecord(task);
                     const isConfirmed = rec?.instructorStatus === 'confirmed';
                     const isSubmitted = rec?.studentStatus === 'submitted';
+
+                    const lessonKeywords =
+                      task.flashcards ||
+                      lessons.find((l) => l.id === task.lessonId)?.keywords ||
+                      [];
+                    const reviewedKeywordsTodayCount = lessonKeywords.filter(
+                      (kw) => {
+                        const key = makeSrsCardKey(
+                          task.lessonId || task.id,
+                          kw.term
+                        );
+                        const srs = srsStates[key];
+                        return (
+                          srs &&
+                          (srs.level > 0 || srs.lastReviewedDate === today)
+                        );
+                      }
+                    ).length;
+                    const isPartiallyStudied =
+                      !isConfirmed &&
+                      !isSubmitted &&
+                      reviewedKeywordsTodayCount > 0;
+
                     const hasStudyFlow =
                       (task.taskType === 'flashcard' &&
                         task.flashcards &&
@@ -341,10 +417,10 @@ export function ClassDashboardPage() {
                         key={task.id}
                         className={`rounded-2xl sm:rounded-3xl border-2 p-5 sm:p-6 transition shadow-xs ${
                           isConfirmed
-                            ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                            ? 'border-emerald-400/90 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/25'
                             : isSubmitted
-                            ? 'border-amber-300 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20'
-                            : 'border-emerald-300/90 bg-white hover:border-emerald-400 dark:border-emerald-900/50 dark:bg-slate-900'
+                            ? 'border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20'
+                            : 'border-emerald-300/80 bg-white hover:border-emerald-400 dark:border-emerald-900/50 dark:bg-slate-900'
                         }`}
                       >
                         {/* Header: Giáo trình, Unit, Sao thưởng & Trạng thái hoàn thành */}
@@ -364,10 +440,16 @@ export function ClassDashboardPage() {
                               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
                               +{task.starsReward} sao
                             </span>
+                            {isPartiallyStudied && (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-teal-100 px-2.5 py-1 text-xs font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                                <Layers className="h-3.5 w-3.5" />
+                                Đã ôn {reviewedKeywordsTodayCount}/{lessonKeywords.length} thẻ
+                              </span>
+                            )}
                           </div>
 
                           {isConfirmed ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1 text-xs font-bold text-white shadow-2xs">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1 text-xs font-black text-white shadow-2xs">
                               <CheckCircle2 className="h-3.5 w-3.5" />
                               Đã hoàn thành (+{rec.starsAwarded} sao)
                             </span>
@@ -379,11 +461,54 @@ export function ClassDashboardPage() {
                           ) : null}
                         </div>
 
-                        {/* Tiêu đề bài học - Gọn gàng không kèm mô tả chi tiết */}
-                        <div className="mt-3.5">
-                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
-                            {task.title}
-                          </h3>
+                        {/* Tiêu đề bài học kèm Biểu tượng trực quan thể hiện trạng thái */}
+                        <div className="mt-3.5 flex items-start gap-3">
+                          {isConfirmed ? (
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs mt-0.5"
+                              title="Đã hoàn thành bài học này"
+                            >
+                              <CheckCircle2 className="h-4.5 w-4.5" />
+                            </span>
+                          ) : isSubmitted ? (
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-xs mt-0.5"
+                              title="Đã nộp bài, đang chờ giáo viên xác nhận"
+                            >
+                              <Clock className="h-4 w-4" />
+                            </span>
+                          ) : (
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 mt-0.5"
+                              title="Chưa học"
+                            >
+                              <BookOpen className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+
+                          <div className="flex-1">
+                            <h3
+                              className={`text-base sm:text-lg font-black leading-snug ${
+                                isConfirmed
+                                  ? 'text-emerald-950 dark:text-emerald-100'
+                                  : 'text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              {task.title}
+                            </h3>
+
+                            {isConfirmed && rec?.instructorComment && (
+                              <p className="mt-1 text-xs text-emerald-800 font-medium dark:text-emerald-300">
+                                Lời khen của thầy/cô: “{rec.instructorComment}”
+                              </p>
+                            )}
+
+                            {isSubmitted && !isConfirmed && (
+                              <p className="mt-1 text-xs text-amber-800 font-medium dark:text-amber-300">
+                                {rec?.studentNote || 'Em đã hoàn thành bài học và gửi báo cáo!'}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         {/* Các nút hành động để vào học */}
@@ -395,10 +520,30 @@ export function ClassDashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => setActiveFlashcardTask(task)}
-                                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"
+                                  className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition active:scale-95 ${
+                                    isConfirmed
+                                      ? 'border border-emerald-300 bg-white text-emerald-800 shadow-2xs hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300'
+                                      : isSubmitted
+                                      ? 'border border-amber-300 bg-white text-amber-800 shadow-2xs hover:bg-amber-50 dark:border-amber-700 dark:bg-slate-800 dark:text-amber-300'
+                                      : 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+                                  }`}
                                 >
-                                  <Layers className="h-3.5 w-3.5" />
-                                  Học {task.flashcards.length} Flashcard
+                                  {isConfirmed ? (
+                                    <>
+                                      <RotateCw className="h-3.5 w-3.5 text-emerald-600" />
+                                      Ôn lại {task.flashcards.length} Flashcard
+                                    </>
+                                  ) : isSubmitted ? (
+                                    <>
+                                      <RotateCw className="h-3.5 w-3.5 text-amber-600" />
+                                      Luyện tập thêm Flashcard
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Layers className="h-3.5 w-3.5" />
+                                      Học {task.flashcards.length} Flashcard
+                                    </>
+                                  )}
                                 </button>
                               )}
 
@@ -408,20 +553,33 @@ export function ClassDashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => setActiveQuizTask(task)}
-                                  className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-violet-700 transition"
+                                  className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition active:scale-95 ${
+                                    isConfirmed
+                                      ? 'border border-violet-300 bg-white text-violet-800 shadow-2xs hover:bg-violet-50 dark:border-violet-700 dark:bg-slate-800 dark:text-violet-300'
+                                      : 'bg-violet-600 text-white shadow-xs hover:bg-violet-700'
+                                  }`}
                                 >
-                                  <ClipboardCheck className="h-3.5 w-3.5" />
-                                  Làm bài kiểm tra ({task.quizQuestions.length} câu)
+                                  {isConfirmed ? (
+                                    <>
+                                      <RotateCw className="h-3.5 w-3.5 text-violet-600" />
+                                      Làm lại bài kiểm tra ({task.quizQuestions.length} câu)
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ClipboardCheck className="h-3.5 w-3.5" />
+                                      Làm bài kiểm tra ({task.quizQuestions.length} câu)
+                                    </>
+                                  )}
                                 </button>
                               )}
 
                             {task.lessonId && (
                               <Link
                                 to={`/app/classes/${studyClass.id}/lessons/${task.lessonId}`}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
                               >
                                 <BookOpen className="h-3.5 w-3.5" />
-                                Vào học bài này
+                                {isConfirmed ? 'Xem lại bài học' : 'Vào học bài này'}
                               </Link>
                             )}
                           </div>
@@ -432,7 +590,7 @@ export function ClassDashboardPage() {
                               type="button"
                               disabled={submittingTaskId === task.id}
                               onClick={() => void handleStudentSubmitTask(task)}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
                             >
                               <Send className="h-3.5 w-3.5" />
                               {submittingTaskId === task.id
