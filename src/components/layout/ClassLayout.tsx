@@ -32,6 +32,7 @@ import {
   RoleBadge,
   THEME_COLOR_STYLES,
 } from '@/components/ui/ThemeBadges';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 interface WorkspaceNavItem {
   to: string;
@@ -467,30 +468,32 @@ function ClassLayoutInner() {
 
       {/* Drawer Sidebar trên Mobile (< lg) */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="relative z-10 flex h-full w-80 max-w-[85vw] flex-col bg-white p-4 shadow-2xl dark:bg-slate-900">
-            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
-              <span className="text-xs font-extrabold tracking-wider uppercase text-slate-400">
-                Menu Workspace
-              </span>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Đóng menu"
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {renderSidebarContent(true)}
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex lg:hidden">
+            <div
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div className="relative z-10 flex h-full w-80 max-w-[85vw] flex-col bg-white p-4 shadow-2xl dark:bg-slate-900">
+              <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+                <span className="text-xs font-extrabold tracking-wider uppercase text-slate-400">
+                  Menu Workspace
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Đóng menu"
+                  className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {renderSidebarContent(true)}
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Left Sidebar cố định trên Desktop (>= lg) */}

@@ -11,6 +11,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 import type {
   Lesson,
   LessonKeyword,
@@ -228,13 +229,14 @@ export function FlashcardStudyModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div className="my-6 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="my-6 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
@@ -570,6 +572,7 @@ export function FlashcardStudyModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -683,13 +686,14 @@ export function QuizTakeModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div className="my-6 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto">
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="my-6 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -851,6 +855,7 @@ export function QuizTakeModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
