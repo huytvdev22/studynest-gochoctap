@@ -117,14 +117,14 @@ export async function listUserClassesWithMembership(
   const { db } = getFirebaseServices();
   const membersQuery = query(
     collectionGroup(db, 'members'),
-    where('uid', '==', uid),
-    where('status', '==', 'active')
+    where('uid', '==', uid)
   );
   const memberSnaps = await getDocs(membersQuery);
   const results: Array<{ studyClass: StudyClass; membership: ClassMember }> = [];
 
   for (const mDoc of memberSnaps.docs) {
     const membership = mDoc.data() as ClassMember;
+    if (membership.status !== 'active') continue;
     const classSnap = await getDoc(doc(db, 'classes', membership.classId));
     if (classSnap.exists()) {
       results.push({
