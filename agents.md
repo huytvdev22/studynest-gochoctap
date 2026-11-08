@@ -15,11 +15,14 @@ Tài liệu này đúc rút toàn bộ quy tắc vận hành, kiến trúc kỹ 
 
 ## 2. Triết lý Sản phẩm & Nguyên tắc Nghiệp vụ Cốt lõi
 
-### 2.1. Giao diện "Học sinh là trung tâm" (Student-First UX)
-- **Mặc định khi vào ứng dụng**: Người mới tham gia lớp bằng mã mời (đặc biệt là học sinh nhỏ tuổi) chỉ muốn vào học ngay.
-- **Không làm rối bằng giao diện quản trị**:
+### 2.1. Giao diện Phân quyền Rõ ràng: Giáo viên Điều hành vs Học sinh Học tập
+- **Học sinh là trung tâm (Student-First UX)**:
+  - Khi học sinh vào lớp (vai trò `student`): Mặc định hiển thị giao diện **"Góc học hôm nay"** thân thiện, gọn gàng gồm: Bài học hôm nay do giáo viên giao (Flashcard, trắc nghiệm), Soạn cặp ngày mai, Chuỗi ngày học (Streak) và Sao thưởng.
   - Ở trang danh sách lớp (`MyClassesPage.tsx`), nếu người dùng chưa hướng dẫn lớp nào (`teachingClasses.length === 0`) nhưng đã tham gia lớp học, **ẩn hoàn toàn** khung trống "Bạn chưa hướng dẫn lớp học nào". Đưa danh sách lớp đang học lên đầu tiên; nút "Tạo lớp học mới" chỉ là nút phụ nhỏ gọn.
-  - Ở trang tổng quan lớp (`ClassDashboardPage.tsx`), ngay cả Chủ lớp (`owner`) hoặc Người hướng dẫn (`instructor`) khi mở vào cũng mặc định ở chế độ **"Góc học tập 60 phút"** giống hệt học sinh (cùng nhìn một màn hình khi ngồi kèm học buổi tối). Các thao tác quản trị được đặt trong nút chuyển chế độ **"Quản lý & Duyệt bài"** ở góc phải.
+- **Giáo viên & Chủ lớp (`instructor` / `owner`)**:
+  - Khi vào trang tổng quan lớp (`ClassDashboardPage.tsx`), **hiển thị trực tiếp 100% giao diện Quản lý & Đánh giá học tập** (không hiển thị giao diện mode học sinh cho giáo viên).
+  - Có thanh lọc theo từng học sinh trong lớp (`selectedStudentUid`), phân loại rõ bài nộp Flashcard, Trắc nghiệm, Bài tập thường, hỗ trợ tab *Chờ xác nhận* và *Đã đánh giá gần đây*.
+  - Bỏ cấu trúc cứng nhắc "Buổi học 60 phút buổi tối". Thay vào đó, giáo viên có thể chỉ định bất kỳ bài học nào từ Thư viện vào "Hôm nay học gì" chỉ với 1 click (**"Thêm vào hôm nay"**).
 
 ### 2.2. Luồng AI "0 đồng API" (Copy Prompt + Dán JSON Codeblock + Preview & Edit)
 - **Không gọi trực tiếp API trả phí từ trình duyệt** (không phụ thuộc OpenAI/Gemini API key trên client).
