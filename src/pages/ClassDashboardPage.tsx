@@ -319,7 +319,7 @@ export function ClassDashboardPage() {
               </div>
 
               {todayTasks.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {todayTasks.map((task) => {
                     const rec = records.find(
                       (r) =>
@@ -327,88 +327,98 @@ export function ClassDashboardPage() {
                     );
                     const isConfirmed = rec?.instructorStatus === 'confirmed';
                     const isSubmitted = rec?.studentStatus === 'submitted';
+                    const hasStudyFlow =
+                      (task.taskType === 'flashcard' &&
+                        task.flashcards &&
+                        task.flashcards.length > 0) ||
+                      (task.taskType === 'quiz' &&
+                        task.quizQuestions &&
+                        task.quizQuestions.length > 0) ||
+                      Boolean(task.lessonId);
 
                     return (
                       <div
                         key={task.id}
-                        className={`rounded-2xl border p-4.5 transition ${
+                        className={`rounded-2xl sm:rounded-3xl border-2 p-5 sm:p-6 transition shadow-xs ${
                           isConfirmed
-                            ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20'
+                            ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-900/60 dark:bg-emerald-950/20'
                             : isSubmitted
-                            ? 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20'
-                            : 'border-emerald-200/80 bg-white hover:border-emerald-400 dark:border-slate-800 dark:bg-slate-900'
+                            ? 'border-amber-300 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20'
+                            : 'border-emerald-300/90 bg-white hover:border-emerald-400 dark:border-emerald-900/50 dark:bg-slate-900'
                         }`}
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {task.subject && (
-                                <span className="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                  {task.subject}
-                                </span>
-                              )}
-                              {task.unitTitle && (
-                                <span className="rounded-lg bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                  {task.unitTitle}
-                                </span>
-                              )}
-                              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-                                <Star className="h-3.5 w-3.5 fill-amber-400" />
-                                +{task.starsReward} sao
+                        {/* Header: Giáo trình, Unit, Sao thưởng & Trạng thái hoàn thành */}
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {task.subject && (
+                              <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                {task.subject}
                               </span>
-                            </div>
-                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                              {task.title}
-                            </h3>
-                            {task.description && (
-                              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                                {task.description}
-                              </p>
                             )}
+                            {task.unitTitle && (
+                              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                {task.unitTitle}
+                              </span>
+                            )}
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                              +{task.starsReward} sao
+                            </span>
                           </div>
 
                           {isConfirmed ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1 text-xs font-bold text-white shadow-2xs">
                               <CheckCircle2 className="h-3.5 w-3.5" />
                               Đã hoàn thành (+{rec.starsAwarded} sao)
                             </span>
                           ) : isSubmitted ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3.5 py-1 text-xs font-bold text-white shadow-2xs">
                               <Clock className="h-3.5 w-3.5" />
                               Đã nộp bài (Chờ duyệt)
                             </span>
                           ) : null}
                         </div>
 
-                        {/* Các nút hành động: Học Flashcard / Làm Quiz / Xem bài / Nộp bài */}
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {task.taskType === 'flashcard' && task.flashcards && task.flashcards.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setActiveFlashcardTask(task)}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
-                              >
-                                <Layers className="h-3.5 w-3.5" />
-                                Học {task.flashcards.length} Flashcard
-                              </button>
-                            )}
+                        {/* Tiêu đề bài học - Gọn gàng không kèm mô tả chi tiết */}
+                        <div className="mt-3.5">
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
+                            {task.title}
+                          </h3>
+                        </div>
 
-                            {task.taskType === 'quiz' && task.quizQuestions && task.quizQuestions.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setActiveQuizTask(task)}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-violet-700"
-                              >
-                                <ClipboardCheck className="h-3.5 w-3.5" />
-                                Làm bài kiểm tra ({task.quizQuestions.length} câu)
-                              </button>
-                            )}
+                        {/* Các nút hành động để vào học */}
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-100 pt-3.5 dark:border-slate-800/80">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            {task.taskType === 'flashcard' &&
+                              task.flashcards &&
+                              task.flashcards.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveFlashcardTask(task)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"
+                                >
+                                  <Layers className="h-3.5 w-3.5" />
+                                  Học {task.flashcards.length} Flashcard
+                                </button>
+                              )}
+
+                            {task.taskType === 'quiz' &&
+                              task.quizQuestions &&
+                              task.quizQuestions.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveQuizTask(task)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-violet-700 transition"
+                                >
+                                  <ClipboardCheck className="h-3.5 w-3.5" />
+                                  Làm bài kiểm tra ({task.quizQuestions.length} câu)
+                                </button>
+                              )}
 
                             {task.lessonId && (
                               <Link
                                 to={`/app/classes/${studyClass.id}/lessons/${task.lessonId}`}
-                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
                               >
                                 <BookOpen className="h-3.5 w-3.5" />
                                 Vào học bài này
@@ -416,12 +426,13 @@ export function ClassDashboardPage() {
                             )}
                           </div>
 
-                          {!isConfirmed && (
+                          {/* Chỉ bài tập thông thường (không có flashcard/quiz/bài học) mới hiện nút nộp báo cáo ngoài này */}
+                          {!hasStudyFlow && !isConfirmed && (
                             <button
                               type="button"
                               disabled={submittingTaskId === task.id}
                               onClick={() => void handleStudentSubmitTask(task)}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
                             >
                               <Send className="h-3.5 w-3.5" />
                               {submittingTaskId === task.id
