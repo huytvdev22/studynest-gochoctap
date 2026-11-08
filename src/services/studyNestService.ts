@@ -838,10 +838,17 @@ export async function getLessonById(
     return lesson;
   }
 
-  const { db } = getFirebaseServices();
-  const snap = await getDoc(doc(db, 'classes', classId, 'lessons', lessonId));
-  if (!snap.exists()) return null;
-  return snap.data() as Lesson;
+  try {
+    const { db } = getFirebaseServices();
+    const snap = await getDoc(doc(db, 'classes', classId, 'lessons', lessonId));
+    if (!snap.exists()) return null;
+    const lesson = snap.data() as Lesson;
+    if (viewerRole === 'student' && lesson.status !== 'published') return null;
+    return lesson;
+  } catch (err) {
+    console.warn(`[getLessonById] Không thể lấy thông tin bài học ${lessonId}:`, err);
+    return null;
+  }
 }
 
 export async function getLessonTeacherNote(
@@ -1282,13 +1289,18 @@ export async function getStudentSrsStates(
     return rec?.srsStates || {};
   }
 
-  const { db } = getFirebaseServices();
-  const snap = await getDoc(
-    doc(db, 'classes', classId, 'learningRecords', srsDocId)
-  );
-  if (!snap.exists()) return {};
-  const data = snap.data() as LearningRecord;
-  return data.srsStates || {};
+  try {
+    const { db } = getFirebaseServices();
+    const snap = await getDoc(
+      doc(db, 'classes', classId, 'learningRecords', srsDocId)
+    );
+    if (!snap.exists()) return {};
+    const data = snap.data() as LearningRecord;
+    return data.srsStates || {};
+  } catch {
+    // Trả về rỗng nếu tài liệu chưa tạo hoặc người dùng chưa có lịch sử học SRS
+    return {};
+  }
 }
 
 export async function saveStudentSrsStates(params: {

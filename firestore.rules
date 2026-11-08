@@ -279,7 +279,7 @@ service cloud.firestore {
       match /lessons/{lessonId} {
         // Students can ONLY read published lessons; instructors/owners can read all
         allow read: if isClassInstructorOrOwner(classId)
-          || (isClassMember(classId) && resource.data.status == 'published');
+          || (isClassMember(classId) && resource != null && resource.data.status == 'published');
 
         allow create, update: if isClassInstructorOrOwner(classId)
           && request.resource.data.id == lessonId
@@ -334,6 +334,7 @@ service cloud.firestore {
         allow read: if isClassInstructorOrOwner(classId)
           || (
             isClassStudent(classId)
+            && resource != null
             && resource.data.assignedStudentUids.hasAny([request.auth.uid, 'ALL'])
           );
 
@@ -357,7 +358,13 @@ service cloud.firestore {
       // -----------------------------------------------------------------------
       match /learningRecords/{recordId} {
         allow read: if isClassInstructorOrOwner(classId)
-          || (isClassStudent(classId) && resource.data.studentUid == request.auth.uid);
+          || (
+            isClassStudent(classId)
+            && (
+              recordId == ('srs_' + request.auth.uid)
+              || (resource != null && resource.data.studentUid == request.auth.uid)
+            )
+          );
 
         allow create: if (
           // Instructor/Owner creating a record directly

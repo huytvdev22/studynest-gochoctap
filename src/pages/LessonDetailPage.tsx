@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  AlertCircle,
   ArrowLeft,
   BookOpen,
   Bot,
@@ -9,6 +10,7 @@ import {
   Copy,
   ExternalLink,
   Eye,
+  EyeOff,
   FileEdit,
   Layers,
   Lock,
@@ -120,22 +122,41 @@ export function LessonDetailPage() {
     if (!studyClass || !role || !lessonId || !user) return;
     setLoading(true);
     try {
-      const [les, srs, lessonList] = await Promise.all([
-        getLessonById(studyClass.id, lessonId, role),
-        getStudentSrsStates(studyClass.id, user.uid),
-        listLessons(studyClass.id, role),
-      ]);
+      // 1. Tải thông tin bài học chính
+      const les = await getLessonById(studyClass.id, lessonId, role);
       setLesson(les);
-      setSrsStates(srs);
-      setAllLessons(lessonList);
-      if (les) {
-        syncEditFormFromLesson(les);
+
+      if (!les) {
+        return;
       }
-      if (les && isInstructorOrOwner) {
-        const note = await getLessonTeacherNote(studyClass.id, lessonId, role);
-        setTeacherNote(note);
-        setNoteDraft(note?.content || '');
+
+      syncEditFormFromLesson(les);
+
+      // 2. Tải dữ liệu SRS cho học sinh (bọc try-catch riêng để không chặn hiển thị bài học)
+      try {
+        const srs = await getStudentSrsStates(studyClass.id, user.uid);
+        setSrsStates(srs);
+      } catch (err) {
+        console.warn('Lỗi lấy tiến độ SRS học sinh:', err);
       }
+
+      // 3. Nếu là Người hướng dẫn hoặc Chủ lớp, tải thêm danh sách bài học và ghi chú sư phạm
+      if (isInstructorOrOwner) {
+        try {
+          const [lessonList, note] = await Promise.all([
+            listLessons(studyClass.id, role),
+            getLessonTeacherNote(studyClass.id, lessonId, role),
+          ]);
+          setAllLessons(lessonList);
+          setTeacherNote(note);
+          setNoteDraft(note?.content || '');
+        } catch (err) {
+          console.warn('Lỗi lấy dữ liệu quản trị bài học:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải chi tiết bài học:', err);
+      setLesson(null);
     } finally {
       setLoading(false);
     }
@@ -180,12 +201,18 @@ export function LessonDetailPage() {
   if (!lesson) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <BookOpen className="h-6 w-6" />
+        </div>
+        <h2 className="mt-4 text-lg font-extrabold text-slate-900 dark:text-white">
           Không tìm thấy bài học hoặc bài học chưa được công bố
         </h2>
+        <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          Bài học này có thể đang ở trạng thái Bản nháp hoặc đã được chuyển mục. Nếu bạn là học sinh, hãy nhờ Người hướng dẫn hoặc Chủ lớp kiểm tra và bấm &quot;Công bố cho học sinh&quot; nhé.
+        </p>
         <Link
           to={`/app/classes/${studyClass.id}/lessons`}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại Thư viện bài học
@@ -428,7 +455,7 @@ export function LessonDetailPage() {
               >
                 {lesson.status === 'published' ? (
                   <>
-                    <FileEdit className="h-3.5 w-3.5" /> Chuyển về Bản nháp & Sửa
+                    <EyeOff className="h-3.5 w-3.5" /> Chuyển về Bản nháp (Ẩn với học sinh)
                   </>
                 ) : (
                   <>
@@ -902,6 +929,26 @@ export function LessonDetailPage() {
         </section>
       )}
 
+      {/* Cảnh báo bài học ở dạng bản nháp cho giáo viên */}
+      {isInstructorOrOwner && lesson.status === 'draft' && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>
+              Bài học này đang ở trạng thái <strong>Bản nháp</strong>. Học sinh trong lớp chưa thể nhìn thấy hoặc vào học bài này.
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={savingNote}
+            onClick={() => void handleTogglePublish()}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+          >
+            <Eye className="h-3.5 w-3.5" /> Công bố cho học sinh ngay
+          </button>
+        </div>
+      )}
+
       {/* Nội dung bài học chính */}
       <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6 dark:border-slate-800 dark:bg-slate-900">
         <div>
@@ -917,6 +964,25 @@ export function LessonDetailPage() {
             {lessonTtsLang && (
               <span className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-300">
                 <Volume2 className="h-3.5 w-3.5" /> Phát âm: {lessonTtsLang}
+              </span>
+            )}
+            {isInstructorOrOwner && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold ${
+                  lesson.status === 'published'
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                }`}
+              >
+                {lesson.status === 'published' ? (
+                  <>
+                    <Eye className="h-3.5 w-3.5" /> Đã công bố
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" /> Bản nháp (Đang ẩn với học sinh)
+                  </>
+                )}
               </span>
             )}
           </div>
