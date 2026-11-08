@@ -79,6 +79,8 @@ export function addDaysToDateString(dateStr: string, deltaDays: number): string 
   return `${year}-${month}-${day}`;
 }
 
+export const addDaysToDateStr = addDaysToDateString;
+
 /**
  * Trả về ngày hôm nay (YYYY-MM-DD) và ngày mai (YYYY-MM-DD) theo múi giờ lớp.
  */

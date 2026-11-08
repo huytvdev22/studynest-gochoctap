@@ -3,22 +3,41 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   Eye,
   FileEdit,
+  Layers,
   Lock,
+  Send,
   Sparkles,
   Trash2,
+  Turtle,
+  Volume2,
 } from 'lucide-react';
-import type { Lesson, LessonNote } from '@/types/domain';
+import type { Lesson, LessonNote, SrsCardProgress } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClassContext } from '@/contexts/ClassContext';
 import {
   deleteLesson,
   getLessonById,
   getLessonTeacherNote,
+  getStudentSrsStates,
+  saveAssignment,
   saveLessonWithTeacherNote,
+  saveStudentSrsStates,
 } from '@/services/studyNestService';
+import { addDaysToDateStr, formatDateInTimezone } from '@/lib/date';
+import {
+  classifySrsCardBucket,
+  inferDefaultTtsLang,
+  makeSrsCardKey,
+  speakTextWithTts,
+} from '@/lib/studyAiAndSrs';
+import {
+  FlashcardStudyModal,
+  SrsStatusBadge,
+} from '@/components/study/InteractiveStudyModals';
 
 export function LessonDetailPage() {
   const { lessonId = '' } = useParams<{ lessonId: string }>();
@@ -29,15 +48,25 @@ export function LessonDetailPage() {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [teacherNote, setTeacherNote] = useState<LessonNote | null>(null);
   const [noteDraft, setNoteDraft] = useState<string>('');
+  const [srsStates, setSrsStates] = useState<Record<string, SrsCardProgress>>(
+    {}
+  );
+  const [showFlashcardPlayer, setShowFlashcardPlayer] =
+    useState<boolean>(false);
+  const [assignMessage, setAssignMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [savingNote, setSavingNote] = useState<boolean>(false);
 
   const loadDetail = useCallback(async () => {
-    if (!studyClass || !role || !lessonId) return;
+    if (!studyClass || !role || !lessonId || !user) return;
     setLoading(true);
     try {
-      const les = await getLessonById(studyClass.id, lessonId, role);
+      const [les, srs] = await Promise.all([
+        getLessonById(studyClass.id, lessonId, role),
+        getStudentSrsStates(studyClass.id, user.uid),
+      ]);
       setLesson(les);
+      setSrsStates(srs);
       if (les && isInstructorOrOwner) {
         const note = await getLessonTeacherNote(studyClass.id, lessonId, role);
         setTeacherNote(note);
@@ -46,7 +75,7 @@ export function LessonDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [studyClass, role, lessonId, isInstructorOrOwner]);
+  }, [studyClass, role, lessonId, user, isInstructorOrOwner]);
 
   useEffect(() => {
     void loadDetail();
@@ -77,6 +106,9 @@ export function LessonDetailPage() {
     );
   }
 
+  const todayStr = formatDateInTimezone(new Date(), studyClass.timezone);
+  const lessonTtsLang = inferDefaultTtsLang(lesson.subject, lesson.ttsLang);
+
   const handleTogglePublish = async () => {
     const nextStatus = lesson.status === 'published' ? 'draft' : 'published';
     setSavingNote(true);
@@ -84,6 +116,8 @@ export function LessonDetailPage() {
       const updated = await saveLessonWithTeacherNote(studyClass.id, user.uid, {
         id: lesson.id,
         subject: lesson.subject,
+        unitTitle: lesson.unitTitle,
+        ttsLang: lesson.ttsLang,
         title: lesson.title,
         goal: lesson.goal,
         keywords: lesson.keywords,
@@ -104,6 +138,8 @@ export function LessonDetailPage() {
       await saveLessonWithTeacherNote(studyClass.id, user.uid, {
         id: lesson.id,
         subject: lesson.subject,
+        unitTitle: lesson.unitTitle,
+        ttsLang: lesson.ttsLang,
         title: lesson.title,
         goal: lesson.goal,
         keywords: lesson.keywords,
@@ -113,6 +149,33 @@ export function LessonDetailPage() {
         teacherNoteContent: noteDraft,
       });
       await loadDetail();
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleAssignFlashcardDeck = async () => {
+    if (lesson.keywords.length === 0) return;
+    setSavingNote(true);
+    try {
+      await saveAssignment(studyClass.id, user.uid, {
+        sessionId: null,
+        lessonId: lesson.id,
+        title: `Học Flashcard: ${lesson.unitTitle ? `${lesson.unitTitle} - ` : ''}${lesson.title}`,
+        description: `Ôn tập ${lesson.keywords.length} thẻ ghi nhớ trong bài "${lesson.title}" (${lesson.subject}).`,
+        dueDate: addDaysToDateStr(todayStr, 1),
+        assignedStudentUids: ['ALL'],
+        starsReward: 3,
+        taskType: 'flashcard',
+        subject: lesson.subject,
+        unitTitle: lesson.unitTitle,
+        ttsLang: lessonTtsLang,
+        flashcards: lesson.keywords,
+      });
+      setAssignMessage(
+        'Đã giao bộ Flashcard này vào danh sách Nhiệm vụ của học sinh!'
+      );
+      setTimeout(() => setAssignMessage(null), 3500);
     } finally {
       setSavingNote(false);
     }
@@ -131,54 +194,91 @@ export function LessonDetailPage() {
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Quay lại Thư viện bài học
+          Quay lại Giáo trình & Bài học
         </Link>
 
-        {isInstructorOrOwner && (
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {lesson.keywords.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowFlashcardPlayer(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+            >
+              <Layers className="h-4 w-4" />
+              Lật thẻ học bài này ({lesson.keywords.length} thẻ)
+            </button>
+          )}
+
+          {isInstructorOrOwner && lesson.keywords.length > 0 && (
             <button
               type="button"
               disabled={savingNote}
-              onClick={() => void handleTogglePublish()}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                lesson.status === 'published'
-                  ? 'border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
-              }`}
+              onClick={() => void handleAssignFlashcardDeck()}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
             >
-              {lesson.status === 'published' ? (
-                <>
-                  <FileEdit className="h-3.5 w-3.5" /> Chuyển về Bản nháp
-                </>
-              ) : (
-                <>
-                  <Eye className="h-3.5 w-3.5" /> Công bố cho học sinh
-                </>
-              )}
+              <Send className="h-3.5 w-3.5" />
+              Giao Flashcard cho học sinh
             </button>
+          )}
 
-            <button
-              type="button"
-              onClick={() => void handleDelete()}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Xóa bài
-            </button>
-          </div>
-        )}
+          {isInstructorOrOwner && (
+            <>
+              <button
+                type="button"
+                disabled={savingNote}
+                onClick={() => void handleTogglePublish()}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  lesson.status === 'published'
+                    ? 'border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                {lesson.status === 'published' ? (
+                  <>
+                    <FileEdit className="h-3.5 w-3.5" /> Chuyển về Bản nháp
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5" /> Công bố cho học sinh
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Xóa bài
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {assignMessage && (
+        <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs font-bold text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          {assignMessage}
+        </div>
+      )}
 
       {/* Nội dung bài học chính */}
       <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6 dark:border-slate-800 dark:bg-slate-900">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Môn {lesson.subject}
+              Giáo trình: {lesson.subject}
             </span>
-            {isInstructorOrOwner && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                Trạng thái: {lesson.status === 'published' ? 'Đã công bố' : 'Bản nháp'}
+            {lesson.unitTitle && (
+              <span className="rounded-lg bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-800 dark:bg-violet-950 dark:text-violet-300">
+                {lesson.unitTitle}
+              </span>
+            )}
+            {lessonTtsLang && (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                <Volume2 className="h-3.5 w-3.5" /> Phát âm: {lessonTtsLang}
               </span>
             )}
           </div>
@@ -195,36 +295,94 @@ export function LessonDetailPage() {
           )}
         </div>
 
-        {/* Thẻ từ khóa (Keywords Flashcards) */}
+        {/* Bộ thẻ Flashcards (Từ mới / Mẫu câu / Khái niệm) */}
         {lesson.keywords.length > 0 && (
           <section aria-labelledby="lesson-keywords-heading">
-            <h2
-              id="lesson-keywords-heading"
-              className="flex items-center gap-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white"
-            >
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              Từ khóa cần nhớ ({lesson.keywords.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2
+                id="lesson-keywords-heading"
+                className="flex items-center gap-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white"
+              >
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                Bộ thẻ Flashcard cần nhớ ({lesson.keywords.length} thẻ)
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowFlashcardPlayer(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+              >
+                <Layers className="h-3.5 w-3.5" />
+                Mở chế độ Lật thẻ & Tự đánh giá
+              </button>
+            </div>
 
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {lesson.keywords.map((kw, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/50"
-                >
-                  <div className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
-                    {kw.term}
-                  </div>
-                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
-                    {kw.meaning}
-                  </p>
-                  {kw.example && (
-                    <p className="mt-2 rounded-xl bg-white p-2.5 text-xs text-slate-600 border border-slate-200/60 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">
-                      <strong>Ví dụ:</strong> {kw.example}
+              {lesson.keywords.map((kw, idx) => {
+                const key = makeSrsCardKey(lesson.id, kw.term);
+                const srs = srsStates[key];
+                const bucket = classifySrsCardBucket(srs, todayStr);
+                const cardLang =
+                  kw.ttsLang !== undefined ? kw.ttsLang : lessonTtsLang;
+
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 space-y-2 dark:border-slate-800 dark:bg-slate-800/50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
+                          {kw.term}
+                        </div>
+                        {kw.pronunciation && (
+                          <div className="text-xs font-mono text-slate-500">
+                            {kw.pronunciation}
+                          </div>
+                        )}
+                      </div>
+
+                      <SrsStatusBadge
+                        bucket={bucket}
+                        nextReviewDate={srs?.nextReviewDate}
+                      />
+                    </div>
+
+                    {cardLang && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakTextWithTts(kw.term, cardLang, false)
+                          }
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                        >
+                          <Volume2 className="h-3.5 w-3.5" /> Nghe phát âm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakTextWithTts(kw.term, cardLang, true)
+                          }
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                        >
+                          <Turtle className="h-3.5 w-3.5" /> Đọc chậm
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {kw.meaning}
                     </p>
-                  )}
-                </div>
-              ))}
+
+                    {kw.example && (
+                      <p className="rounded-xl bg-white p-2.5 text-xs text-slate-600 border border-slate-200/60 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">
+                        <strong>Ví dụ / Ghi chú:</strong> {kw.example}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
@@ -236,14 +394,13 @@ export function LessonDetailPage() {
             className="flex items-center gap-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white"
           >
             <BookOpen className="h-5 w-5 text-emerald-600" />
-            Hướng dẫn & Giải thích bài học
+            Hướng dẫn & Ghi chú ngữ pháp / kiến thức
           </h2>
           <div className="mt-3 whitespace-pre-line rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 text-base leading-relaxed text-slate-800 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-200">
             {lesson.explanation || 'Chưa có nội dung giải thích chi tiết.'}
           </div>
         </section>
 
-        {/* Link tài liệu PDF / ngoài */}
         {lesson.resourceUrl && (
           <div className="flex items-center justify-between rounded-2xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-900/50 dark:bg-sky-950/30">
             <div>
@@ -280,10 +437,6 @@ export function LessonDetailPage() {
               Bảo mật bởi Firestore Rules
             </span>
           </div>
-          <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-            Dữ liệu này được lưu tách biệt tại <code>lessonNotes/{lesson.id}</code>.
-            Học sinh không có quyền đọc ngay cả qua DevTools/SDK.
-          </p>
 
           <textarea
             rows={3}
@@ -308,7 +461,33 @@ export function LessonDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Modal học Flashcard tương tác */}
+      {showFlashcardPlayer && (
+        <FlashcardStudyModal
+          title={lesson.title}
+          cards={lesson.keywords.map((kw) => ({
+            lessonId: lesson.id,
+            subject: lesson.subject,
+            unitTitle: lesson.unitTitle || 'Chung',
+            keyword: kw,
+            ttsLang: kw.ttsLang !== undefined ? kw.ttsLang : lessonTtsLang,
+          }))}
+          srsStates={srsStates}
+          todayStr={todayStr}
+          onClose={() => setShowFlashcardPlayer(false)}
+          onSaveProgress={async ({ updatedSrsPatch }) => {
+            const merged = await saveStudentSrsStates({
+              classId: studyClass.id,
+              studentUid: user.uid,
+              studentName: user.displayName,
+              todayDateStr: todayStr,
+              srsStates: updatedSrsPatch,
+            });
+            setSrsStates(merged);
+          }}
+        />
+      )}
     </div>
   );
 }
-

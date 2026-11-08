@@ -110,16 +110,31 @@ export interface ScheduleException {
   createdAt: Timestamp;
 }
 
+export type SupportedTtsLang =
+  | ''
+  | 'en-US'
+  | 'en-GB'
+  | 'zh-CN'
+  | 'ja-JP'
+  | 'ko-KR'
+  | 'fr-FR'
+  | 'vi-VN';
+
 export interface LessonKeyword {
   term: string;
   meaning: string;
   example: string;
+  pronunciation?: string; // Phiên âm (IPA cho Tiếng Anh, Pinyin cho Tiếng Trung, Romaji cho Tiếng Nhật...)
+  cardType?: 'vocab' | 'sentence' | 'concept';
+  ttsLang?: SupportedTtsLang; // Mã ngôn ngữ đọc âm thanh (VD: 'en-US', 'zh-CN', '' nếu không bật loa)
 }
 
 export interface Lesson {
   id: string;
   classId: string;
-  subject: string;
+  subject: string; // Tên Giáo trình / Môn học độc lập (VD: "Everybody Up 1", "Toán Lớp 3")
+  unitTitle?: string; // Tên Unit / Chương (VD: "Unit 1: First Day", "Chương 1: Phép nhân")
+  ttsLang?: SupportedTtsLang; // Ngôn ngữ phát âm mặc định của giáo trình/bài học ('' nếu tắt loa)
   title: string;
   goal: string;
   keywords: LessonKeyword[];
@@ -129,6 +144,33 @@ export interface Lesson {
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[]; // 4 đáp án A, B, C, D
+  correctIndex: number; // 0..3
+  explanation: string;
+  relatedTerm?: string; // Từ khóa/mẫu câu liên quan để cập nhật Đường cong quên lãng
+}
+
+export type SrsMemoryLevel = 0 | 1 | 2 | 3; // 0: Mới học, 1: Hay quên, 2: Đang nhớ/Sắp quên, 3: Đã nhớ kỹ
+
+export interface SrsCardProgress {
+  key: string;
+  lessonId: string;
+  subject: string;
+  unitTitle: string;
+  term: string;
+  meaning: string;
+  example: string;
+  pronunciation?: string;
+  ttsLang?: SupportedTtsLang;
+  level: SrsMemoryLevel;
+  streakCorrect: number;
+  lastReviewedDate: string; // YYYY-MM-DD
+  nextReviewDate: string; // YYYY-MM-DD
 }
 
 export interface LessonNote {
@@ -172,13 +214,19 @@ export interface Assignment {
   dueDate: string; // YYYY-MM-DD
   assignedStudentUids: string[]; // ['ALL'] hoặc danh sách uid học sinh
   starsReward: number; // 1..10
+  taskType?: 'standard' | 'flashcard' | 'quiz';
+  subject?: string;
+  unitTitle?: string;
+  ttsLang?: SupportedTtsLang;
+  flashcards?: LessonKeyword[];
+  quizQuestions?: QuizQuestion[];
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 export interface LearningRecord {
-  id: string; // `${assignmentId}_${studentUid}` hoặc `session_${sessionId}_${studentUid}`
+  id: string; // `${assignmentId}_${studentUid}` hoặc `session_${sessionId}_${studentUid}` hoặc `srs_${studentUid}`
   classId: string;
   studentUid: string;
   studentName: string;
@@ -195,6 +243,9 @@ export interface LearningRecord {
   starsAwarded: number;
   confirmedBy: string | null;
   confirmedAt: Timestamp | null;
+  quizScore?: number;
+  quizTotal?: number;
+  srsStates?: Record<string, SrsCardProgress>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

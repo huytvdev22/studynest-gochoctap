@@ -29,12 +29,15 @@ import type {
   LessonKeyword,
   LessonNote,
   LessonStatus,
+  QuizQuestion,
   ScheduleException,
   ScheduleItem,
   SessionChecklistItem,
+  SrsCardProgress,
   StudyClass,
   StudySession,
   StudySessionStatus,
+  SupportedTtsLang,
   UserProfile,
 } from '@/types/domain';
 import { getFirebaseServices, isFirebaseConfigured } from '@/lib/firebase';
@@ -868,6 +871,8 @@ export async function saveLessonWithTeacherNote(
   input: {
     id?: string;
     subject: string;
+    unitTitle?: string;
+    ttsLang?: SupportedTtsLang;
     title: string;
     goal: string;
     keywords: LessonKeyword[];
@@ -883,6 +888,8 @@ export async function saveLessonWithTeacherNote(
     id: lessonId,
     classId,
     subject: input.subject.trim(),
+    unitTitle: (input.unitTitle || '').trim(),
+    ttsLang: input.ttsLang || '',
     title: input.title.trim(),
     goal: input.goal.trim(),
     keywords: input.keywords,
@@ -1085,6 +1092,12 @@ export async function saveAssignment(
     dueDate: string;
     assignedStudentUids: string[];
     starsReward: number;
+    taskType?: 'standard' | 'flashcard' | 'quiz';
+    subject?: string;
+    unitTitle?: string;
+    ttsLang?: SupportedTtsLang;
+    flashcards?: LessonKeyword[];
+    quizQuestions?: QuizQuestion[];
   }
 ): Promise<Assignment> {
   const now = Timestamp.now();
@@ -1099,6 +1112,12 @@ export async function saveAssignment(
     dueDate: input.dueDate,
     assignedStudentUids: input.assignedStudentUids,
     starsReward: input.starsReward,
+    taskType: input.taskType || 'standard',
+    subject: (input.subject || '').trim(),
+    unitTitle: (input.unitTitle || '').trim(),
+    ttsLang: input.ttsLang || '',
+    flashcards: input.flashcards || [],
+    quizQuestions: input.quizQuestions || [],
     createdBy: uid,
     createdAt: now,
     updatedAt: now,
@@ -1147,7 +1166,9 @@ export async function listLearningRecords(
 ): Promise<LearningRecord[]> {
   if (!isFirebaseConfigured) {
     const state = loadDemoState();
-    const all = Object.values(state.learningRecords[classId] || {});
+    const all = Object.values(state.learningRecords[classId] || {}).filter(
+      (r) => !r.id.startsWith('srs_')
+    );
     const filtered =
       viewerRole === 'student'
         ? all.filter((r) => r.studentUid === viewerUid)
@@ -1164,13 +1185,15 @@ export async function listLearningRecords(
       ? query(
           ref,
           where('studentUid', '==', viewerUid),
-          limit(maxRecords)
+          limit(maxRecords + 5)
         )
-      : query(ref, limit(maxRecords));
+      : query(ref, limit(maxRecords + 5));
   const snap = await getDocs(q);
   return snap.docs
     .map((d) => d.data() as LearningRecord)
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .filter((r) => !r.id.startsWith('srs_'))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, maxRecords);
 }
 
 export async function submitStudentCompletion(params: {
@@ -1183,6 +1206,8 @@ export async function submitStudentCompletion(params: {
   title: string;
   date: string;
   studentNote: string;
+  quizScore?: number;
+  quizTotal?: number;
 }): Promise<LearningRecord> {
   const now = Timestamp.now();
   const recordId = params.assignmentId
@@ -1207,6 +1232,8 @@ export async function submitStudentCompletion(params: {
     starsAwarded: 0,
     confirmedBy: null,
     confirmedAt: null,
+    ...(params.quizScore !== undefined ? { quizScore: params.quizScore } : {}),
+    ...(params.quizTotal !== undefined ? { quizTotal: params.quizTotal } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -1234,11 +1261,124 @@ export async function submitStudentCompletion(params: {
       studentNote: record.studentNote,
       submittedAt: now,
       updatedAt: now,
+      ...(params.quizScore !== undefined ? { quizScore: params.quizScore } : {}),
+      ...(params.quizTotal !== undefined ? { quizTotal: params.quizTotal } : {}),
     });
     return { ...(existingSnap.data() as LearningRecord), ...record };
   }
   await setDoc(ref, record);
   return record;
+}
+
+export async function getStudentSrsStates(
+  classId: string,
+  studentUid: string
+): Promise<Record<string, SrsCardProgress>> {
+  const srsDocId = `srs_${studentUid}`;
+
+  if (!isFirebaseConfigured) {
+    const state = loadDemoState();
+    const rec = state.learningRecords[classId]?.[srsDocId];
+    return rec?.srsStates || {};
+  }
+
+  const { db } = getFirebaseServices();
+  const snap = await getDoc(
+    doc(db, 'classes', classId, 'learningRecords', srsDocId)
+  );
+  if (!snap.exists()) return {};
+  const data = snap.data() as LearningRecord;
+  return data.srsStates || {};
+}
+
+export async function saveStudentSrsStates(params: {
+  classId: string;
+  studentUid: string;
+  studentName: string;
+  todayDateStr: string;
+  srsStates: Record<string, SrsCardProgress>;
+}): Promise<Record<string, SrsCardProgress>> {
+  const now = Timestamp.now();
+  const srsDocId = `srs_${params.studentUid}`;
+
+  if (!isFirebaseConfigured) {
+    const state = loadDemoState();
+    if (!state.learningRecords[params.classId]) {
+      state.learningRecords[params.classId] = {};
+    }
+    const existing = state.learningRecords[params.classId][srsDocId];
+    const mergedStates = {
+      ...(existing?.srsStates || {}),
+      ...params.srsStates,
+    };
+    state.learningRecords[params.classId][srsDocId] = {
+      id: srsDocId,
+      classId: params.classId,
+      studentUid: params.studentUid,
+      studentName: params.studentName,
+      type: 'session',
+      assignmentId: null,
+      sessionId: null,
+      title: 'Tiến độ ghi nhớ Flashcard (SRS)',
+      date: existing?.date || params.todayDateStr,
+      studentStatus: 'submitted',
+      studentNote: `Đã cập nhật ${Object.keys(mergedStates).length} thẻ ghi nhớ`,
+      submittedAt: now,
+      instructorStatus: 'unverified',
+      instructorComment: '',
+      starsAwarded: 0,
+      confirmedBy: null,
+      confirmedAt: null,
+      srsStates: mergedStates,
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    };
+    saveDemoState(state);
+    return mergedStates;
+  }
+
+  const { db } = getFirebaseServices();
+  const ref = doc(db, 'classes', params.classId, 'learningRecords', srsDocId);
+  const existingSnap = await getDoc(ref);
+  if (existingSnap.exists()) {
+    const existing = existingSnap.data() as LearningRecord;
+    const mergedStates = {
+      ...(existing.srsStates || {}),
+      ...params.srsStates,
+    };
+    await updateDoc(ref, {
+      studentStatus: 'submitted',
+      studentNote: `Đã cập nhật ${Object.keys(mergedStates).length} thẻ ghi nhớ`,
+      srsStates: mergedStates,
+      updatedAt: now,
+    });
+    return mergedStates;
+  }
+
+  const created: LearningRecord = {
+    id: srsDocId,
+    classId: params.classId,
+    studentUid: params.studentUid,
+    studentName: params.studentName,
+    type: 'session',
+    assignmentId: null,
+    sessionId: null,
+    title: 'Tiến độ ghi nhớ Flashcard (SRS)',
+    date: params.todayDateStr,
+    studentStatus: 'submitted',
+    studentNote: `Đã cập nhật ${Object.keys(params.srsStates).length} thẻ ghi nhớ`,
+    submittedAt: now,
+    instructorStatus: 'unverified',
+    instructorComment: '',
+    starsAwarded: 0,
+    confirmedBy: null,
+    confirmedAt: null,
+    srsStates: params.srsStates,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await setDoc(ref, created);
+  return params.srsStates;
 }
 
 export async function confirmOrReviewLearningRecord(params: {

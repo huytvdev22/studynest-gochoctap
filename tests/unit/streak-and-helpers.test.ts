@@ -25,6 +25,14 @@ import {
   validateSessionInput,
 } from '@/lib/validation';
 import { parseScheduleJsonFromAiResponse } from '@/lib/scheduleAiParser';
+import {
+  classifySrsCardBucket,
+  computeNextSrsState,
+  inferDefaultTtsLang,
+  makeSrsCardKey,
+  parseFlashcardAiResponse,
+  parseQuizAiResponse,
+} from '@/lib/studyAiAndSrs';
 
 describe('Date & Timezone Helpers (Asia/Ho_Chi_Minh)', () => {
   it('chuyển đổi chính xác UTC sang ngày theo múi giờ Asia/Ho_Chi_Minh (+07:00)', () => {
@@ -333,6 +341,122 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(parsed.items[1].sessionOfDay).toBe('afternoon');
     expect(parsed.items[1].periodNumber).toBe(1); // Tiết 6 buổi chiều -> Tiết 1 buổi chiều
     expect(parsed.items[1].startTime).toBe('');
+  });
+
+  it('tính đúng Đường cong quên lãng Ebbinghaus (SRS) và bóc tách JSON Flashcard + Quiz đa ngôn ngữ', () => {
+    expect(inferDefaultTtsLang('Everybody Up 1')).toBe('en-US');
+    expect(inferDefaultTtsLang('Tiếng Trung HSK 1')).toBe('zh-CN');
+    expect(inferDefaultTtsLang('Toán lớp 3')).toBe('');
+
+    const sampleKeyword = {
+      term: 'pencil case',
+      pronunciation: '/ˈpensl keɪs/',
+      meaning: 'hộp bút',
+      example: "It's a pencil case.",
+    };
+
+    const key = makeSrsCardKey('les_1', sampleKeyword.term);
+    expect(classifySrsCardBucket(undefined, '2026-11-08')).toBe('new');
+
+    // Lần 1 bấm "Tạm nhớ" (good) -> Mức 2, hẹn ôn sau +3 ngày
+    const s1 = computeNextSrsState({
+      prev: undefined,
+      rating: 'good',
+      todayStr: '2026-11-08',
+      lessonId: 'les_1',
+      subject: 'Everybody Up 1',
+      unitTitle: 'Unit 1: First Day',
+      keyword: sampleKeyword,
+      lessonTtsLang: 'en-US',
+    });
+    expect(s1.key).toBe(key);
+    expect(s1.level).toBe(2);
+    expect(s1.nextReviewDate).toBe('2026-11-11');
+    expect(classifySrsCardBucket(s1, '2026-11-08')).toBe('due_soon');
+
+    // Lần 2 bấm "Đã nhớ kỹ" (easy) -> Mức 3, hẹn ôn sau +14 ngày
+    const s2 = computeNextSrsState({
+      prev: s1,
+      rating: 'easy',
+      todayStr: '2026-11-11',
+      lessonId: 'les_1',
+      subject: 'Everybody Up 1',
+      unitTitle: 'Unit 1: First Day',
+      keyword: sampleKeyword,
+      lessonTtsLang: 'en-US',
+    });
+    expect(s2.level).toBe(3);
+    expect(s2.nextReviewDate).toBe('2026-11-25');
+    expect(classifySrsCardBucket(s2, '2026-11-11')).toBe('mastered');
+    expect(classifySrsCardBucket(s2, '2026-11-25')).toBe('due_soon');
+
+    // Nếu làm bài kiểm tra sai (forgot) -> hạ về Mức 1 (struggling, +1 ngày)
+    const sForgot = computeNextSrsState({
+      prev: s2,
+      rating: 'forgot',
+      todayStr: '2026-11-12',
+      lessonId: 'les_1',
+      subject: 'Everybody Up 1',
+      unitTitle: 'Unit 1: First Day',
+      keyword: sampleKeyword,
+      lessonTtsLang: 'en-US',
+    });
+    expect(sForgot.level).toBe(1);
+    expect(sForgot.nextReviewDate).toBe('2026-11-13');
+    expect(classifySrsCardBucket(sForgot, '2026-11-12')).toBe('struggling');
+
+    // Kiểm tra bóc tách JSON Flashcard từ AI (dùng ttsLang thay vì hardcode tiếng Anh)
+    const flashcardAi = parseFlashcardAiResponse(
+      `\`\`\`json
+{
+  "subject": "Everybody Up 1",
+  "unitTitle": "Unit 1: First Day",
+  "title": "Lesson 1: School Supplies",
+  "goal": "Nhớ 2 từ vựng đồ dùng học tập",
+  "explanation": "Cấu trúc What is it? It's a...",
+  "ttsLang": "en-US",
+  "keywords": [
+    {
+      "term": "pencil case",
+      "pronunciation": "/ˈpensl keɪs/",
+      "meaning": "hộp bút",
+      "example": "It's a pencil case.",
+      "cardType": "vocab"
+    }
+  ]
+}
+\`\`\``,
+      'Everybody Up 1',
+      'Unit 1: First Day'
+    );
+    expect(flashcardAi.error).toBeUndefined();
+    expect(flashcardAi.ttsLang).toBe('en-US');
+    expect(flashcardAi.keywords).toHaveLength(1);
+    expect(flashcardAi.keywords[0].pronunciation).toBe('/ˈpensl keɪs/');
+
+    // Kiểm tra bóc tách JSON Đề trắc nghiệm từ AI
+    const quizAi = parseQuizAiResponse(
+      `\`\`\`json
+{
+  "title": "Đề kiểm tra Unit 1",
+  "description": "Chọn đáp án đúng nhất",
+  "questions": [
+    {
+      "question": "Nghĩa của từ 'pencil case' là gì?",
+      "options": ["Hộp bút", "Cục tẩy", "Thước kẻ", "Bút chì"],
+      "correctIndex": 0,
+      "explanation": "Pencil case nghĩa là hộp bút.",
+      "relatedTerm": "pencil case"
+    }
+  ]
+}
+\`\`\``,
+      'Đề kiểm tra Unit 1'
+    );
+    expect(quizAi.error).toBeUndefined();
+    expect(quizAi.questions).toHaveLength(1);
+    expect(quizAi.questions[0].correctIndex).toBe(0);
+    expect(quizAi.questions[0].relatedTerm).toBe('pencil case');
   });
 });
 

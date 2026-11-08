@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
+  ClipboardCheck,
   Clock,
+  Layers,
   Play,
   Plus,
   Send,
@@ -16,6 +18,7 @@ import type {
   LearningRecord,
   Lesson,
   SessionChecklistItem,
+  SrsCardProgress,
   StudySession,
 } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +26,7 @@ import { useClassContext } from '@/contexts/ClassContext';
 import {
   confirmOrReviewLearningRecord,
   deleteAssignment,
+  getStudentSrsStates,
   listAssignments,
   listClassMembers,
   listLearningRecords,
@@ -30,6 +34,7 @@ import {
   listSessions,
   saveAssignment,
   saveSession,
+  saveStudentSrsStates,
   submitStudentCompletion,
 } from '@/services/studyNestService';
 import {
@@ -39,6 +44,11 @@ import {
 } from '@/lib/validation';
 import { formatDateInTimezone, formatVietnameseDate } from '@/lib/date';
 import { EmptyState, UserAvatar } from '@/components/ui/ThemeBadges';
+import {
+  FlashcardStudyModal,
+  QuizTakeModal,
+} from '@/components/study/InteractiveStudyModals';
+import { inferDefaultTtsLang } from '@/lib/studyAiAndSrs';
 
 export function SessionsAndTasksPage() {
   const { user } = useAuth();
@@ -79,6 +89,10 @@ export function SessionsAndTasksPage() {
   // Học sinh nộp bài
   const [studentNotes, setStudentNotes] = useState<Record<string, string>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [srsStates, setSrsStates] = useState<Record<string, SrsCardProgress>>({});
+  const [activeFlashcardTask, setActiveFlashcardTask] =
+    useState<Assignment | null>(null);
+  const [activeQuizTask, setActiveQuizTask] = useState<Assignment | null>(null);
 
   const loadAll = useCallback(async () => {
     if (!studyClass || !user || !role) return;
@@ -88,18 +102,20 @@ export function SessionsAndTasksPage() {
       setSesDate((prev) => prev || today);
       setTaskDueDate((prev) => prev || today);
 
-      const [ses, asg, rec, les, mems] = await Promise.all([
+      const [ses, asg, rec, les, mems, srsMap] = await Promise.all([
         listSessions(studyClass.id, 30),
         listAssignments(studyClass.id, user.uid, role),
         listLearningRecords(studyClass.id, user.uid, role, 80),
         listLessons(studyClass.id, role),
         listClassMembers(studyClass.id),
+        getStudentSrsStates(studyClass.id, user.uid),
       ]);
       setSessions(ses);
       setAssignments(asg);
       setRecords(rec);
       setLessons(les);
       setStudents(mems.filter((m) => m.role === 'student'));
+      setSrsStates(srsMap);
     } finally {
       setLoading(false);
     }
@@ -398,6 +414,24 @@ export function SessionsAndTasksPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
+                        {task.taskType === 'flashcard' && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
+                            <Layers className="h-3.5 w-3.5" />
+                            Thẻ Flashcard ({task.flashcards?.length || 0} thẻ)
+                          </span>
+                        )}
+                        {task.taskType === 'quiz' && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2.5 py-0.5 text-xs font-extrabold text-violet-900 dark:bg-violet-950 dark:text-violet-300">
+                            <ClipboardCheck className="h-3.5 w-3.5" />
+                            Bài kiểm tra ({task.quizQuestions?.length || 0} câu)
+                          </span>
+                        )}
+                        {task.subject && (
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            📚 {task.subject}
+                            {task.unitTitle ? ` • ${task.unitTitle}` : ''}
+                          </span>
+                        )}
                         <span className="rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-extrabold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
                           ⭐ Thưởng {task.starsReward} sao
                         </span>
@@ -420,6 +454,33 @@ export function SessionsAndTasksPage() {
                           {task.description}
                         </p>
                       )}
+
+                      {task.taskType === 'flashcard' &&
+                        (task.flashcards?.length || 0) > 0 && (
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={() => setActiveFlashcardTask(task)}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+                            >
+                              <Layers className="h-3.5 w-3.5" />
+                              Vào học bộ Flashcard ({task.flashcards?.length} thẻ)
+                            </button>
+                          </div>
+                        )}
+                      {task.taskType === 'quiz' &&
+                        (task.quizQuestions?.length || 0) > 0 && (
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={() => setActiveQuizTask(task)}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-violet-700"
+                            >
+                              <ClipboardCheck className="h-3.5 w-3.5" />
+                              Làm bài trắc nghiệm ({task.quizQuestions?.length} câu)
+                            </button>
+                          </div>
+                        )}
                     </div>
 
                     {isInstructorOrOwner && (
@@ -521,9 +582,19 @@ export function SessionsAndTasksPage() {
                                     </div>
                                     <div className="text-[11px] text-slate-500">
                                       {confirmed
-                                        ? `Đã xác nhận (+${rec.starsAwarded} sao)`
+                                        ? `Đã xác nhận (+${rec.starsAwarded} sao)${
+                                            typeof rec.quizScore === 'number' &&
+                                            typeof rec.quizTotal === 'number'
+                                              ? ` • Điểm: ${rec.quizScore}/${rec.quizTotal}`
+                                              : ''
+                                          }`
                                         : submitted
-                                        ? `Đã nộp: “${rec.studentNote || 'Đã làm xong'}”`
+                                        ? `Đã nộp${
+                                            typeof rec.quizScore === 'number' &&
+                                            typeof rec.quizTotal === 'number'
+                                              ? ` (${rec.quizScore}/${rec.quizTotal} câu đúng)`
+                                              : ''
+                                          }: “${rec.studentNote || 'Đã làm xong'}”`
                                         : 'Chưa nộp'}
                                     </div>
                                   </div>
@@ -915,6 +986,95 @@ export function SessionsAndTasksPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal luyện tập Flashcard được giao */}
+      {activeFlashcardTask && activeFlashcardTask.flashcards && (
+        <FlashcardStudyModal
+          title={activeFlashcardTask.title}
+          cards={activeFlashcardTask.flashcards.map((kw) => ({
+            lessonId: activeFlashcardTask.lessonId || activeFlashcardTask.id,
+            subject: activeFlashcardTask.subject || 'Giáo trình',
+            unitTitle: activeFlashcardTask.unitTitle || 'Chung',
+            keyword: kw,
+            ttsLang:
+              kw.ttsLang !== undefined
+                ? kw.ttsLang
+                : inferDefaultTtsLang(
+                    activeFlashcardTask.subject || '',
+                    activeFlashcardTask.ttsLang
+                  ),
+          }))}
+          srsStates={srsStates}
+          todayStr={today}
+          onClose={() => setActiveFlashcardTask(null)}
+          onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
+            await saveStudentSrsStates({
+              classId: studyClass.id,
+              studentUid: user.uid,
+              studentName: user.displayName,
+              todayDateStr: today,
+              srsStates: updatedSrsPatch,
+            });
+            await submitStudentCompletion({
+              classId: studyClass.id,
+              studentUid: user.uid,
+              studentName: user.displayName,
+              type: 'assignment',
+              assignmentId: activeFlashcardTask.id,
+              sessionId: activeFlashcardTask.sessionId,
+              title: activeFlashcardTask.title,
+              date: today,
+              studentNote: summaryNote,
+            });
+            await loadAll();
+          }}
+        />
+      )}
+
+      {/* Modal làm Bài kiểm tra Trắc nghiệm được giao */}
+      {activeQuizTask && activeQuizTask.quizQuestions && (
+        <QuizTakeModal
+          title={activeQuizTask.title}
+          subject={activeQuizTask.subject || 'Giáo trình'}
+          unitTitle={activeQuizTask.unitTitle}
+          ttsLang={activeQuizTask.ttsLang}
+          questions={activeQuizTask.quizQuestions}
+          lessons={lessons}
+          srsStates={srsStates}
+          todayStr={today}
+          onClose={() => setActiveQuizTask(null)}
+          onSubmitQuizResult={async ({
+            score,
+            total,
+            studentNote,
+            updatedSrsPatch,
+          }) => {
+            if (Object.keys(updatedSrsPatch).length > 0) {
+              await saveStudentSrsStates({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                todayDateStr: today,
+                srsStates: updatedSrsPatch,
+              });
+            }
+            await submitStudentCompletion({
+              classId: studyClass.id,
+              studentUid: user.uid,
+              studentName: user.displayName,
+              type: 'assignment',
+              assignmentId: activeQuizTask.id,
+              sessionId: activeQuizTask.sessionId,
+              title: activeQuizTask.title,
+              date: today,
+              studentNote,
+              quizScore: score,
+              quizTotal: total,
+            });
+            await loadAll();
+          }}
+        />
       )}
     </div>
   );

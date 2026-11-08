@@ -6,8 +6,10 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
   Flame,
+  Layers,
   Plus,
   Send,
   Sparkles,
@@ -21,12 +23,14 @@ import type {
   Lesson,
   ScheduleException,
   ScheduleItem,
+  SrsCardProgress,
   StudySession,
 } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClassContext } from '@/contexts/ClassContext';
 import {
   confirmOrReviewLearningRecord,
+  getStudentSrsStates,
   listAssignments,
   listJoinRequests,
   listLearningRecords,
@@ -34,6 +38,7 @@ import {
   listScheduleExceptions,
   listSchedules,
   listSessions,
+  saveStudentSrsStates,
   submitStudentCompletion,
 } from '@/services/studyNestService';
 import {
@@ -42,6 +47,11 @@ import {
   getTodayAndTomorrow,
 } from '@/lib/date';
 import { calculateStudentProgressAndStreak } from '@/lib/streak';
+import { inferDefaultTtsLang } from '@/lib/studyAiAndSrs';
+import {
+  FlashcardStudyModal,
+  QuizTakeModal,
+} from '@/components/study/InteractiveStudyModals';
 
 export function ClassDashboardPage() {
   const { user } = useAuth();
@@ -62,9 +72,15 @@ export function ClassDashboardPage() {
     'learning'
   );
 
-  // State cho học sinh nộp bài nhanh
+  // State cho học sinh nộp bài nhanh & làm Flashcard / Quiz
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
   const [studentNotes, setStudentNotes] = useState<Record<string, string>>({});
+  const [srsStates, setSrsStates] = useState<Record<string, SrsCardProgress>>(
+    {}
+  );
+  const [activeFlashcardTask, setActiveFlashcardTask] =
+    useState<Assignment | null>(null);
+  const [activeQuizTask, setActiveQuizTask] = useState<Assignment | null>(null);
 
   // State cho instructor xác nhận nhanh
   const [confirmingRecordId, setConfirmingRecordId] = useState<string | null>(
@@ -79,13 +95,14 @@ export function ClassDashboardPage() {
     if (!studyClass || !user || !role) return;
     setLoading(true);
     try {
-      const [ses, asg, rec, les, sch, exc] = await Promise.all([
+      const [ses, asg, rec, les, sch, exc, srs] = await Promise.all([
         listSessions(studyClass.id, 15),
         listAssignments(studyClass.id, user.uid, role),
         listLearningRecords(studyClass.id, user.uid, role, 60),
         listLessons(studyClass.id, role),
         listSchedules(studyClass.id),
         listScheduleExceptions(studyClass.id),
+        getStudentSrsStates(studyClass.id, user.uid),
       ]);
       setSessions(ses);
       setAssignments(asg);
@@ -93,6 +110,7 @@ export function ClassDashboardPage() {
       setLessons(les);
       setSchedules(sch);
       setExceptions(exc);
+      setSrsStates(srs);
 
       if (isOwner) {
         const reqs = await listJoinRequests(studyClass.id);
@@ -452,34 +470,85 @@ export function ClassDashboardPage() {
                           </div>
                         )}
 
-                        {!isConfirmed && (
-                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <input
-                              type="text"
-                              aria-label={`Ghi chú hoàn thành cho ${task.title}`}
-                              value={
-                                studentNotes[task.id] ?? rec?.studentNote ?? ''
-                              }
-                              onChange={(e) =>
-                                setStudentNotes((prev) => ({
-                                  ...prev,
-                                  [task.id]: e.target.value,
-                                }))
-                              }
-                              placeholder="Ghi chú của em (VD: Em đã làm xong vào vở ô ly ạ)..."
-                              className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                            />
-                            <button
-                              type="button"
-                              disabled={submittingTaskId === task.id}
-                              onClick={() => void handleStudentSubmitTask(task)}
-                              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
-                            >
-                              <Send className="h-3.5 w-3.5" />
-                              {isSubmitted ? 'Cập nhật báo cáo' : 'Em đã làm xong'}
-                            </button>
-                          </div>
-                        )}
+                        {/* Nút mở tương tác nếu là nhiệm vụ Flashcard hoặc Bài kiểm tra Trắc nghiệm */}
+                        {task.taskType === 'flashcard' &&
+                          (task.flashcards?.length || 0) > 0 && (
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+                              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                                🃏 Bộ Flashcard: {task.flashcards?.length} thẻ
+                                {task.subject ? ` (${task.subject})` : ''}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveFlashcardTask(task)}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+                              >
+                                <Layers className="h-3.5 w-3.5" />
+                                {isSubmitted
+                                  ? 'Lật ôn lại bộ Flashcard'
+                                  : 'Bắt đầu học Flashcard'}
+                              </button>
+                            </div>
+                          )}
+
+                        {task.taskType === 'quiz' &&
+                          (task.quizQuestions?.length || 0) > 0 && (
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-900/50 dark:bg-violet-950/30">
+                              <span className="text-xs font-bold text-violet-900 dark:text-violet-200">
+                                📝 Đề trắc nghiệm: {task.quizQuestions?.length} câu
+                                {rec?.quizTotal
+                                  ? ` • Đã đạt: ${rec.quizScore}/${rec.quizTotal} câu đúng`
+                                  : ''}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveQuizTask(task)}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-violet-700"
+                              >
+                                <ClipboardCheck className="h-3.5 w-3.5" />
+                                {isSubmitted
+                                  ? 'Làm lại bài kiểm tra'
+                                  : 'Làm bài kiểm tra ngay'}
+                              </button>
+                            </div>
+                          )}
+
+                        {!isConfirmed &&
+                          task.taskType !== 'flashcard' &&
+                          task.taskType !== 'quiz' && (
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <input
+                                type="text"
+                                aria-label={`Ghi chú hoàn thành cho ${task.title}`}
+                                value={
+                                  studentNotes[task.id] ??
+                                  rec?.studentNote ??
+                                  ''
+                                }
+                                onChange={(e) =>
+                                  setStudentNotes((prev) => ({
+                                    ...prev,
+                                    [task.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Ghi chú của em (VD: Em đã làm xong vào vở ô ly ạ)..."
+                                className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                              />
+                              <button
+                                type="button"
+                                disabled={submittingTaskId === task.id}
+                                onClick={() =>
+                                  void handleStudentSubmitTask(task)
+                                }
+                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                <Send className="h-3.5 w-3.5" />
+                                {isSubmitted
+                                  ? 'Cập nhật báo cáo'
+                                  : 'Em đã làm xong'}
+                              </button>
+                            </div>
+                          )}
                       </div>
                     );
                   })}
@@ -565,6 +634,93 @@ export function ClassDashboardPage() {
             </section>
           </div>
         </div>
+
+        {activeFlashcardTask && activeFlashcardTask.flashcards && (
+          <FlashcardStudyModal
+            title={activeFlashcardTask.title}
+            cards={activeFlashcardTask.flashcards.map((kw) => ({
+              lessonId: activeFlashcardTask.lessonId || activeFlashcardTask.id,
+              subject: activeFlashcardTask.subject || 'Giáo trình',
+              unitTitle: activeFlashcardTask.unitTitle || 'Chung',
+              keyword: kw,
+              ttsLang:
+                kw.ttsLang !== undefined
+                  ? kw.ttsLang
+                  : inferDefaultTtsLang(
+                      activeFlashcardTask.subject || '',
+                      activeFlashcardTask.ttsLang
+                    ),
+            }))}
+            srsStates={srsStates}
+            todayStr={today}
+            onClose={() => setActiveFlashcardTask(null)}
+            onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
+              await saveStudentSrsStates({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                todayDateStr: today,
+                srsStates: updatedSrsPatch,
+              });
+              await submitStudentCompletion({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                type: 'assignment',
+                assignmentId: activeFlashcardTask.id,
+                sessionId: activeFlashcardTask.sessionId,
+                title: activeFlashcardTask.title,
+                date: today,
+                studentNote: summaryNote,
+              });
+              await loadDashboardData();
+            }}
+          />
+        )}
+
+        {activeQuizTask && activeQuizTask.quizQuestions && (
+          <QuizTakeModal
+            title={activeQuizTask.title}
+            subject={activeQuizTask.subject || 'Giáo trình'}
+            unitTitle={activeQuizTask.unitTitle}
+            ttsLang={activeQuizTask.ttsLang}
+            questions={activeQuizTask.quizQuestions}
+            lessons={lessons}
+            srsStates={srsStates}
+            todayStr={today}
+            onClose={() => setActiveQuizTask(null)}
+            onSubmitQuizResult={async ({
+              score,
+              total,
+              studentNote,
+              updatedSrsPatch,
+            }) => {
+              if (Object.keys(updatedSrsPatch).length > 0) {
+                await saveStudentSrsStates({
+                  classId: studyClass.id,
+                  studentUid: user.uid,
+                  studentName: user.displayName,
+                  todayDateStr: today,
+                  srsStates: updatedSrsPatch,
+                });
+              }
+              await submitStudentCompletion({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                type: 'assignment',
+                assignmentId: activeQuizTask.id,
+                sessionId: activeQuizTask.sessionId,
+                title: activeQuizTask.title,
+                date: today,
+                studentNote,
+                quizScore: score,
+                quizTotal: total,
+              });
+              await loadDashboardData();
+            }}
+          />
+        )}
       </div>
     );
   }
