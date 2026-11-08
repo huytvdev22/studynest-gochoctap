@@ -28,7 +28,9 @@ import { parseScheduleJsonFromAiResponse } from '@/lib/scheduleAiParser';
 import {
   classifySrsCardBucket,
   computeNextSrsState,
+  detectTextTtsLang,
   inferDefaultTtsLang,
+  isVietnameseText,
   makeSrsCardKey,
   parseFlashcardAiResponse,
   parseQuizAiResponse,
@@ -470,6 +472,15 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(quizAi.questions).toHaveLength(1);
     expect(quizAi.questions[0].correctIndex).toBe(0);
     expect(quizAi.questions[0].relatedTerm).toBe('pencil case');
+
+    // Kiểm tra nhận diện tiếng Việt và chuyển giọng TTS thông minh
+    expect(isVietnameseText('It is a book')).toBe(false);
+    expect(isVietnameseText('Dùng để đính chính khi nhìn một đồ vật: khẳng định trước, phủ định sau.')).toBe(true);
+    expect(isVietnameseText('Nó là một quyển sách')).toBe(true);
+
+    expect(detectTextTtsLang('It is a book', 'en-US')).toBe('en-US');
+    expect(detectTextTtsLang('Dùng để đính chính khi nhìn một đồ vật', 'en-US')).toBe('vi-VN');
+    expect(detectTextTtsLang('', 'en-US')).toBe('');
   });
 });
 

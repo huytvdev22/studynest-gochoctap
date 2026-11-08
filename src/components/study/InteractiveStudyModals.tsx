@@ -22,7 +22,9 @@ import type {
 import {
   classifySrsCardBucket,
   computeNextSrsState,
+  detectTextTtsLang,
   inferDefaultTtsLang,
+  isVietnameseText,
   makeSrsCardKey,
   speakTextWithTts,
   type SrsBucket,
@@ -136,18 +138,20 @@ export function FlashcardStudyModal({
     };
   }, []);
 
-  // Tự động phát âm khi: mở flashcard lần đầu, chuyển thẻ, hoặc lật thẻ (nếu có âm thanh và đang bật chế độ đọc)
+  // Tự động phát âm từ/mẫu câu chính ở mặt trước khi mở flashcard hoặc chuyển thẻ
   useEffect(() => {
-    if (!autoSpeechEnabled || finished || !currentCard || !activeTtsLang) {
+    // Chỉ tự động đọc từ/mẫu câu ngoại ngữ ở mặt trước; mặt sau để học sinh nhìn nghĩa và ghi chú
+    if (
+      !autoSpeechEnabled ||
+      finished ||
+      !currentCard ||
+      !activeTtsLang ||
+      flipped
+    ) {
       return;
     }
 
-    // Nếu lật sang mặt sau và có câu ví dụ, đọc câu ví dụ; nếu không thì đọc từ chính
-    const textToSpeak =
-      flipped && currentCard.keyword.example?.trim()
-        ? currentCard.keyword.example.trim()
-        : currentCard.keyword.term?.trim();
-
+    const textToSpeak = currentCard.keyword.term?.trim();
     if (textToSpeak) {
       const timer = setTimeout(() => {
         speakTextWithTts(textToSpeak, activeTtsLang, false);
@@ -454,31 +458,63 @@ export function FlashcardStudyModal({
 
                 {flipped && (
                   <div className="mt-4 border-t border-emerald-200/80 pt-4 space-y-2 animate-fadeIn dark:border-emerald-900/60">
-                    <div className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
-                      {currentCard.keyword.meaning}
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                        {currentCard.keyword.meaning}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          speakTextWithTts(
+                            currentCard.keyword.meaning,
+                            'vi-VN',
+                            false
+                          );
+                        }}
+                        title="Nghe đọc nghĩa tiếng Việt (vi-VN)"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                      >
+                        <Volume2 className="h-3.5 w-3.5" />
+                        <span>Đọc nghĩa</span>
+                      </button>
                     </div>
-                    {currentCard.keyword.example && (
-                      <div className="rounded-2xl bg-white/90 p-3 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">
-                        <strong>Ví dụ / Ghi chú:</strong>{' '}
-                        {currentCard.keyword.example}
-                        {activeTtsLang && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              speakTextWithTts(
-                                currentCard.keyword.example,
-                                activeTtsLang,
-                                false
-                              );
-                            }}
-                            className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
-                          >
-                            <Volume2 className="h-3.5 w-3.5" /> Đọc câu
-                          </button>
-                        )}
-                      </div>
-                    )}
+
+                    {currentCard.keyword.example && (() => {
+                      const exampleTtsLang = detectTextTtsLang(
+                        currentCard.keyword.example,
+                        activeTtsLang
+                      );
+                      const isExampleVi = isVietnameseText(
+                        currentCard.keyword.example
+                      );
+
+                      return (
+                        <div className="rounded-2xl bg-white/90 p-3 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">
+                          <strong>Ví dụ / Ghi chú:</strong>{' '}
+                          {currentCard.keyword.example}
+                          {exampleTtsLang && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                speakTextWithTts(
+                                  currentCard.keyword.example,
+                                  exampleTtsLang,
+                                  false
+                                );
+                              }}
+                              className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                            >
+                              <Volume2 className="h-3.5 w-3.5" />
+                              {isExampleVi
+                                ? 'Đọc ghi chú'
+                                : `Đọc câu (${exampleTtsLang})`}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

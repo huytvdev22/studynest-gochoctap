@@ -116,6 +116,29 @@ export function inferDefaultTtsLang(
 }
 
 /**
+ * Kiểm tra xem một đoạn văn bản có chứa ký tự tiếng Việt có dấu hay không.
+ */
+export function isVietnameseText(text: string): boolean {
+  if (!text) return false;
+  return /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(
+    text
+  );
+}
+
+/**
+ * Tự động nhận diện ngôn ngữ phát âm phù hợp cho một đoạn văn bản ghi chú/ví dụ.
+ * Nếu văn bản chứa tiếng Việt có dấu thì trả về 'vi-VN' thay vì dùng giọng ngoại ngữ.
+ */
+export function detectTextTtsLang(
+  text: string,
+  defaultLang: SupportedTtsLang = 'en-US'
+): SupportedTtsLang {
+  if (!text || !text.trim()) return '';
+  if (isVietnameseText(text)) return 'vi-VN';
+  return defaultLang;
+}
+
+/**
  * Phát âm văn bản bằng chuẩn Web Speech API (SpeechSynthesis) tích hợp sẵn trên trình duyệt.
  * Hoàn toàn miễn phí, không cần gọi API ngoài, hỗ trợ đọc tốc độ thường và tốc độ chậm (slow = true).
  */
