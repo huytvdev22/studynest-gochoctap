@@ -8,10 +8,12 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Copy,
+  Edit3,
   ExternalLink,
   Eye,
   FileEdit,
   Layers,
+  PlayCircle,
   Plus,
   RotateCcw,
   RotateCw,
@@ -23,6 +25,7 @@ import {
 import type {
   Assignment,
   ClassMember,
+  LearningRecord,
   Lesson,
   LessonKeyword,
   LessonStatus,
@@ -36,6 +39,7 @@ import {
   getStudentSrsStates,
   listAssignments,
   listClassMembers,
+  listLearningRecords,
   listLessons,
   saveAssignment,
   saveLessonWithTeacherNote,
@@ -58,6 +62,7 @@ import {
 } from '@/lib/studyAiAndSrs';
 import {
   FlashcardStudyModal,
+  QuizTakeModal,
   type StudyDeckCard,
 } from '@/components/study/InteractiveStudyModals';
 import { EmptyState } from '@/components/ui/ThemeBadges';
@@ -186,6 +191,17 @@ export function LessonsPage() {
 
   // Modal Tạo Đề Trắc Nghiệm bằng AI (Theo Unit hoặc Theo Đường cong quên lãng)
   const [showQuizAiModal, setShowQuizAiModal] = useState<boolean>(false);
+  const [editingQuizAssignment, setEditingQuizAssignment] =
+    useState<Assignment | null>(null);
+  const [activeQuizTask, setActiveQuizTask] = useState<Assignment | null>(null);
+  const [records, setRecords] = useState<LearningRecord[]>([]);
+  const [assignQuizToday, setAssignQuizToday] = useState<boolean>(true);
+  const [addingQuizTodayId, setAddingQuizTodayId] = useState<string | null>(
+    null
+  );
+  const [quizSuccessMessage, setQuizSuccessMessage] = useState<string | null>(
+    null
+  );
   const [quizSubject, setQuizSubject] = useState<string>('ALL');
   const [quizSourceMode, setQuizSourceMode] = useState<'unit' | 'srs_due'>(
     'unit'
@@ -206,13 +222,15 @@ export function LessonsPage() {
     if (!studyClass || !user || !role) return;
     setLoading(true);
     try {
-      const [les, mems, asgs] = await Promise.all([
+      const [les, mems, asgs, recs] = await Promise.all([
         listLessons(studyClass.id, role),
         listClassMembers(studyClass.id),
         listAssignments(studyClass.id, user.uid, role),
+        listLearningRecords(studyClass.id, user.uid, role, 100),
       ]);
       setLessons(les);
       setAssignments(asgs);
+      setRecords(recs);
       const studentList = mems.filter((m) => m.role === 'student');
       setStudents(studentList);
 
@@ -528,17 +546,78 @@ export function LessonsPage() {
     }
   };
 
-  // Xử lý tạo Đề Trắc Nghiệm AI
-  const openQuizGeneratorModal = (defaultSub = subjectFilter, defaultUnit = unitFilter) => {
+  // Xử lý tạo / sửa Đề Trắc Nghiệm AI
+  const openQuizGeneratorModal = (
+    defaultSub = subjectFilter,
+    defaultUnit = unitFilter
+  ) => {
     const resolvedSub =
       defaultSub !== 'ALL' ? defaultSub : curriculums[0] || 'Everybody Up';
+    setEditingQuizAssignment(null);
     setQuizSubject(resolvedSub);
     setQuizUnitTitle(defaultUnit);
     setQuizSourceMode('unit');
     setQuizPastedJson('');
     setQuizQuestions([]);
+    setQuizTitle(
+      `Kiểm tra trắc nghiệm: ${
+        defaultUnit !== 'ALL' ? defaultUnit : resolvedSub
+      }`
+    );
+    setQuizDescription('');
+    setQuizStarsReward(5);
+    setAssignQuizToday(true);
     setQuizError(null);
     setShowQuizAiModal(true);
+  };
+
+  const openEditQuizModal = (quiz: Assignment) => {
+    setEditingQuizAssignment(quiz);
+    setQuizSubject(quiz.subject || 'ALL');
+    setQuizUnitTitle(quiz.unitTitle || 'ALL');
+    setQuizTitle(quiz.title);
+    setQuizDescription(quiz.description);
+    setQuizQuestions(quiz.quizQuestions || []);
+    setQuizStarsReward(quiz.starsReward || 5);
+    setAssignQuizToday(quiz.dueDate === todayStr);
+    setQuizPastedJson('');
+    setQuizError(null);
+    setShowQuizAiModal(true);
+  };
+
+  const handleAddQuizToToday = async (targetQuiz: Assignment) => {
+    if (!studyClass || !user) return;
+    setAddingQuizTodayId(targetQuiz.id);
+    try {
+      const updated = await saveAssignment(studyClass.id, user.uid, {
+        id: targetQuiz.id,
+        sessionId: targetQuiz.sessionId,
+        lessonId: targetQuiz.lessonId,
+        title: targetQuiz.title,
+        description: targetQuiz.description,
+        dueDate: todayStr,
+        assignedStudentUids: targetQuiz.assignedStudentUids || ['ALL'],
+        starsReward: targetQuiz.starsReward || 5,
+        taskType: 'quiz',
+        subject: targetQuiz.subject,
+        unitTitle: targetQuiz.unitTitle,
+        ttsLang: targetQuiz.ttsLang,
+        quizQuestions: targetQuiz.quizQuestions,
+      });
+      setAssignments((prev) =>
+        prev.map((a) => (a.id === updated.id ? updated : a))
+      );
+      setQuizSuccessMessage(
+        `Đã thêm bài kiểm tra "${targetQuiz.title}" vào Hôm nay học gì cho học sinh!`
+      );
+      setTimeout(() => setQuizSuccessMessage(null), 4000);
+    } catch (err: unknown) {
+      alert(
+        err instanceof Error ? err.message : 'Không thể giao đề thi hôm nay.'
+      );
+    } finally {
+      setAddingQuizTodayId(null);
+    }
   };
 
   const handleCopyQuizPrompt = async () => {
@@ -599,14 +678,21 @@ export function LessonsPage() {
     try {
       const targetSubject =
         quizSubject === 'ALL' ? curriculums[0] || 'Tổng hợp' : quizSubject;
-      await saveAssignment(studyClass.id, user.uid, {
-        sessionId: null,
-        lessonId: null,
-        title: quizTitle.trim() || `Bài kiểm tra trắc nghiệm (${quizQuestions.length} câu)`,
+      const targetDueDate = assignQuizToday
+        ? todayStr
+        : editingQuizAssignment?.dueDate || addDaysToDateStr(todayStr, 2);
+
+      const saved = await saveAssignment(studyClass.id, user.uid, {
+        id: editingQuizAssignment ? editingQuizAssignment.id : undefined,
+        sessionId: editingQuizAssignment?.sessionId || null,
+        lessonId: editingQuizAssignment?.lessonId || null,
+        title:
+          quizTitle.trim() ||
+          `Bài kiểm tra trắc nghiệm (${quizQuestions.length} câu)`,
         description:
           quizDescription.trim() ||
           `Hoàn thành ${quizQuestions.length} câu hỏi trắc nghiệm giáo trình ${targetSubject}.`,
-        dueDate: addDaysToDateStr(todayStr, 2),
+        dueDate: targetDueDate,
         assignedStudentUids: ['ALL'],
         starsReward: quizStarsReward,
         taskType: 'quiz',
@@ -615,8 +701,26 @@ export function LessonsPage() {
         ttsLang: inferDefaultTtsLang(targetSubject),
         quizQuestions,
       });
+
+      setAssignments((prev) => {
+        const idx = prev.findIndex((a) => a.id === saved.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = saved;
+          return next;
+        }
+        return [saved, ...prev];
+      });
+
       setShowQuizAiModal(false);
-      navigate(`/app/classes/${studyClass.id}/sessions`);
+      const isEdit = Boolean(editingQuizAssignment);
+      setEditingQuizAssignment(null);
+      setQuizSuccessMessage(
+        isEdit
+          ? `Đã cập nhật bài kiểm tra "${saved.title}" thành công!`
+          : `Đã lưu và giao bài kiểm tra "${saved.title}" thành công!`
+      );
+      setTimeout(() => setQuizSuccessMessage(null), 4000);
     } catch (err: unknown) {
       setQuizError(
         err instanceof Error ? err.message : 'Không thể lưu đề kiểm tra.'
@@ -863,6 +967,28 @@ export function LessonsPage() {
               unitTotalCards > 0 && unitStudiedCards === unitTotalCards;
             const isUnitInProgress = unitStudiedCards > 0 && !isUnitCompleted;
 
+            // Tìm đề kiểm tra trắc nghiệm của Unit này (nếu đã tạo)
+            const unitQuiz = assignments.find(
+              (a) =>
+                a.taskType === 'quiz' &&
+                a.subject === firstLes.subject &&
+                (firstLes.unitTitle ? a.unitTitle === firstLes.unitTitle.trim() : true)
+            );
+            const studentQuizRecord = unitQuiz
+              ? records.find(
+                  (r) =>
+                    r.studentUid === user.uid &&
+                    (r.assignmentId === unitQuiz.id ||
+                      (r.title &&
+                        unitQuiz.title &&
+                        r.title.trim().toLowerCase() ===
+                          unitQuiz.title.trim().toLowerCase()))
+                )
+              : undefined;
+            const isQuizAddedToToday = unitQuiz
+              ? unitQuiz.dueDate === todayStr
+              : false;
+
             return (
               <section key={groupHeader} className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 bg-slate-100/80 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-800/60">
@@ -919,20 +1045,117 @@ export function LessonsPage() {
                       </button>
                     )}
 
-                    {isInstructorOrOwner && unitCards.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openQuizGeneratorModal(
-                            firstLes.subject,
-                            firstLes.unitTitle?.trim() || 'ALL'
+                    {/* Xử lý Đề kiểm tra Trắc nghiệm của Unit: Phân biệt rõ ĐÃ CÓ vs CHƯA CÓ */}
+                    {unitQuiz ? (
+                      <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-violet-50/90 p-1 border border-violet-200/80 dark:bg-violet-950/40 dark:border-violet-900/50">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-extrabold text-violet-800 dark:text-violet-300">
+                          <ClipboardCheck className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                          Đề kiểm tra ({unitQuiz.quizQuestions?.length || 0} câu)
+                        </span>
+
+                        {/* Góc nhìn HỌC SINH */}
+                        {isStudent && (
+                          studentQuizRecord ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                Đã nộp: {studentQuizRecord.quizScore !== undefined ? `${studentQuizRecord.quizScore}/${studentQuizRecord.quizTotal || unitQuiz.quizQuestions?.length} điểm` : 'Đã làm'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveQuizTask(unitQuiz)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-violet-300 bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 dark:border-violet-800 dark:bg-slate-900 dark:text-violet-300"
+                              >
+                                <PlayCircle className="h-3 w-3" />
+                                Làm lại
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setActiveQuizTask(unitQuiz)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold text-white hover:bg-violet-700 active:scale-95 shadow-xs transition"
+                            >
+                              <PlayCircle className="h-3.5 w-3.5" />
+                              Làm bài kiểm tra ({unitQuiz.quizQuestions?.length || 0} câu)
+                            </button>
                           )
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700"
-                      >
-                        <ClipboardCheck className="h-3.5 w-3.5" />
-                        Tạo đề kiểm tra Unit này
-                      </button>
+                        )}
+
+                        {/* Góc nhìn GIÁO VIÊN & CHỦ LỚP */}
+                        {isInstructorOrOwner && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setActiveQuizTask(unitQuiz)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 dark:bg-slate-900 dark:text-violet-300 shadow-2xs"
+                              title="Làm thử đề thi với tư cách học sinh"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Làm thử
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openEditQuizModal(unitQuiz)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 dark:bg-slate-900 dark:text-violet-300 shadow-2xs"
+                              title="Chỉnh sửa câu hỏi, đáp án đúng và điểm thưởng"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              Sửa đề thi
+                            </button>
+
+                            {isQuizAddedToToday ? (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <Check className="h-3 w-3" /> Đã thêm hôm nay
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={addingQuizTodayId === unitQuiz.id}
+                                onClick={() => void handleAddQuizToToday(unitQuiz)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-emerald-700 active:scale-95 disabled:opacity-50 shadow-2xs transition"
+                              >
+                                <Plus className="h-3 w-3" />
+                                {addingQuizTodayId === unitQuiz.id
+                                  ? 'Đang thêm...'
+                                  : 'Thêm vào hôm nay'}
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openQuizGeneratorModal(
+                                  firstLes.subject,
+                                  firstLes.unitTitle?.trim() || 'ALL'
+                                )
+                              }
+                              className="ml-1 text-[10px] font-semibold text-slate-500 hover:text-violet-700 hover:underline dark:text-slate-400"
+                              title="Tạo thêm hoặc soạn đề mới cho Unit"
+                            >
+                              Soạn đề mới...
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Nếu chưa có đề thi: hiển thị nút Tạo đề cho Giáo viên */
+                      isInstructorOrOwner && unitCards.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openQuizGeneratorModal(
+                              firstLes.subject,
+                              firstLes.unitTitle?.trim() || 'ALL'
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700 shadow-xs"
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                          Tạo đề kiểm tra Unit này
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -1694,15 +1917,22 @@ export function LessonsPage() {
                   id="modal-quiz-ai-title"
                   className="text-lg font-extrabold text-slate-900 dark:text-white"
                 >
-                  Tạo Đề Kiểm Tra Trắc Nghiệm bằng AI (Theo Unit / Từ sắp quên)
+                  {editingQuizAssignment
+                    ? `Chỉnh Sửa Đề Kiểm Tra: ${editingQuizAssignment.title}`
+                    : 'Tạo Đề Kiểm Tra Trắc Nghiệm bằng AI (Theo Unit / Từ sắp quên)'}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Hệ thống tự động gom các từ vựng, mẫu câu hoặc kiến thức đã học trong Unit để tạo Prompt cho AI.
+                  {editingQuizAssignment
+                    ? 'Xem lại, chỉnh sửa câu hỏi, đáp án đúng hoặc thêm bớt câu trước khi lưu lại.'
+                    : 'Hệ thống tự động gom các từ vựng, mẫu câu hoặc kiến thức đã học trong Unit để tạo Prompt cho AI.'}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowQuizAiModal(false)}
+                onClick={() => {
+                  setShowQuizAiModal(false);
+                  setEditingQuizAssignment(null);
+                }}
                 className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100"
               >
                 <X className="h-5 w-5" />
@@ -2005,10 +2235,31 @@ export function LessonsPage() {
               </div>
             )}
 
+            {/* Tùy chọn giao bài thi làm ngay hôm nay */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5 dark:border-violet-900/50 dark:bg-violet-950/30">
+              <label className="flex items-center gap-2.5 text-xs sm:text-sm font-bold text-violet-950 cursor-pointer dark:text-violet-200">
+                <input
+                  type="checkbox"
+                  checked={assignQuizToday}
+                  onChange={(e) => setAssignQuizToday(e.target.checked)}
+                  className="h-4 w-4 rounded border-violet-400 text-violet-600 focus:ring-violet-500"
+                />
+                <span>Giao cho học sinh làm ngay hôm nay (xuất hiện trong mục Hôm nay học gì)</span>
+              </label>
+              <span className="text-xs font-semibold text-slate-500">
+                {assignQuizToday
+                  ? `Hạn nộp: Hôm nay (${todayStr})`
+                  : `Hạn nộp: Sau 2 ngày (${addDaysToDateStr(todayStr, 2)})`}
+              </span>
+            </div>
+
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setShowQuizAiModal(false)}
+                onClick={() => {
+                  setShowQuizAiModal(false);
+                  setEditingQuizAssignment(null);
+                }}
                 className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600"
               >
                 Đóng
@@ -2020,13 +2271,72 @@ export function LessonsPage() {
                 className="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
               >
                 {savingQuiz
-                  ? 'Đang lưu & giao bài...'
+                  ? 'Đang lưu đề thi...'
+                  : editingQuizAssignment
+                  ? `Lưu thay đổi (${quizQuestions.length} câu)`
                   : `Lưu & Giao đề thi (${quizQuestions.length} câu)`}
               </button>
             </div>
           </div>
         </div>
         </ModalPortal>
+      )}
+
+      {/* ===================================================================== */}
+      {/* MODAL 3: HỌC SINH & GIÁO VIÊN LÀM BÀI TRẮC NGHIỆM TRỰC TIẾP          */}
+      {/* ===================================================================== */}
+      {activeQuizTask && activeQuizTask.quizQuestions && (
+        <QuizTakeModal
+          title={activeQuizTask.title}
+          subject={activeQuizTask.subject || 'Giáo trình'}
+          unitTitle={activeQuizTask.unitTitle}
+          ttsLang={activeQuizTask.ttsLang}
+          questions={activeQuizTask.quizQuestions}
+          lessons={lessons}
+          srsStates={srsStates}
+          todayStr={todayStr}
+          onClose={() => setActiveQuizTask(null)}
+          onSubmitQuizResult={async ({
+            score,
+            total,
+            studentNote,
+            updatedSrsPatch,
+          }) => {
+            const currentTask = activeQuizTask;
+            setActiveQuizTask(null);
+            if (Object.keys(updatedSrsPatch).length > 0) {
+              await saveStudentSrsStates({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                todayDateStr: todayStr,
+                srsStates: updatedSrsPatch,
+              });
+            }
+            await submitStudentCompletion({
+              classId: studyClass.id,
+              studentUid: user.uid,
+              studentName: user.displayName,
+              type: 'assignment',
+              assignmentId: currentTask.id,
+              sessionId: currentTask.sessionId,
+              title: currentTask.title,
+              date: todayStr,
+              studentNote,
+              quizScore: score,
+              quizTotal: total,
+            });
+            await loadData();
+          }}
+        />
+      )}
+
+      {/* Toast thông báo thành công */}
+      {quizSuccessMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-xs sm:text-sm font-bold text-white shadow-xl animate-fade-in">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>{quizSuccessMessage}</span>
+        </div>
       )}
     </div>
   );

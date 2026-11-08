@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BookOpen,
   CheckCircle2,
   ClipboardCheck,
   Clock,
+  Edit3,
   Eye,
   Layers,
   Plus,
@@ -369,14 +371,26 @@ export function SessionsAndTasksPage() {
                     </div>
 
                     {isInstructorOrOwner && (
-                      <button
-                        type="button"
-                        onClick={() => void handleDeleteTask(task.id)}
-                        aria-label={`Xóa nhiệm vụ ${task.title}`}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {task.taskType === 'quiz' && (
+                          <Link
+                            to={`/app/classes/${studyClass.id}/lessons`}
+                            className="inline-flex items-center gap-1 rounded-lg border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:bg-slate-900 dark:text-violet-300 shadow-2xs"
+                            title="Chỉnh sửa câu hỏi, đáp án đề thi trong Thư viện"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                            Sửa đề thi
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteTask(task.id)}
+                          aria-label={`Xóa nhiệm vụ ${task.title}`}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
 
