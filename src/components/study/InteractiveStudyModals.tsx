@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  PartyPopper,
   RotateCw,
   Sparkles,
   Turtle,
@@ -12,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { ModalPortal } from '@/components/ui/ModalPortal';
+import { triggerGrandConfetti, triggerMiniConfetti } from '@/lib/confetti';
 import type {
   Lesson,
   LessonKeyword,
@@ -117,6 +119,20 @@ export function FlashcardStudyModal({
   const [finished, setFinished] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
+  const [clickedRating, setClickedRating] = useState<SrsReviewRating | null>(
+    null
+  );
+  const [slideDirection, setSlideDirection] = useState<'next' | 'prev' | null>(
+    null
+  );
+
+  // Kích hoạt pháo giấy chúc mừng rực rỡ khi hoàn thành toàn bộ bài học
+  useEffect(() => {
+    if (finished) {
+      triggerGrandConfetti();
+    }
+  }, [finished]);
+
   const currentCard = cards[currentIndex] || cards[0];
   const cardKey = currentCard
     ? makeSrsCardKey(currentCard.lessonId, currentCard.keyword.term)
@@ -170,7 +186,20 @@ export function FlashcardStudyModal({
 
   if (cards.length === 0) return null;
 
-  const handleRateCard = (rating: SrsReviewRating) => {
+  const handleRateCard = (
+    rating: SrsReviewRating,
+    event?: React.MouseEvent
+  ) => {
+    setClickedRating(rating);
+
+    // Bắn pháo giấy mini nếu đã nhớ kỹ để khích lệ trẻ em học tập
+    if (rating === 'easy') {
+      const origin = event
+        ? { x: event.clientX, y: event.clientY }
+        : undefined;
+      triggerMiniConfetti(origin);
+    }
+
     const nextState = computeNextSrsState({
       prev: effectiveSrs,
       rating,
@@ -192,13 +221,19 @@ export function FlashcardStudyModal({
     };
     setLocalPatch(nextPatch);
     setRatingsByKey(nextRatings);
-    setFlipped(false);
 
-    if (currentIndex + 1 < cards.length) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setFinished(true);
-    }
+    // Chờ 300ms để hiệu ứng nút bấm và pháo giấy hiển thị rồi chuyển thẻ
+    setTimeout(() => {
+      setClickedRating(null);
+      setFlipped(false);
+
+      if (currentIndex + 1 < cards.length) {
+        setSlideDirection('next');
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        setFinished(true);
+      }
+    }, 300);
   };
 
   const handleClose = () => {
@@ -257,7 +292,7 @@ export function FlashcardStudyModal({
                 type="button"
                 onClick={() => setAutoSpeechEnabled((prev) => !prev)}
                 title={autoSpeechEnabled ? 'Tắt tự động đọc' : 'Bật tự động đọc phát âm'}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition ${
+                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition active:scale-95 ${
                   autoSpeechEnabled
                     ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                     : 'border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'
@@ -281,7 +316,7 @@ export function FlashcardStudyModal({
               type="button"
               onClick={handleClose}
               aria-label="Đóng"
-              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 active:scale-95 dark:hover:bg-slate-800"
             >
               <X className="h-5 w-5" />
             </button>
@@ -289,22 +324,22 @@ export function FlashcardStudyModal({
         </div>
 
         {finished ? (
-          <div className="py-8 text-center space-y-5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              <Sparkles className="h-8 w-8" />
+          <div className="py-8 text-center space-y-5 animate-card-next">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-600 shadow-inner dark:bg-emerald-950 dark:text-emerald-400 animate-bounce">
+              <PartyPopper className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                 Tuyệt vời! Em đã hoàn thành bộ Flashcard ({cards.length} thẻ)
               </h3>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Hệ thống đã tính toán lịch hẹn ôn lại theo Đường cong quên lãng cho từng thẻ.
+                Hệ thống đã tự động tính toán lịch hẹn ôn lại theo Đường cong quên lãng cho từng thẻ của em.
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-                <div className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 shadow-2xs dark:border-emerald-900 dark:bg-emerald-950/30">
+                <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
                   {
                     Object.values(ratingsByKey).filter((r) => r === 'easy')
                       .length
@@ -315,8 +350,8 @@ export function FlashcardStudyModal({
                   Nhớ kỹ (+14 ngày)
                 </div>
               </div>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-                <div className="text-xl font-extrabold text-amber-700 dark:text-amber-300">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 shadow-2xs dark:border-amber-900 dark:bg-amber-950/30">
+                <div className="text-2xl font-black text-amber-700 dark:text-amber-300">
                   {
                     Object.values(ratingsByKey).filter((r) => r === 'good')
                       .length
@@ -327,8 +362,8 @@ export function FlashcardStudyModal({
                   Tạm nhớ (+3 ngày)
                 </div>
               </div>
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-3 dark:border-rose-900 dark:bg-rose-950/30">
-                <div className="text-xl font-extrabold text-rose-700 dark:text-rose-300">
+              <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-3 shadow-2xs dark:border-rose-900 dark:bg-rose-950/30">
+                <div className="text-2xl font-black text-rose-700 dark:text-rose-300">
                   {
                     Object.values(ratingsByKey).filter((r) => r === 'forgot')
                       .length
@@ -349,7 +384,7 @@ export function FlashcardStudyModal({
                   setFlipped(false);
                   setFinished(false);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-95 transition dark:border-slate-700 dark:text-slate-300"
               >
                 <RotateCw className="h-4 w-4" />
                 Lật ôn lại lần nữa
@@ -358,7 +393,7 @@ export function FlashcardStudyModal({
                 type="button"
                 disabled={saving}
                 onClick={() => void handleCompleteSession()}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {saving ? 'Đang lưu tiến độ...' : 'Hoàn thành & Lưu kết quả'}
@@ -377,89 +412,119 @@ export function FlashcardStudyModal({
                 nextReviewDate={effectiveSrs?.nextReviewDate}
               />
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300 shadow-xs"
                 style={{
                   width: `${Math.round(((currentIndex + 1) / cards.length) * 100)}%`,
                 }}
               />
             </div>
 
-            {/* Thẻ Flashcard chính */}
-            <div
-              onClick={() => setFlipped((f) => !f)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setFlipped((f) => !f);
-                }
-              }}
-              className="group relative min-h-[250px] cursor-pointer rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/60 via-white to-sky-50/40 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm transition hover:border-emerald-400 dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30"
-            >
-              <span className="absolute top-3.5 left-4 rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
-                {flipped ? 'Mặt sau (Nghĩa / Đáp án)' : 'Mặt trước (Từ / Mẫu câu / Câu hỏi)'}
-              </span>
+            {/* Thẻ Flashcard chính với hiệu ứng 3D Flip và Chuyển thẻ */}
+            <div className="perspective-1000 w-full min-h-[290px] select-none">
+              <div
+                key={currentIndex}
+                onClick={() => setFlipped((f) => !f)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setFlipped((f) => !f);
+                  }
+                }}
+                className={`relative w-full min-h-[290px] cursor-pointer transition-transform duration-500 preserve-3d ${
+                  slideDirection === 'next'
+                    ? 'animate-card-next'
+                    : slideDirection === 'prev'
+                    ? 'animate-card-prev'
+                    : ''
+                } ${flipped ? 'rotate-y-180' : ''}`}
+              >
+                {/* Mặt trước của Thẻ Flashcard */}
+                <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/40 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-emerald-400 transition-all dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30">
+                  <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
+                    Mặt trước (Từ / Mẫu câu / Câu hỏi)
+                  </span>
 
-              <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                <RotateCw className="h-3.5 w-3.5" />
-                Bấm vào thẻ để lật
-              </span>
+                  <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Bấm để lật thẻ
+                  </span>
 
-              <div className="mt-4 max-w-lg space-y-3">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-                  {currentCard.keyword.term}
+                  <div className="mt-4 max-w-lg space-y-3 w-full">
+                    <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {currentCard.keyword.term}
+                    </div>
+
+                    {currentCard.keyword.pronunciation && (
+                      <div className="text-sm sm:text-base font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                        {currentCard.keyword.pronunciation}
+                      </div>
+                    )}
+
+                    {/* Nút phát âm ngoại ngữ (chỉ hiện khi có ttsLang) */}
+                    {activeTtsLang && (
+                      <div
+                        className="flex flex-wrap items-center justify-center gap-2 pt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakTextWithTts(
+                              currentCard.keyword.term,
+                              activeTtsLang,
+                              false
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition"
+                        >
+                          <Volume2 className="h-4 w-4" />
+                          Nghe phát âm ({activeTtsLang})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakTextWithTts(
+                              currentCard.keyword.term,
+                              activeTtsLang,
+                              true
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50 active:scale-95 transition dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
+                        >
+                          <Turtle className="h-4 w-4" />
+                          Đọc chậm
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="pt-2 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                      Chạm vào thẻ hoặc bấm nút Lật bên dưới để xem nghĩa
+                    </div>
+                  </div>
                 </div>
 
-                {currentCard.keyword.pronunciation && (
-                  <div className="text-sm font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                    {currentCard.keyword.pronunciation}
-                  </div>
-                )}
+                {/* Mặt sau của Thẻ Flashcard */}
+                <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl border-2 border-teal-300/90 bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-teal-400 transition-all dark:border-teal-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/30 overflow-y-auto">
+                  <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-teal-700 shadow-2xs dark:bg-slate-800 dark:text-teal-300">
+                    Mặt sau (Nghĩa / Đáp án)
+                  </span>
 
-                {/* Nút phát âm ngoại ngữ (chỉ hiện khi có ttsLang) */}
-                {activeTtsLang && (
-                  <div
-                    className="flex flex-wrap items-center justify-center gap-2 pt-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        speakTextWithTts(
-                          currentCard.keyword.term,
-                          activeTtsLang,
-                          false
-                        )
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
-                    >
-                      <Volume2 className="h-4 w-4" />
-                      Nghe phát âm ({activeTtsLang})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        speakTextWithTts(
-                          currentCard.keyword.term,
-                          activeTtsLang,
-                          true
-                        )
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
-                    >
-                      <Turtle className="h-4 w-4" />
-                      Đọc chậm
-                    </button>
-                  </div>
-                )}
+                  <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-400">
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Bấm để quay lại
+                  </span>
 
-                {flipped && (
-                  <div className="mt-4 border-t border-emerald-200/80 pt-4 space-y-2 animate-fadeIn dark:border-emerald-900/60">
+                  <div className="mt-4 max-w-lg space-y-3 w-full">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {currentCard.keyword.term}
+                    </div>
+
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                      <span className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">
                         {currentCard.keyword.meaning}
                       </span>
                       <button
@@ -473,7 +538,7 @@ export function FlashcardStudyModal({
                           );
                         }}
                         title="Nghe đọc nghĩa tiếng Việt (vi-VN)"
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 active:scale-95 dark:bg-emerald-950 dark:text-emerald-300 transition"
                       >
                         <Volume2 className="h-3.5 w-3.5" />
                         <span>Đọc nghĩa</span>
@@ -490,7 +555,7 @@ export function FlashcardStudyModal({
                       );
 
                       return (
-                        <div className="rounded-2xl bg-white/90 p-3 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">
+                        <div className="rounded-2xl bg-white/90 p-3.5 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 shadow-2xs text-left">
                           <strong>Ví dụ / Ghi chú:</strong>{' '}
                           {currentCard.keyword.example}
                           {exampleTtsLang && (
@@ -504,7 +569,7 @@ export function FlashcardStudyModal({
                                   false
                                 );
                               }}
-                              className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                              className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline active:scale-95 dark:text-emerald-400"
                             >
                               <Volume2 className="h-3.5 w-3.5" />
                               {isExampleVi
@@ -516,7 +581,7 @@ export function FlashcardStudyModal({
                       );
                     })()}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -528,8 +593,12 @@ export function FlashcardStudyModal({
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                 <button
                   type="button"
-                  onClick={() => handleRateCard('forgot')}
-                  className="flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-rose-900 transition hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+                  onClick={(e) => handleRateCard('forgot', e)}
+                  className={`group relative flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-rose-900 transition-all duration-150 hover:bg-rose-100 hover:shadow-md hover:-translate-y-0.5 active:scale-95 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200 ${
+                    clickedRating === 'forgot'
+                      ? 'animate-btn-shake ring-4 ring-rose-400/50'
+                      : ''
+                  }`}
                 >
                   <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -542,8 +611,12 @@ export function FlashcardStudyModal({
 
                 <button
                   type="button"
-                  onClick={() => handleRateCard('good')}
-                  className="flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-amber-950 transition hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+                  onClick={(e) => handleRateCard('good', e)}
+                  className={`group relative flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-amber-950 transition-all duration-150 hover:bg-amber-100 hover:shadow-md hover:-translate-y-0.5 active:scale-95 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 ${
+                    clickedRating === 'good'
+                      ? 'animate-btn-pop ring-4 ring-amber-400/50'
+                      : ''
+                  }`}
                 >
                   <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
                     <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -556,14 +629,18 @@ export function FlashcardStudyModal({
 
                 <button
                   type="button"
-                  onClick={() => handleRateCard('easy')}
-                  className="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-emerald-950 transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200"
+                  onClick={(e) => handleRateCard('easy', e)}
+                  className={`group relative flex flex-col items-center rounded-2xl border-2 border-emerald-400 bg-emerald-50 px-4 py-3 text-emerald-950 shadow-xs transition-all duration-150 hover:bg-emerald-100 hover:shadow-md hover:-translate-y-0.5 active:scale-95 dark:border-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-200 ${
+                    clickedRating === 'easy'
+                      ? 'animate-btn-pop ring-4 ring-emerald-500/60 scale-105'
+                      : ''
+                  }`}
                 >
-                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-800 dark:text-emerald-300">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
                     Đã nhớ kỹ
                   </span>
-                  <span className="mt-0.5 text-[11px] opacity-80">
+                  <span className="mt-0.5 text-[11px] font-semibold text-emerald-700/90 dark:text-emerald-400">
                     Ôn lại sau 14 – 30 ngày
                   </span>
                 </button>
@@ -576,10 +653,11 @@ export function FlashcardStudyModal({
                 type="button"
                 disabled={currentIndex === 0}
                 onClick={() => {
+                  setSlideDirection('prev');
                   setFlipped(false);
                   setCurrentIndex((i) => Math.max(0, i - 1));
                 }}
-                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300"
+                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition disabled:opacity-40 dark:text-slate-300"
               >
                 <ChevronLeft className="h-4 w-4" /> Thẻ trước
               </button>
@@ -587,19 +665,21 @@ export function FlashcardStudyModal({
               <button
                 type="button"
                 onClick={() => setFlipped((f) => !f)}
-                className="rounded-xl bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition dark:bg-slate-800 dark:text-slate-200"
               >
-                {flipped ? 'Ẩn đáp án' : 'Lật xem nghĩa / đáp án'}
+                <RotateCw className="h-3.5 w-3.5 text-slate-500" />
+                {flipped ? 'Lật về mặt trước' : 'Lật xem nghĩa / đáp án'}
               </button>
 
               <button
                 type="button"
                 disabled={currentIndex >= cards.length - 1}
                 onClick={() => {
+                  setSlideDirection('next');
                   setFlipped(false);
                   setCurrentIndex((i) => Math.min(cards.length - 1, i + 1));
                 }}
-                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300"
+                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition disabled:opacity-40 dark:text-slate-300"
               >
                 Thẻ tiếp <ChevronRight className="h-4 w-4" />
               </button>
