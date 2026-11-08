@@ -332,7 +332,7 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(parsed.items[1].dayOfWeek).toBe(2);
     expect(parsed.items[1].sessionOfDay).toBe('afternoon');
     expect(parsed.items[1].periodNumber).toBe(1); // Tiết 6 buổi chiều -> Tiết 1 buổi chiều
-    expect(parsed.items[1].startTime).toBe('14:00');
+    expect(parsed.items[1].startTime).toBe('');
   });
 });
 

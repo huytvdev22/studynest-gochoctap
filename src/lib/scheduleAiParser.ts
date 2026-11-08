@@ -13,7 +13,7 @@ export interface ParsedScheduleDraft {
   endTime: string;
 }
 
-export const AI_TIMETABLE_PROMPT = `Bạn là trợ lý trích xuất dữ liệu Thời khóa biểu học sinh tiểu học.
+export const AI_TIMETABLE_PROMPT = `Bạn là trợ lý trích xuất dữ liệu Thời khóa biểu học sinh.
 Hãy đọc hình ảnh thời khóa biểu tôi đính kèm và trả về DUY NHẤT một khối mã JSON (trong cặp dấu \`\`\`json ... \`\`\`) là một mảng các tiết học theo đúng cấu trúc sau:
 
 \`\`\`json
@@ -25,9 +25,7 @@ Hãy đọc hình ảnh thời khóa biểu tôi đính kèm và trả về DUY 
     "subject": "Toán",
     "type": "regular",
     "teacherName": "",
-    "materialsNote": "SGK Toán, vở bài tập Toán, thước kẻ",
-    "startTime": "07:30",
-    "endTime": "08:05"
+    "materialsNote": "SGK Toán, vở bài tập Toán, thước kẻ"
   }
 ]
 \`\`\`
@@ -42,41 +40,15 @@ Quy tắc bắt buộc khi trích xuất:
    - 6 = Thứ Bảy
    - 0 = Chủ Nhật
 2. "sessionOfDay": chỉ nhận 1 trong 3 giá trị:
-   - "morning" (Buổi sáng)
-   - "afternoon" (Buổi chiều)
+   - "morning" (Buổi sáng: từ Tiết 1 đến Tiết 5)
+   - "afternoon" (Buổi chiều: từ Tiết 1 đến Tiết 5)
    - "evening" (Buổi tối / học kèm ở nhà)
-3. "periodNumber" (kiểu số nguyên từ 1 đến 5): thứ tự tiết trong buổi đó (ví dụ Tiết 1 buổi chiều thì sessionOfDay = "afternoon" và periodNumber = 1; nếu ảnh ghi Tiết 6, 7, 8 của buổi chiều thì quy đổi thành periodNumber 1, 2, 3 của "afternoon").
-4. "subject": Tên môn học rõ ràng bằng tiếng Việt (VD: "Toán", "Tiếng Việt", "Tiếng Anh", "Tự nhiên & Xã hội", "Tin học", "Đạo đức", "Giáo dục thể chất", "Âm nhạc", "Mỹ thuật", "Hoạt động trải nghiệm"...). Bỏ qua các ô trống hoặc tiết "Chào cờ / Sinh hoạt" nếu không cần thiết, hoặc giữ lại nếu có trong bảng.
+3. "periodNumber" (kiểu số nguyên từ 1 đến 5): thứ tự tiết trong buổi đó (ví dụ Tiết 1 buổi chiều thì sessionOfDay = "afternoon" và periodNumber = 1; nếu ảnh ghi Tiết 6, 7, 8, 9, 10 của buổi chiều thì quy đổi thành periodNumber 1, 2, 3, 4, 5 của "afternoon"). Không cần ghi giờ bắt đầu hay kết thúc của tiết.
+4. "subject": Tên môn học rõ ràng bằng tiếng Việt (VD: "Toán", "Tiếng Việt", "Tiếng Anh", "Tự nhiên & Xã hội", "Tin học", "Đạo đức", "Giáo dục thể chất", "Âm nhạc", "Mỹ thuật", "Hoạt động trải nghiệm"...).
 5. "type": "regular" (lịch học chính khóa ở trường) hoặc "tutoring" (lịch học kèm buổi tối tại nhà).
 6. "materialsNote": Tự động gợi ý ngắn gọn sách vở/dụng cụ học sinh cần mang theo cho môn đó (VD: "SGK Toán, vở ô ly, thước kẻ").
-7. "startTime" và "endTime": Nếu trên ảnh có ghi giờ thì lấy theo ảnh, nếu không có thì điền giờ chuẩn:
-   - Sáng: Tiết 1 (07:30-08:05), Tiết 2 (08:15-08:50), Tiết 3 (09:05-09:40), Tiết 4 (09:50-10:25), Tiết 5 (10:30-11:05)
-   - Chiều: Tiết 1 (14:00-14:35), Tiết 2 (14:45-15:20), Tiết 3 (15:35-16:10)
-   - Tối: Tiết 1 (19:30-20:30)
 
 Chỉ trả về khối \`\`\`json ... \`\`\`, không cần giải thích dài dòng.`;
-
-const DEFAULT_SLOT_TIMES: Record<
-  SessionOfDay,
-  Record<number, { start: string; end: string }>
-> = {
-  morning: {
-    1: { start: '07:30', end: '08:05' },
-    2: { start: '08:15', end: '08:50' },
-    3: { start: '09:05', end: '09:40' },
-    4: { start: '09:50', end: '10:25' },
-    5: { start: '10:30', end: '11:05' },
-  },
-  afternoon: {
-    1: { start: '14:00', end: '14:35' },
-    2: { start: '14:45', end: '15:20' },
-    3: { start: '15:35', end: '16:10' },
-  },
-  evening: {
-    1: { start: '19:30', end: '20:30' },
-    2: { start: '20:30', end: '20:50' },
-  },
-};
 
 function normalizeDayOfWeek(raw: unknown): number | null {
   if (typeof raw === 'number' && Number.isInteger(raw)) {
@@ -234,19 +206,14 @@ export function parseScheduleJsonFromAiResponse(rawText: string): {
         ? 'tutoring'
         : 'regular';
 
-    const fallbackTime = DEFAULT_SLOT_TIMES[sessionOfDay]?.[periodNumber] || {
-      start: sessionOfDay === 'morning' ? '07:30' : sessionOfDay === 'afternoon' ? '14:00' : '19:30',
-      end: sessionOfDay === 'morning' ? '08:05' : sessionOfDay === 'afternoon' ? '14:35' : '20:30',
-    };
-
     const startTime =
       typeof obj.startTime === 'string' && obj.startTime.trim()
         ? obj.startTime.trim()
-        : fallbackTime.start;
+        : '';
     const endTime =
       typeof obj.endTime === 'string' && obj.endTime.trim()
         ? obj.endTime.trim()
-        : fallbackTime.end;
+        : '';
 
     const materialsNote =
       typeof obj.materialsNote === 'string' && obj.materialsNote.trim()

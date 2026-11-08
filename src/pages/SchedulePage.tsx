@@ -6,7 +6,6 @@ import {
   Check,
   CheckSquare,
   ClipboardPaste,
-  Clock,
   Copy,
   Edit3,
   Eye,
@@ -49,93 +48,83 @@ interface TimeSlotRow {
   sessionOfDay: SessionOfDay;
   periodNumber: number;
   label: string;
-  defaultStart: string;
-  defaultEnd: string;
   defaultType: ScheduleType;
 }
 
 const OUTLOOK_TIME_SLOTS: TimeSlotRow[] = [
-  // Buổi sáng
+  // Buổi sáng (5 tiết)
   {
     sessionOfDay: 'morning',
     periodNumber: 1,
     label: 'Sáng • Tiết 1',
-    defaultStart: '07:30',
-    defaultEnd: '08:05',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'morning',
     periodNumber: 2,
     label: 'Sáng • Tiết 2',
-    defaultStart: '08:15',
-    defaultEnd: '08:50',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'morning',
     periodNumber: 3,
     label: 'Sáng • Tiết 3',
-    defaultStart: '09:05',
-    defaultEnd: '09:40',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'morning',
     periodNumber: 4,
     label: 'Sáng • Tiết 4',
-    defaultStart: '09:50',
-    defaultEnd: '10:25',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'morning',
     periodNumber: 5,
     label: 'Sáng • Tiết 5',
-    defaultStart: '10:30',
-    defaultEnd: '11:05',
     defaultType: 'regular',
   },
-  // Buổi chiều
+  // Buổi chiều (5 tiết)
   {
     sessionOfDay: 'afternoon',
     periodNumber: 1,
     label: 'Chiều • Tiết 1',
-    defaultStart: '14:00',
-    defaultEnd: '14:35',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'afternoon',
     periodNumber: 2,
     label: 'Chiều • Tiết 2',
-    defaultStart: '14:45',
-    defaultEnd: '15:20',
     defaultType: 'regular',
   },
   {
     sessionOfDay: 'afternoon',
     periodNumber: 3,
     label: 'Chiều • Tiết 3',
-    defaultStart: '15:35',
-    defaultEnd: '16:10',
     defaultType: 'regular',
   },
-  // Buổi tối (Góc học tập tại nhà)
+  {
+    sessionOfDay: 'afternoon',
+    periodNumber: 4,
+    label: 'Chiều • Tiết 4',
+    defaultType: 'regular',
+  },
+  {
+    sessionOfDay: 'afternoon',
+    periodNumber: 5,
+    label: 'Chiều • Tiết 5',
+    defaultType: 'regular',
+  },
+  // Buổi tối (Góc học tập tại nhà - không ghi giờ cố định)
   {
     sessionOfDay: 'evening',
     periodNumber: 1,
-    label: 'Tối • Ca 1 (60p)',
-    defaultStart: '19:30',
-    defaultEnd: '20:30',
+    label: 'Tối • Tiết 1 (Học bài)',
     defaultType: 'tutoring',
   },
   {
     sessionOfDay: 'evening',
     periodNumber: 2,
-    label: 'Tối • Ca 2 (Soạn cặp)',
-    defaultStart: '20:30',
-    defaultEnd: '20:50',
+    label: 'Tối • Tiết 2 (Soạn cặp)',
     defaultType: 'tutoring',
   },
 ];
@@ -211,9 +200,7 @@ const SAMPLE_AI_RESPONSE = `\`\`\`json
     "subject": "Toán",
     "type": "regular",
     "teacherName": "Cô Thu Hà",
-    "materialsNote": "SGK Toán 3, vở bài tập Toán, thước kẻ",
-    "startTime": "07:30",
-    "endTime": "08:05"
+    "materialsNote": "SGK Toán 3, vở bài tập Toán, thước kẻ"
   },
   {
     "dayOfWeek": 1,
@@ -222,9 +209,7 @@ const SAMPLE_AI_RESPONSE = `\`\`\`json
     "subject": "Tiếng Việt",
     "type": "regular",
     "teacherName": "Cô Thu Hà",
-    "materialsNote": "SGK Tiếng Việt 3, vở chính tả",
-    "startTime": "08:15",
-    "endTime": "08:50"
+    "materialsNote": "SGK Tiếng Việt 3, vở chính tả"
   },
   {
     "dayOfWeek": 2,
@@ -233,9 +218,7 @@ const SAMPLE_AI_RESPONSE = `\`\`\`json
     "subject": "Tiếng Anh",
     "type": "regular",
     "teacherName": "Thầy Nam",
-    "materialsNote": "Sách Tiếng Anh Global Success 3, vở từ vựng",
-    "startTime": "07:30",
-    "endTime": "08:05"
+    "materialsNote": "Sách Tiếng Anh Global Success 3, vở từ vựng"
   },
   {
     "dayOfWeek": 3,
@@ -244,9 +227,7 @@ const SAMPLE_AI_RESPONSE = `\`\`\`json
     "subject": "Tin học & Công nghệ",
     "type": "regular",
     "teacherName": "",
-    "materialsNote": "SGK Tin học & Công nghệ 3",
-    "startTime": "14:00",
-    "endTime": "14:35"
+    "materialsNote": "SGK Tin học & Công nghệ 3"
   }
 ]
 \`\`\``;
@@ -302,8 +283,6 @@ export function SchedulePage() {
   const [cellSubject, setCellSubject] = useState<string>('');
   const [cellMaterials, setCellMaterials] = useState<string>('');
   const [cellTeacher, setCellTeacher] = useState<string>('');
-  const [cellStart, setCellStart] = useState<string>('');
-  const [cellEnd, setCellEnd] = useState<string>('');
   const [cellType, setCellType] = useState<ScheduleType>('regular');
   const [savingCell, setSavingCell] = useState<boolean>(false);
 
@@ -377,8 +356,8 @@ export function SchedulePage() {
           type: quickStampSubject.type || slot.defaultType,
           teacherName: '',
           materialsNote: quickStampSubject.materials,
-          startTime: slot.defaultStart,
-          endTime: slot.defaultEnd,
+          startTime: '',
+          endTime: '',
         });
         await loadScheduleData();
       } finally {
@@ -391,8 +370,6 @@ export function SchedulePage() {
     setCellSubject(existingItem?.subject || '');
     setCellMaterials(existingItem?.materialsNote || '');
     setCellTeacher(existingItem?.teacherName || '');
-    setCellStart(existingItem?.startTime || slot.defaultStart);
-    setCellEnd(existingItem?.endTime || slot.defaultEnd);
     setCellType(existingItem?.type || slot.defaultType);
   };
 
@@ -423,8 +400,8 @@ export function SchedulePage() {
         type: finalType,
         teacherName: cellTeacher.trim(),
         materialsNote: finalMaterials,
-        startTime: cellStart.trim(),
-        endTime: cellEnd.trim(),
+        startTime: '',
+        endTime: '',
       });
       setActiveCell(null);
       await loadScheduleData();
@@ -500,8 +477,8 @@ export function SchedulePage() {
         type: 'regular',
         teacherName: '',
         materialsNote: 'SGK Toán, vở bài tập',
-        startTime: '07:30',
-        endTime: '08:05',
+        startTime: '',
+        endTime: '',
       },
     ]);
   };
@@ -727,7 +704,7 @@ export function SchedulePage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-800/60">
                 <th className="w-36 border-r border-slate-200 px-3 py-3.5 text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                  Tiết / Khung giờ
+                  Buổi / Tiết
                 </th>
                 {ORDERED_DAYS_OF_WEEK.map((dow) => {
                   const isToday = dow === todayDayOfWeek;
@@ -772,10 +749,10 @@ export function SchedulePage() {
 
                 const sectionBannerTitle =
                   slot.sessionOfDay === 'morning'
-                    ? '☀️ BUỔI SÁNG (Lịch học trên trường / ở nhà)'
+                    ? '☀️ BUỔI SÁNG (5 tiết)'
                     : slot.sessionOfDay === 'afternoon'
-                    ? '🌤️ BUỔI CHIỀU'
-                    : '🌙 BUỔI TỐI – GÓC HỌC TẬP 60 PHÚT TẠI NHÀ';
+                    ? '🌤️ BUỔI CHIỀU (5 tiết)'
+                    : '🌙 BUỔI TỐI – GÓC HỌC TẬP TẠI NHÀ';
 
                 return (
                   <React.Fragment
@@ -793,13 +770,9 @@ export function SchedulePage() {
                     )}
 
                     <tr className="group/row hover:bg-slate-50/40 dark:hover:bg-slate-800/20">
-                      <td className="border-r border-slate-200 bg-slate-50/40 px-3 py-2.5 align-top dark:border-slate-800 dark:bg-slate-900/50">
+                      <td className="border-r border-slate-200 bg-slate-50/40 px-3 py-3 align-middle dark:border-slate-800 dark:bg-slate-900/50">
                         <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
                           {slot.label}
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400">
-                          <Clock className="h-3 w-3" />
-                          {slot.defaultStart} - {slot.defaultEnd}
                         </div>
                       </td>
 
@@ -819,7 +792,7 @@ export function SchedulePage() {
                             onClick={() =>
                               void handleCellClick(dow, slot, primaryItem)
                             }
-                            className={`relative h-20 min-w-[115px] border-r border-slate-200 p-1.5 align-top transition last:border-r-0 dark:border-slate-800 ${
+                            className={`relative h-16 min-w-[115px] border-r border-slate-200 p-1.5 align-top transition last:border-r-0 dark:border-slate-800 ${
                               isInstructorOrOwner ? 'cursor-pointer' : ''
                             } ${
                               isToday
@@ -868,16 +841,13 @@ export function SchedulePage() {
                                   )}
                                 </div>
 
-                                <div className="mt-1 flex items-center justify-between text-[10px] opacity-70">
-                                  <span>
-                                    {primaryItem.startTime || slot.defaultStart}
-                                  </span>
-                                  {primaryItem.teacherName && (
-                                    <span className="truncate max-w-[65px]">
+                                {primaryItem.teacherName && (
+                                  <div className="mt-1 flex items-center justify-end text-[10px] opacity-70">
+                                    <span className="truncate max-w-[90px]">
                                       {primaryItem.teacherName}
                                     </span>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               isInstructorOrOwner && (
@@ -992,37 +962,7 @@ export function SchedulePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label
-                    htmlFor="cell-start-input"
-                    className="block text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                  >
-                    Bắt đầu
-                  </label>
-                  <input
-                    id="cell-start-input"
-                    type="text"
-                    value={cellStart}
-                    onChange={(e) => setCellStart(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="cell-end-input"
-                    className="block text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                  >
-                    Kết thúc
-                  </label>
-                  <input
-                    id="cell-end-input"
-                    type="text"
-                    value={cellEnd}
-                    onChange={(e) => setCellEnd(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label
                     htmlFor="cell-type-input"
@@ -1034,29 +974,29 @@ export function SchedulePage() {
                     id="cell-type-input"
                     value={cellType}
                     onChange={(e) => setCellType(e.target.value as ScheduleType)}
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
                   >
                     <option value="regular">Ở trường</option>
                     <option value="tutoring">Kèm tại nhà</option>
                   </select>
                 </div>
-              </div>
 
-              <div>
-                <label
-                  htmlFor="cell-teacher-input"
-                  className="block text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                >
-                  Giáo viên / Người hướng dẫn (Tùy chọn)
-                </label>
-                <input
-                  id="cell-teacher-input"
-                  type="text"
-                  value={cellTeacher}
-                  onChange={(e) => setCellTeacher(e.target.value)}
-                  placeholder="VD: Cô Thu Hà / Anh Hai"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
-                />
+                <div>
+                  <label
+                    htmlFor="cell-teacher-input"
+                    className="block text-[11px] font-bold text-slate-600 dark:text-slate-400"
+                  >
+                    Giáo viên / Người hướng dẫn (Tùy chọn)
+                  </label>
+                  <input
+                    id="cell-teacher-input"
+                    type="text"
+                    value={cellTeacher}
+                    onChange={(e) => setCellTeacher(e.target.value)}
+                    placeholder="VD: Cô Thu Hà / Anh Hai"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-3">
@@ -1265,7 +1205,6 @@ export function SchedulePage() {
                         <th className="p-2.5 w-16">Tiết</th>
                         <th className="p-2.5">Môn học *</th>
                         <th className="p-2.5">Sách vở chuẩn bị</th>
-                        <th className="p-2.5 w-24">Giờ</th>
                         <th className="p-2.5 w-28">Phân loại</th>
                         <th className="p-2.5 w-10"></th>
                       </tr>
@@ -1364,22 +1303,6 @@ export function SchedulePage() {
                               }
                               placeholder="SGK, vở..."
                               className="w-full min-w-[150px] rounded-lg border border-slate-300 bg-white px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800"
-                            />
-                          </td>
-
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              aria-label="Giờ bắt đầu"
-                              value={draft.startTime}
-                              onChange={(e) =>
-                                handleUpdateDraftField(
-                                  draft.tempId,
-                                  'startTime',
-                                  e.target.value
-                                )
-                              }
-                              className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center dark:border-slate-700 dark:bg-slate-800"
                             />
                           </td>
 
