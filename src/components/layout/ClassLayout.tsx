@@ -1,30 +1,123 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
   Calendar,
+  Check,
+  ChevronsUpDown,
   Clock,
+  FolderKanban,
   LayoutDashboard,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PlusCircle,
   ShieldAlert,
+  Sparkles,
   Trophy,
   Users,
+  X,
 } from 'lucide-react';
+import type { ClassMember, StudyClass } from '@/types/domain';
+import { useAuth } from '@/contexts/AuthContext';
 import { ClassProvider, useClassContext } from '@/contexts/ClassContext';
+import { listUserClassesWithMembership } from '@/services/studyNestService';
+import { DAY_OF_WEEK_SHORT_LABELS } from '@/lib/date';
 import {
   ClassIconView,
   RoleBadge,
   THEME_COLOR_STYLES,
 } from '@/components/ui/ThemeBadges';
 
+interface WorkspaceNavItem {
+  to: string;
+  end: boolean;
+  label: string;
+  sublabel: string;
+  icon: typeof LayoutDashboard;
+}
+
+interface WorkspaceNavGroup {
+  groupTitle: string;
+  items: WorkspaceNavItem[];
+}
+
 function ClassLayoutInner() {
+  const { user } = useAuth();
   const { studyClass, role, loading, error } = useClassContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Trạng thái thu gọn sidebar trên màn hình lớn
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('studynest_sidebar_collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  // Trạng thái mở drawer trên mobile
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+
+  // Trạng thái mở bộ chuyển đổi Workspace (Workspace Switcher)
+  const [switcherOpen, setSwitcherOpen] = useState<boolean>(false);
+  const [allWorkspaces, setAllWorkspaces] = useState<
+    Array<{ studyClass: StudyClass; membership: ClassMember }>
+  >([]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'studynest_sidebar_collapsed',
+        collapsed ? '1' : '0'
+      );
+    } catch {
+      // Ignore
+    }
+  }, [collapsed]);
+
+  // Đóng menu mobile & switcher khi đổi route
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setSwitcherOpen(false);
+  }, [location.pathname]);
+
+  // Tải danh sách tất cả các lớp (workspaces) của user để chuyển nhanh
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    listUserClassesWithMembership(user.uid)
+      .then((list) => {
+        if (active) setAllWorkspaces(list);
+      })
+      .catch(() => {
+        // Bỏ qua lỗi phụ ở switcher
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, studyClass?.id]);
 
   if (loading) {
     return (
-      <div className="space-y-4 py-8" role="status" aria-live="polite">
-        <div className="h-28 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
-        <div className="h-12 animate-pulse rounded-xl bg-slate-200/70 dark:bg-slate-800/60" />
-        <div className="h-64 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
+      <div
+        className="flex flex-col gap-6 lg:flex-row"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="h-20 w-full animate-pulse rounded-2xl bg-slate-200/70 lg:h-[calc(100vh-7rem)] lg:w-64 dark:bg-slate-800/60" />
+        <div className="flex-1 space-y-4">
+          <div className="h-16 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
+          <div className="h-96 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
+        </div>
       </div>
     );
   }
@@ -36,7 +129,7 @@ function ClassLayoutInner() {
           <ShieldAlert className="h-7 w-7" />
         </div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-          Không có quyền truy cập lớp học này
+          Không có quyền truy cập Workspace lớp học này
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {error ||
@@ -48,123 +141,449 @@ function ClassLayoutInner() {
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
           >
             <ArrowLeft className="h-4 w-4" />
-            Quay về Lớp của tôi
+            Quay về danh sách Workspace
           </Link>
         </div>
       </div>
     );
   }
 
-  const theme = THEME_COLOR_STYLES[studyClass.color] || THEME_COLOR_STYLES.emerald;
+  const theme =
+    THEME_COLOR_STYLES[studyClass.color] || THEME_COLOR_STYLES.emerald;
   const baseUrl = `/app/classes/${studyClass.id}`;
 
-  const navItems = [
+  const navGroups: WorkspaceNavGroup[] = [
     {
-      to: baseUrl,
-      end: true,
-      label: role === 'student' ? 'Góc học hôm nay' : 'Tổng quan lớp',
-      icon: LayoutDashboard,
+      groupTitle: 'Không gian học tập',
+      items: [
+        {
+          to: baseUrl,
+          end: true,
+          label: role === 'student' ? 'Góc học hôm nay' : 'Tổng quan lớp',
+          sublabel: 'Điều phối 60p & Soạn cặp',
+          icon: LayoutDashboard,
+        },
+        {
+          to: `${baseUrl}/schedule`,
+          end: false,
+          label: 'Thời khóa biểu',
+          sublabel: 'Lịch tuần & Nhập AI',
+          icon: Calendar,
+        },
+        {
+          to: `${baseUrl}/sessions`,
+          end: false,
+          label: 'Buổi học & Nhiệm vụ',
+          sublabel: 'Nhật ký 60p & Bài tập',
+          icon: Clock,
+        },
+        {
+          to: `${baseUrl}/lessons`,
+          end: false,
+          label: 'Thư viện bài học',
+          sublabel: 'Bài giảng & Ôn tập',
+          icon: BookOpen,
+        },
+      ],
     },
     {
-      to: `${baseUrl}/schedule`,
-      end: false,
-      label: 'Thời khóa biểu',
-      icon: Calendar,
+      groupTitle: 'Động lực & Thành tích',
+      items: [
+        {
+          to: `${baseUrl}/progress`,
+          end: false,
+          label: 'Sao & Chuỗi ngày học',
+          sublabel: 'Bảng vàng & Streak',
+          icon: Trophy,
+        },
+      ],
     },
     {
-      to: `${baseUrl}/lessons`,
-      end: false,
-      label: 'Thư viện bài học',
-      icon: BookOpen,
-    },
-    {
-      to: `${baseUrl}/sessions`,
-      end: false,
-      label: 'Buổi học & Nhiệm vụ',
-      icon: Clock,
-    },
-    {
-      to: `${baseUrl}/progress`,
-      end: false,
-      label: 'Sao & Chuỗi ngày học',
-      icon: Trophy,
-    },
-    {
-      to: `${baseUrl}/members`,
-      end: false,
-      label: 'Thành viên & Cài đặt',
-      icon: Users,
+      groupTitle: 'Quản trị Workspace',
+      items: [
+        {
+          to: `${baseUrl}/members`,
+          end: false,
+          label: 'Thành viên & Cài đặt',
+          sublabel: 'Mã mời & Cấu hình lớp',
+          icon: Users,
+        },
+      ],
     },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* Header Lớp học */}
-      <div
-        className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 shadow-sm ${theme.bgSoft} ${theme.border}`}
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ${theme.iconBg}`}
+  const allNavItems = navGroups.flatMap((g) => g.items);
+  const currentActiveItem =
+    allNavItems.find((item) =>
+      item.end
+        ? location.pathname === item.to
+        : location.pathname.startsWith(item.to)
+    ) || allNavItems[0];
+
+  // Khi chuyển sang Workspace (Lớp) khác, giữ nguyên phân khu đang mở (VD: đang ở /schedule thì sang lớp kia cũng mở /schedule)
+  const handleSwitchWorkspace = (targetClassId: string) => {
+    setSwitcherOpen(false);
+    if (targetClassId === studyClass.id) return;
+
+    const suffix = location.pathname.slice(baseUrl.length);
+    const topLevelSection = suffix.split('/').filter(Boolean)[0];
+    const allowedSections = [
+      'schedule',
+      'lessons',
+      'sessions',
+      'progress',
+      'members',
+    ];
+    if (topLevelSection && allowedSections.includes(topLevelSection)) {
+      navigate(`/app/classes/${targetClassId}/${topLevelSection}`);
+    } else {
+      navigate(`/app/classes/${targetClassId}`);
+    }
+  };
+
+  const studyDaysText =
+    studyClass.studyDaysOfWeek && studyClass.studyDaysOfWeek.length > 0
+      ? studyClass.studyDaysOfWeek
+          .map((d) => DAY_OF_WEEK_SHORT_LABELS[d] || `T${d + 1}`)
+          .join(', ')
+      : 'Linh hoạt';
+
+  const renderSidebarContent = (isMobileDrawer = false) => {
+    const isMini = !isMobileDrawer && collapsed;
+
+    return (
+      <div className="flex h-full flex-col justify-between">
+        {/* Phần trên: Workspace Switcher + Danh sách phân khu */}
+        <div className="space-y-4">
+          {/* 1. Bộ chuyển đổi Workspace (Workspace Switcher) */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setSwitcherOpen((prev) => !prev)}
+              title={`Workspace: ${studyClass.name} (Bấm để chuyển nhanh lớp học)`}
+              className={`group flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left transition shadow-xs ${theme.bgSoft} ${theme.border} hover:shadow-sm`}
             >
-              <ClassIconView icon={studyClass.icon} className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  to="/app/classes"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Tất cả lớp
-                </Link>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
-                <RoleBadge role={role} />
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-xs ${theme.iconBg}`}
+              >
+                <ClassIconView icon={studyClass.icon} className="h-5 w-5" />
               </div>
-              <h1 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
-                {studyClass.name}
-              </h1>
+
+              {!isMini && (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+                        Workspace
+                      </span>
+                      <span className="text-slate-300 dark:text-slate-600">•</span>
+                      <RoleBadge role={role} />
+                    </div>
+                    <p className="mt-0.5 truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                      {studyClass.name}
+                    </p>
+                  </div>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-white" />
+                </>
+              )}
+            </button>
+
+            {/* Dropdown danh sách các Workspace (Lớp học) */}
+            {switcherOpen && (
+              <div className="absolute left-0 right-0 z-50 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                <div className="px-2.5 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                  Chuyển nhanh Workspace ({allWorkspaces.length})
+                </div>
+                <div className="max-h-60 space-y-1 overflow-y-auto py-1">
+                  {allWorkspaces.map(({ studyClass: cls, membership: mem }) => {
+                    const isCurrent = cls.id === studyClass.id;
+                    const clsTheme =
+                      THEME_COLOR_STYLES[cls.color] ||
+                      THEME_COLOR_STYLES.emerald;
+                    return (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => handleSwitchWorkspace(cls.id)}
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition ${
+                          isCurrent
+                            ? 'bg-emerald-50/90 font-bold text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-200'
+                            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${clsTheme.iconBg}`}
+                        >
+                          <ClassIconView icon={cls.icon} className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-bold">{cls.name}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {mem.role === 'owner'
+                              ? 'Chủ lớp'
+                              : mem.role === 'instructor'
+                              ? 'Người hướng dẫn'
+                              : 'Học sinh'}
+                          </div>
+                        </div>
+                        {isCurrent && (
+                          <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-1 border-t border-slate-100 pt-1.5 dark:border-slate-800">
+                  <Link
+                    to="/app/classes"
+                    className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Tạo mới / Quản lý tất cả Workspace
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Danh sách điều hướng phân khu trong Workspace */}
+          <nav
+            aria-label="Điều hướng trong Workspace lớp học"
+            className="space-y-4"
+          >
+            {navGroups.map((group) => (
+              <div key={group.groupTitle} className="space-y-1">
+                {!isMini && (
+                  <div className="px-3 text-[11px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                    {group.groupTitle}
+                  </div>
+                )}
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        title={isMini ? `${item.label} — ${item.sublabel}` : undefined}
+                        className={({ isActive }) =>
+                          `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                            isMini ? 'justify-center' : ''
+                          } ${
+                            isActive
+                              ? 'bg-emerald-600 text-white font-bold shadow-xs dark:bg-emerald-600 dark:text-white'
+                              : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white'
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <Icon
+                              className={`h-4 w-4 shrink-0 transition ${
+                                isActive
+                                  ? 'text-white'
+                                  : 'text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400'
+                              }`}
+                            />
+                            {!isMini && (
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate leading-tight">
+                                  {item.label}
+                                </div>
+                                <div
+                                  className={`truncate text-[11px] leading-tight mt-0.5 ${
+                                    isActive
+                                      ? 'text-emerald-100 font-normal'
+                                      : 'text-slate-400 dark:text-slate-500'
+                                  }`}
+                                >
+                                  {item.sublabel}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        {/* Phần chân Sidebar: Thông tin nhanh Workspace & nút thu gọn */}
+        <div className="mt-6 space-y-2 border-t border-slate-200/80 pt-3 dark:border-slate-800">
+          {!isMini && (
+            <div className="rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-800/60">
+              <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Lịch sinh hoạt Workspace</span>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                Ngày học định kỳ: <strong className="text-slate-700 dark:text-slate-200">{studyDaysText}</strong>
+              </p>
               {studyClass.description && (
-                <p className="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
                   {studyClass.description}
                 </p>
               )}
             </div>
+          )}
+
+          <div className="flex items-center justify-between gap-1">
+            <Link
+              to="/app/classes"
+              title="Quay lại danh sách tất cả Workspace"
+              className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white ${
+                isMini ? 'w-full justify-center' : 'flex-1'
+              }`}
+            >
+              <FolderKanban className="h-4 w-4 shrink-0" />
+              {!isMini && <span>Tất cả Workspace</span>}
+            </Link>
+
+            {!isMobileDrawer && (
+              <button
+                type="button"
+                onClick={() => setCollapsed((c) => !c)}
+                title={
+                  collapsed
+                    ? 'Mở rộng thanh menu bên trái'
+                    : 'Thu gọn thanh menu bên trái'
+                }
+                aria-label={
+                  collapsed
+                    ? 'Mở rộng thanh menu bên trái'
+                    : 'Thu gọn thanh menu bên trái'
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                {collapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+      {/* Thanh điều khiển Workspace trên Mobile / Tablet (< lg) */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs lg:hidden dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Mở menu Workspace"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${theme.iconBg}`}
+          >
+            <ClassIconView icon={studyClass.icon} className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                {studyClass.name}
+              </span>
+              <RoleBadge role={role} />
+            </div>
+            <p className="truncate text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              {currentActiveItem?.label}
+            </p>
           </div>
         </div>
 
-        {/* Thanh điều hướng con của lớp */}
-        <nav
-          aria-label="Điều hướng trong lớp học"
-          className="mt-5 flex items-center gap-1.5 overflow-x-auto pb-1"
+        <Link
+          to="/app/classes"
+          className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
         >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
-                      : 'bg-white/80 text-slate-700 hover:bg-white dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-900'
-                  }`
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            );
-          })}
-        </nav>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Đổi lớp
+        </Link>
       </div>
 
-      {/* Nội dung trang con */}
-      <div>
-        <Outlet />
+      {/* Drawer Sidebar trên Mobile (< lg) */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="relative z-10 flex h-full w-80 max-w-[85vw] flex-col bg-white p-4 shadow-2xl dark:bg-slate-900">
+            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+              <span className="text-xs font-extrabold tracking-wider uppercase text-slate-400">
+                Menu Workspace
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Đóng menu"
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {renderSidebarContent(true)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Left Sidebar cố định trên Desktop (>= lg) */}
+      <aside
+        aria-label="Thanh điều hướng Workspace bên trái"
+        className={`hidden lg:block lg:sticky lg:top-20 lg:h-[calc(100vh-6.5rem)] shrink-0 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs transition-all duration-200 dark:border-slate-800 dark:bg-slate-900 ${
+          collapsed ? 'lg:w-[76px]' : 'lg:w-64'
+        }`}
+      >
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Vùng nội dung chính của Workspace bên phải */}
+      <div className="min-w-0 flex-1 space-y-5">
+        {/* Thanh ngữ cảnh (Breadcrumb Bar) gọn gàng phía trên trang con */}
+        <div className="hidden lg:flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-5 py-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center gap-2.5 text-sm">
+            <span className="font-semibold text-slate-400 dark:text-slate-500">
+              Workspace
+            </span>
+            <span className="text-slate-300 dark:text-slate-700">/</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200">
+              {studyClass.name}
+            </span>
+            <span className="text-slate-300 dark:text-slate-700">/</span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              {currentActiveItem?.label}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {studyClass.description && (
+              <span className="max-w-md truncate text-xs text-slate-500 dark:text-slate-400">
+                {studyClass.description}
+              </span>
+            )}
+            <RoleBadge role={role} />
+          </div>
+        </div>
+
+        {/* Nội dung trang con */}
+        <div>
+          <Outlet />
+        </div>
       </div>
     </div>
   );
@@ -177,4 +596,3 @@ export function ClassLayout() {
     </ClassProvider>
   );
 }
-

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
+  FolderKanban,
   LogOut,
   Moon,
   RotateCcw,
   ShieldAlert,
   Sparkles,
   Sun,
-  Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -23,6 +23,10 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
     resetDemoData,
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isWorkspaceRoute =
+    location.pathname.startsWith('/app/classes/') &&
+    location.pathname !== '/app/classes';
   const [dark, setDark] = useState<boolean>(() => {
     try {
       return localStorage.getItem('studynest_theme') === 'dark';
@@ -110,7 +114,11 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
       {/* Top Navigation */}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div
+          className={`mx-auto flex h-16 items-center justify-between px-4 sm:px-6 ${
+            isWorkspaceRoute ? 'max-w-[1600px]' : 'max-w-6xl'
+          }`}
+        >
           <div className="flex items-center gap-4">
             <Link
               to="/app/classes"
@@ -124,7 +132,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
                   StudyNest
                 </span>
                 <span className="block text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  Góc học tập 60 phút
+                  Workspace học tập 60 phút
                 </span>
               </div>
             </Link>
@@ -134,8 +142,8 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
                 to="/app/classes"
                 className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                Lớp của tôi
+                <FolderKanban className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                Tất cả Workspace
               </Link>
             </nav>
           </div>
@@ -175,14 +183,24 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        className={`mx-auto w-full flex-1 ${
+          isWorkspaceRoute
+            ? 'max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6'
+            : 'max-w-6xl px-4 py-6 sm:px-6 sm:py-8'
+        }`}
+      >
         {children ?? <Outlet />}
       </main>
 
       <footer className="border-t border-slate-200/70 bg-white/60 py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-        <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div
+          className={`mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 ${
+            isWorkspaceRoute ? 'max-w-[1600px]' : 'max-w-6xl'
+          }`}
+        >
           <span>
-            <strong>StudyNest – Góc học tập</strong> • Thiết kế tối giản, an toàn dữ liệu cho học sinh nhỏ tuổi.
+            <strong>StudyNest – Workspace học tập</strong> • Thiết kế tối giản, an toàn dữ liệu cho học sinh nhỏ tuổi.
           </span>
           <span>Múi giờ mặc định: Asia/Ho_Chi_Minh • Không mạng xã hội / Không hồ sơ công khai</span>
         </div>
