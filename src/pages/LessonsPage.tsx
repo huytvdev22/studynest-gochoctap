@@ -10,10 +10,9 @@ import {
   ExternalLink,
   Eye,
   FileEdit,
-  Flame,
-  FolderOpen,
   Layers,
   Plus,
+  RotateCcw,
   Search,
   Sparkles,
   Trash2,
@@ -229,19 +228,6 @@ export function LessonsPage() {
     ? formatDateInTimezone(new Date(), studyClass.timezone)
     : '2026-11-08';
 
-  // Tổng hợp dữ liệu Đường cong quên lãng (SRS) theo Giáo trình & Unit đang lọc
-  const srsOverview = useMemo(
-    () =>
-      buildCurriculumSrsOverview({
-        lessons,
-        srsStates,
-        todayStr,
-        subjectFilter,
-        unitFilter,
-      }),
-    [lessons, srsStates, todayStr, subjectFilter, unitFilter]
-  );
-
   // Các thẻ nguồn dùng để tạo Đề kiểm tra trắc nghiệm AI
   const quizSourceCards = useMemo(() => {
     const overview = buildCurriculumSrsOverview({
@@ -296,6 +282,18 @@ export function LessonsPage() {
     },
     {}
   );
+
+  // Toàn bộ Flashcard trong các bài học đang hiển thị theo bộ lọc
+  const allCardsInView: StudyDeckCard[] = filteredLessons.flatMap((les) => {
+    const lang = inferDefaultTtsLang(les.subject, les.ttsLang);
+    return les.keywords.map((kw) => ({
+      lessonId: les.id,
+      subject: les.subject,
+      unitTitle: les.unitTitle || 'Chung',
+      keyword: kw,
+      ttsLang: kw.ttsLang !== undefined ? kw.ttsLang : lang,
+    }));
+  });
 
   const handleSubjectInputChange = (val: string) => {
     setSubject(val);
@@ -530,15 +528,23 @@ export function LessonsPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Thanh chọn Giáo trình độc lập & Nút tạo bằng AI */}
+      {/* 1. Header Thư viện & Bộ lọc trực quan, tinh gọn */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-              Giáo trình, Flashcard & Đề kiểm tra
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Mỗi giáo trình độc lập (VD: Everybody Up, Toán Lớp 3...) có cây Unit, bộ Flashcard và bài kiểm tra trắc nghiệm riêng.
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                <BookOpen className="h-4 w-4" />
+              </span>
+              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
+                Thư viện Giáo trình & Bài học
+              </h1>
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {curriculums.length} giáo trình • {filteredLessons.length} bài
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Tra cứu bài học theo từng giáo trình, ôn luyện từ vựng qua bộ thẻ Flashcard.
             </p>
           </div>
 
@@ -547,16 +553,16 @@ export function LessonsPage() {
               <button
                 type="button"
                 onClick={() => openCreateLessonModal()}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
               >
-                <Bot className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Thêm Bài học & Flashcard (AI)
               </button>
 
               <button
                 type="button"
                 onClick={() => openQuizGeneratorModal()}
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-violet-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-violet-700"
               >
                 <ClipboardCheck className="h-4 w-4" />
                 Tạo Đề Trắc Nghiệm (AI)
@@ -565,73 +571,50 @@ export function LessonsPage() {
           )}
         </div>
 
-        {/* Các tab Giáo trình độc lập */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3.5 dark:border-slate-800">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-            <FolderOpen className="h-3.5 w-3.5 text-emerald-600" />
-            Giáo trình:
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setSubjectFilter('ALL');
-              setUnitFilter('ALL');
-            }}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              subjectFilter === 'ALL'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            Tất cả ({lessons.length})
-          </button>
-
-          {curriculums.map((cur) => {
-            const count = lessons.filter((l) => l.subject === cur).length;
-            const hasAudio = Boolean(inferDefaultTtsLang(cur));
-            return (
-              <button
-                key={cur}
-                type="button"
-                onClick={() => {
-                  setSubjectFilter(cur);
-                  setUnitFilter('ALL');
-                }}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                  subjectFilter === cur
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'border border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
-                }`}
-              >
-                <span>{cur}</span>
-                {hasAudio && <Volume2 className="h-3.5 w-3.5 opacity-80" />}
-                <span className="rounded-md bg-black/10 px-1.5 py-0.2 text-[10px]">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Bộ lọc Unit + Tìm kiếm */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Thanh công cụ lọc & tìm kiếm gọn gàng 1 hàng */}
+        <div className="flex flex-wrap items-center gap-2.5 border-t border-slate-100 pt-3.5 dark:border-slate-800">
+          {/* Ô tìm kiếm */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="pointer-events-none absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="search"
-              aria-label="Tìm bài học, Unit hoặc từ vựng"
+              aria-label="Tìm bài học hoặc từ vựng"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm theo Unit, tên bài hoặc từ vựng..."
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="Tìm kiếm bài học, từ vựng..."
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3.5 py-2 text-xs text-slate-900 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
 
+          {/* Droplist chọn Giáo trình */}
+          <select
+            aria-label="Chọn Giáo trình"
+            value={subjectFilter}
+            onChange={(e) => {
+              setSubjectFilter(e.target.value);
+              setUnitFilter('ALL');
+            }}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <option value="ALL">
+              Tất cả giáo trình ({lessons.length} bài)
+            </option>
+            {curriculums.map((cur) => {
+              const count = lessons.filter((l) => l.subject === cur).length;
+              return (
+                <option key={cur} value={cur}>
+                  {cur} ({count} bài)
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Droplist chọn Unit */}
           <select
             aria-label="Lọc theo Unit / Chương"
             value={unitFilter}
             onChange={(e) => setUnitFilter(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="ALL">Tất cả Unit / Chương</option>
             {unitsInSelectedCurriculum.map((u) => (
@@ -641,6 +624,7 @@ export function LessonsPage() {
             ))}
           </select>
 
+          {/* Droplist Trạng thái (cho Instructor) */}
           {isInstructorOrOwner && (
             <select
               aria-label="Lọc theo trạng thái bài học"
@@ -648,141 +632,56 @@ export function LessonsPage() {
               onChange={(e) =>
                 setStatusFilter(e.target.value as 'ALL' | LessonStatus)
               }
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               <option value="ALL">Mọi trạng thái</option>
               <option value="published">Đã công bố</option>
               <option value="draft">Bản nháp</option>
             </select>
           )}
+
+          {/* Nút lật toàn bộ Flashcard trong giáo trình/kết quả lọc */}
+          {allCardsInView.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                setActiveStudyDeck({
+                  title: `Bộ Flashcard: ${
+                    subjectFilter === 'ALL'
+                      ? 'Tất cả giáo trình'
+                      : subjectFilter
+                  }${unitFilter !== 'ALL' ? ` • ${unitFilter}` : ''}`,
+                  cards: allCardsInView,
+                })
+              }
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/80 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0"
+            >
+              <Layers className="h-3.5 w-3.5" />
+              Lật toàn bộ ({allCardsInView.length} thẻ)
+            </button>
+          )}
+
+          {/* Nút xóa nhanh bộ lọc nếu đang lọc */}
+          {(searchTerm ||
+            subjectFilter !== 'ALL' ||
+            unitFilter !== 'ALL' ||
+            statusFilter !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setSubjectFilter('ALL');
+                setUnitFilter('ALL');
+                setStatusFilter('ALL');
+              }}
+              title="Đặt lại bộ lọc"
+              className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 shrink-0"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
-
-      {/* 2. Bảng theo dõi Đường cong quên lãng (Spaced Repetition - SRS) */}
-      {srsOverview.allCards.length > 0 && (
-        <div className="rounded-3xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/70 via-white to-amber-50/50 p-5 shadow-xs dark:border-emerald-900/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <Flame className="h-5 w-5 text-amber-500" />
-                <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
-                  Đường cong quên lãng & Ghi nhớ Flashcard (
-                  {subjectFilter === 'ALL' ? 'Tất cả giáo trình' : subjectFilter}
-                  )
-                </h2>
-                {isInstructorOrOwner && students.length > 1 && (
-                  <select
-                    aria-label="Chọn học sinh để xem mức độ nhớ"
-                    value={selectedSrsStudentUid}
-                    onChange={(e) => setSelectedSrsStudentUid(e.target.value)}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold dark:border-slate-700 dark:bg-slate-800"
-                  >
-                    {students.map((st) => (
-                      <option key={st.uid} value={st.uid}>
-                        Học sinh: {st.displayName}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Phân loại tự động từ kết quả lật Flashcard và làm bài kiểm tra trắc nghiệm để nhắc ôn đúng lúc sắp quên.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {srsOverview.reviewDueCards.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveStudyDeck({
-                      title: `Ôn tập theo Đường cong quên lãng (${
-                        subjectFilter === 'ALL' ? 'Tổng hợp' : subjectFilter
-                      })`,
-                      cards: srsOverview.reviewDueCards.map((c) => ({
-                        lessonId: c.lessonId,
-                        subject: c.subject,
-                        unitTitle: c.unitTitle,
-                        keyword: c.keyword,
-                        ttsLang: c.ttsLang,
-                      })),
-                    })
-                  }
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-amber-600"
-                >
-                  <Flame className="h-4 w-4" />
-                  Ôn ngay {srsOverview.reviewDueCards.length} thẻ cần nhớ
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveStudyDeck({
-                    title: `Bộ Flashcard: ${
-                      subjectFilter === 'ALL' ? 'Tất cả giáo trình' : subjectFilter
-                    }`,
-                    cards: srsOverview.allCards.map((c) => ({
-                      lessonId: c.lessonId,
-                      subject: c.subject,
-                      unitTitle: c.unitTitle,
-                      keyword: c.keyword,
-                      ttsLang: c.ttsLang,
-                    })),
-                  })
-                }
-                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
-              >
-                <Layers className="h-4 w-4" />
-                Lật toàn bộ ({srsOverview.allCards.length} thẻ)
-              </button>
-            </div>
-          </div>
-
-          {/* 4 ô trạng thái nhớ */}
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 dark:border-slate-800 dark:bg-slate-800/70">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                Mới học (Chưa ôn)
-              </div>
-              <div className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">
-                {srsOverview.counts.new} thẻ
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-rose-200/80 bg-rose-50/70 p-3 dark:border-rose-900/50 dark:bg-rose-950/30">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-300">
-                <span className="h-2 w-2 rounded-full bg-rose-500" />
-                Hay quên (Ôn +1 ngày)
-              </div>
-              <div className="mt-1 text-xl font-extrabold text-rose-700 dark:text-rose-300">
-                {srsOverview.counts.struggling} thẻ
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                Sắp quên / Đến hạn ôn
-              </div>
-              <div className="mt-1 text-xl font-extrabold text-amber-700 dark:text-amber-300">
-                {srsOverview.counts.due_soon} thẻ
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Đã nhớ kỹ (14–30 ngày)
-              </div>
-              <div className="mt-1 text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
-                {srsOverview.counts.mastered} thẻ
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 3. Danh sách bài học gom nhóm theo Giáo trình & Unit */}
       {loading ? (
