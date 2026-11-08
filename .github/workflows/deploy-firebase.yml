@@ -10,8 +10,6 @@ jobs:
   deploy:
     name: Build & Deploy lên Firebase
     runs-on: ubuntu-latest
-    # Chỉ chạy deploy khi đã cấu hình secret FIREBASE_SERVICE_ACCOUNT trên GitHub
-    if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' || vars.FIREBASE_PROJECT_ID != '' }}
 
     steps:
       - name: Checkout mã nguồn
@@ -26,32 +24,46 @@ jobs:
       - name: Cài đặt dependencies
         run: npm ci
 
-      - name: Build ứng dụng với biến môi trường Firebase Production
+      - name: Build ứng dụng với cấu hình Firebase Production
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN || 'studynest-gochoctap.firebaseapp.com' }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'studynest-gochoctap' }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET || 'studynest-gochoctap.firebasestorage.app' }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID || '204447517364' }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID || '1:204447517364:web:b47c6b1191a9110b6465e1' }}
           VITE_USE_FIREBASE_EMULATOR: 'false'
         run: npm run build
 
-      - name: Triển khai Firestore Rules và Indexes
+      - name: Kiểm tra biến FIREBASE_SERVICE_ACCOUNT trong GitHub Secrets
+        id: check_secret
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT_JSON" ]; then
+            echo "has_secret=false" >> $GITHUB_OUTPUT
+            echo "::warning::Chưa cấu hình secret FIREBASE_SERVICE_ACCOUNT trong Settings -> Secrets and variables -> Actions. Bỏ qua bước deploy tự động."
+          else
+            echo "has_secret=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Xác thực Google Cloud từ FIREBASE_SERVICE_ACCOUNT
+        if: steps.check_secret.outputs.has_secret == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Deploy Firestore Rules & Indexes bằng Firebase CLI
+        if: steps.check_secret.outputs.has_secret == 'true'
         run: |
           npm install -g firebase-tools
-          firebase deploy --only firestore:rules,firestore:indexes --project "${{ secrets.VITE_FIREBASE_PROJECT_ID }}"
+          firebase deploy --only firestore:rules,firestore:indexes --project "${{ secrets.VITE_FIREBASE_PROJECT_ID || 'studynest-gochoctap' }}"
 
       - name: Deploy SPA lên Firebase Hosting
+        if: steps.check_secret.outputs.has_secret == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
-          projectId: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-
+          projectId: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'studynest-gochoctap' }}
