@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   ChevronLeft,
@@ -7,6 +7,7 @@ import {
   Sparkles,
   Turtle,
   Volume2,
+  VolumeX,
   X,
   XCircle,
 } from 'lucide-react';
@@ -103,6 +104,7 @@ export function FlashcardStudyModal({
 }) {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [flipped, setFlipped] = useState<boolean>(false);
+  const [autoSpeechEnabled, setAutoSpeechEnabled] = useState<boolean>(true);
   const [localPatch, setLocalPatch] = useState<Record<string, SrsCardProgress>>(
     {}
   );
@@ -112,19 +114,56 @@ export function FlashcardStudyModal({
   const [finished, setFinished] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
-  if (cards.length === 0) return null;
-
   const currentCard = cards[currentIndex] || cards[0];
-  const cardKey = makeSrsCardKey(
-    currentCard.lessonId,
-    currentCard.keyword.term
-  );
-  const effectiveSrs = localPatch[cardKey] || srsStates[cardKey];
+  const cardKey = currentCard
+    ? makeSrsCardKey(currentCard.lessonId, currentCard.keyword.term)
+    : '';
+  const effectiveSrs = cardKey ? localPatch[cardKey] || srsStates[cardKey] : undefined;
   const currentBucket = classifySrsCardBucket(effectiveSrs, todayStr);
-  const activeTtsLang =
-    currentCard.keyword.ttsLang !== undefined
+  const activeTtsLang = currentCard
+    ? currentCard.keyword.ttsLang !== undefined
       ? currentCard.keyword.ttsLang
-      : currentCard.ttsLang;
+      : currentCard.ttsLang
+    : '';
+
+  // Dừng phát âm khi component unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Tự động phát âm khi: mở flashcard lần đầu, chuyển thẻ, hoặc lật thẻ (nếu có âm thanh và đang bật chế độ đọc)
+  useEffect(() => {
+    if (!autoSpeechEnabled || finished || !currentCard || !activeTtsLang) {
+      return;
+    }
+
+    // Nếu lật sang mặt sau và có câu ví dụ, đọc câu ví dụ; nếu không thì đọc từ chính
+    const textToSpeak =
+      flipped && currentCard.keyword.example?.trim()
+        ? currentCard.keyword.example.trim()
+        : currentCard.keyword.term?.trim();
+
+    if (textToSpeak) {
+      const timer = setTimeout(() => {
+        speakTextWithTts(textToSpeak, activeTtsLang, false);
+      }, 140);
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    currentIndex,
+    flipped,
+    autoSpeechEnabled,
+    finished,
+    currentCard,
+    activeTtsLang,
+  ]);
+
+  if (cards.length === 0) return null;
 
   const handleRateCard = (rating: SrsReviewRating) => {
     const nextState = computeNextSrsState({
@@ -157,6 +196,13 @@ export function FlashcardStudyModal({
     }
   };
 
+  const handleClose = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    onClose();
+  };
+
   const handleCompleteSession = async () => {
     setSaving(true);
     try {
@@ -175,7 +221,7 @@ export function FlashcardStudyModal({
         updatedSrsPatch: localPatch,
         summaryNote,
       });
-      onClose();
+      handleClose();
     } finally {
       setSaving(false);
     }
@@ -199,14 +245,41 @@ export function FlashcardStudyModal({
               {title}
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {activeTtsLang && (
+              <button
+                type="button"
+                onClick={() => setAutoSpeechEnabled((prev) => !prev)}
+                title={autoSpeechEnabled ? 'Tắt tự động đọc' : 'Bật tự động đọc phát âm'}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition ${
+                  autoSpeechEnabled
+                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                    : 'border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+              >
+                {autoSpeechEnabled ? (
+                  <>
+                    <Volume2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Tự động đọc: Bật</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="h-3.5 w-3.5" />
+                    <span>Tự động đọc: Tắt</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Đóng"
+              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {finished ? (
