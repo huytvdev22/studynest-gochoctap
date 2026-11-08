@@ -3,6 +3,8 @@ import {
   BookOpen,
   CheckCircle2,
   ClipboardCheck,
+  Clock,
+  Eye,
   Layers,
   Plus,
   Send,
@@ -40,6 +42,7 @@ import {
   QuizTakeModal,
 } from '@/components/study/InteractiveStudyModals';
 import { inferDefaultTtsLang } from '@/lib/studyAiAndSrs';
+import { SubmissionDetailModal } from '@/components/study/SubmissionDetailModal';
 
 export function SessionsAndTasksPage() {
   const { user } = useAuth();
@@ -68,6 +71,19 @@ export function SessionsAndTasksPage() {
   const [activeFlashcardTask, setActiveFlashcardTask] =
     useState<Assignment | null>(null);
   const [activeQuizTask, setActiveQuizTask] = useState<Assignment | null>(null);
+
+  // Xem chi tiết bài làm của học sinh
+  const [viewingRecord, setViewingRecord] = useState<LearningRecord | null>(null);
+  const [viewingTask, setViewingTask] = useState<Assignment | null>(null);
+  const [viewingStudent, setViewingStudent] = useState<ClassMember | null>(null);
+
+  const viewingLesson = viewingTask?.lessonId
+    ? lessons.find((l) => l.id === viewingTask.lessonId)
+    : viewingRecord
+    ? lessons.find((l) =>
+        viewingRecord.title.toLowerCase().includes(l.title.toLowerCase())
+      )
+    : null;
 
   const loadAll = useCallback(async () => {
     if (!studyClass || !user || !role) return;
@@ -434,9 +450,15 @@ export function SessionsAndTasksPage() {
                             return (
                               <div
                                 key={st.uid}
-                                className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/40"
+                                className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition ${
+                                  confirmed
+                                    ? 'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                                    : submitted
+                                    ? 'border-amber-200 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20'
+                                    : 'border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-800/40'
+                                }`}
                               >
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex items-center gap-2.5 min-w-0">
                                   <UserAvatar
                                     name={st.displayName}
                                     avatarUrl={
@@ -445,45 +467,83 @@ export function SessionsAndTasksPage() {
                                     }
                                     size="sm"
                                   />
-                                  <div>
-                                    <div className="font-bold text-slate-900 dark:text-white">
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-slate-900 dark:text-white truncate">
                                       {st.displayName}
                                     </div>
-                                    <div className="text-[11px] text-slate-500">
-                                      {confirmed
-                                        ? `Đã xác nhận (+${rec.starsAwarded} sao)${
-                                            typeof rec.quizScore === 'number' &&
-                                            typeof rec.quizTotal === 'number'
-                                              ? ` • Điểm: ${rec.quizScore}/${rec.quizTotal}`
-                                              : ''
-                                          }`
-                                        : submitted
-                                        ? `Đã nộp${
-                                            typeof rec.quizScore === 'number' &&
-                                            typeof rec.quizTotal === 'number'
-                                              ? ` (${rec.quizScore}/${rec.quizTotal} câu đúng)`
-                                              : ''
-                                          }: “${rec.studentNote || 'Đã làm xong'}”`
-                                        : 'Chưa nộp'}
+                                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
+                                      {confirmed ? (
+                                        <span className="inline-flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
+                                          <CheckCircle2 className="h-3 w-3" />
+                                          Đã xác nhận (+{rec?.starsAwarded} sao)
+                                          {typeof rec?.quizScore === 'number' &&
+                                            typeof rec?.quizTotal === 'number' && (
+                                              <span className="text-violet-600 dark:text-violet-400">
+                                                • Điểm: {rec.quizScore}/{rec.quizTotal}
+                                              </span>
+                                            )}
+                                        </span>
+                                      ) : submitted ? (
+                                        <span className="inline-flex items-center gap-1 font-bold text-amber-700 dark:text-amber-400">
+                                          <Clock className="h-3 w-3" />
+                                          Đã nộp (Chờ duyệt)
+                                          {typeof rec?.quizScore === 'number' &&
+                                            typeof rec?.quizTotal === 'number' && (
+                                              <span>
+                                                • {rec.quizScore}/{rec.quizTotal} câu đúng
+                                              </span>
+                                            )}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-400 font-medium">
+                                          Chưa nộp bài
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
 
-                                {!confirmed && (
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      submittingId === `${task.id}_${st.uid}`
-                                    }
-                                    onClick={() =>
-                                      void handleQuickConfirmTask(task, st, rec)
-                                    }
-                                    className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700"
-                                  >
-                                    <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
-                                    Xác nhận +{task.starsReward} sao
-                                  </button>
-                                )}
+                                {/* Nút thao tác theo trạng thái nộp */}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {/* Cho phép xem bài làm nếu học sinh đã nộp hoặc đã được xác nhận */}
+                                  {rec && (submitted || confirmed) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setViewingRecord(rec);
+                                        setViewingTask(task);
+                                        setViewingStudent(st);
+                                      }}
+                                      className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition"
+                                      title="Xem chi tiết bài làm, câu hỏi, điểm số hoặc bộ thẻ Flashcard"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                      <span>Xem bài</span>
+                                    </button>
+                                  )}
+
+                                  {/* CHỈ cho phép giáo viên xác nhận & tặng sao KHI HỌC SINH ĐÃ NỘP BÀI (chống tặng sao khống) */}
+                                  {submitted && !confirmed && rec && (
+                                    <button
+                                      type="button"
+                                      disabled={
+                                        submittingId === `${task.id}_${st.uid}`
+                                      }
+                                      onClick={() =>
+                                        void handleQuickConfirmTask(task, st, rec)
+                                      }
+                                      className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 transition shadow-2xs disabled:opacity-50"
+                                      title="Xác nhận hoàn thành và tặng sao cho học sinh"
+                                    >
+                                      <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
+                                      <span>
+                                        {submittingId === `${task.id}_${st.uid}`
+                                          ? 'Đang lưu...'
+                                          : `Xác nhận +${task.starsReward} sao`}
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
@@ -774,6 +834,50 @@ export function SessionsAndTasksPage() {
             });
             await loadAll();
           }}
+        />
+      )}
+
+      {/* Modal xem chi tiết bài làm học sinh */}
+      {viewingRecord && studyClass && (
+        <SubmissionDetailModal
+          record={viewingRecord}
+          studyClass={studyClass}
+          assignment={viewingTask}
+          lesson={viewingLesson}
+          student={viewingStudent}
+          isInstructorOrOwner={isInstructorOrOwner}
+          onClose={() => {
+            setViewingRecord(null);
+            setViewingTask(null);
+            setViewingStudent(null);
+          }}
+          onConfirm={async (rec, stars, comment) => {
+            setSubmittingId(rec.id);
+            try {
+              await confirmOrReviewLearningRecord({
+                classId: studyClass.id,
+                instructorUid: user.uid,
+                recordId: rec.id,
+                studentUid: rec.studentUid,
+                studentName: rec.studentName,
+                type: rec.type,
+                assignmentId: rec.assignmentId,
+                sessionId: rec.sessionId,
+                title: rec.title,
+                date: rec.date,
+                instructorStatus: 'confirmed',
+                starsAwarded: stars,
+                instructorComment: comment,
+              });
+              await loadAll();
+              setViewingRecord(null);
+              setViewingTask(null);
+              setViewingStudent(null);
+            } finally {
+              setSubmittingId(null);
+            }
+          }}
+          isConfirming={submittingId === viewingRecord.id}
         />
       )}
     </div>
