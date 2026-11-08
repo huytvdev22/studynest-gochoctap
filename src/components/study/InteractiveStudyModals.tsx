@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CheckCircle2,
   ChevronLeft,
@@ -643,18 +643,38 @@ export function QuizTakeModal({
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, number>
   >({});
-  const [submitted, setSubmitted] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
+  const [isEvaluated, setIsEvaluated] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const effectiveTtsLang = inferDefaultTtsLang(subject, ttsLang);
 
+  const answeredCount = Object.keys(selectedAnswers).length;
   const correctCount = questions.reduce((acc, q) => {
     return selectedAnswers[q.id] === q.correctIndex ? acc + 1 : acc;
   }, 0);
+  const scorePercentage = Math.round(
+    (correctCount / (questions.length || 1)) * 100
+  );
 
-  const handleFinishQuiz = async () => {
-    setSubmitted(true);
-    setSaving(true);
+  const handleEvaluate = () => {
+    if (answeredCount === 0) return;
+    setIsEvaluated(true);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleRetake = () => {
+    setSelectedAnswers({});
+    setIsEvaluated(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleSubmitResult = async () => {
+    setSubmitting(true);
     try {
       // Tự động cập nhật Đường cong quên lãng (SRS) dựa trên câu trả lời Đúng / Sai
       const srsPatch: Record<string, SrsCardProgress> = {};
@@ -708,7 +728,7 @@ export function QuizTakeModal({
         wrongTerms.length > 0
           ? ` • Cần ôn lại: ${wrongTerms.slice(0, 5).join(', ')}`
           : ' • Làm đúng toàn bộ!';
-      const studentNote = `Kết quả trắc nghiệm: ${correctCount}/${questions.length} câu đúng${wrongSummary}`;
+      const studentNote = `Kết quả trắc nghiệm: ${correctCount}/${questions.length} câu đúng (${scorePercentage}%)${wrongSummary}`;
 
       await onSubmitQuizResult({
         score: correctCount,
@@ -716,8 +736,12 @@ export function QuizTakeModal({
         studentNote,
         updatedSrsPatch: srsPatch,
       });
+
+      onClose();
+    } catch (err) {
+      console.error('Lỗi khi nộp bài trắc nghiệm:', err);
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   };
 
@@ -729,168 +753,234 @@ export function QuizTakeModal({
         aria-modal="true"
         aria-label={title}
       >
-        <div className="my-6 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              {subject} {unitTitle ? `• ${unitTitle}` : ''}
-            </span>
-            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-              {title} ({questions.length} câu)
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {submitted && (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 flex flex-wrap items-center justify-between gap-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+        <div
+          ref={scrollContainerRef}
+          className="my-6 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
             <div>
-              <div className="text-base font-extrabold text-slate-900 dark:text-white">
-                Kết quả của em: {correctCount} / {questions.length} câu đúng (
-                {Math.round((correctCount / (questions.length || 1)) * 100)}%)
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Các từ/mẫu câu làm sai đã tự động được xếp vào nhóm Hay quên để nhắc em ôn lại vào ngày mai.
-              </p>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                {subject} {unitTitle ? `• ${unitTitle}` : ''}
+              </span>
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                {title} ({questions.length} câu)
+              </h2>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+              disabled={submitting}
+              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
             >
-              Đóng & Xem nhiệm vụ
+              <X className="h-5 w-5" />
             </button>
           </div>
-        )}
 
-        <div className="mt-4 space-y-5">
-          {questions.map((q, qIdx) => {
-            const chosen = selectedAnswers[q.id];
-            const isCorrect = chosen === q.correctIndex;
-
-            return (
-              <div
-                key={q.id}
-                className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-800/40"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                    Câu {qIdx + 1}: {q.question}
+          {/* Banner kết quả khi đã chấm điểm */}
+          {isEvaluated && (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/40">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Kết quả làm bài
                   </div>
-                  {effectiveTtsLang && q.relatedTerm && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        speakTextWithTts(q.relatedTerm!, effectiveTtsLang, false)
-                      }
-                      title={`Nghe phát âm: ${q.relatedTerm}`}
-                      className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
-                    >
-                      <Volume2 className="h-3.5 w-3.5" />
-                      Nghe
-                    </button>
-                  )}
+                  <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    {correctCount} / {questions.length} câu đúng{' '}
+                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      ({scorePercentage}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    {scorePercentage === 100
+                      ? 'Xuất sắc! Em đã trả lời đúng tất cả các câu hỏi.'
+                      : scorePercentage >= 80
+                      ? 'Rất tốt! Em đã nắm vững hầu hết kiến thức của bài.'
+                      : scorePercentage >= 50
+                      ? 'Khá tốt! Hãy xem lại các câu chưa đúng bên dưới để nhớ sâu hơn nhé.'
+                      : 'Hãy xem lại lời giải thích bên dưới hoặc làm lại bài để cải thiện điểm số nhé.'}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {q.options.map((opt, oIdx) => {
-                    const isSelected = chosen === oIdx;
-                    let optionStyle =
-                      'border-slate-200 bg-white text-slate-800 hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
-
-                    if (!submitted && isSelected) {
-                      optionStyle =
-                        'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/40 dark:bg-emerald-950/60 dark:text-emerald-200';
-                    } else if (submitted) {
-                      if (oIdx === q.correctIndex) {
-                        optionStyle =
-                          'border-emerald-600 bg-emerald-100/90 text-emerald-950 font-extrabold dark:bg-emerald-950/70 dark:text-emerald-200';
-                      } else if (isSelected && oIdx !== q.correctIndex) {
-                        optionStyle =
-                          'border-rose-500 bg-rose-100/80 text-rose-900 line-through dark:bg-rose-950/60 dark:text-rose-200';
-                      }
-                    }
-
-                    return (
-                      <button
-                        key={oIdx}
-                        type="button"
-                        disabled={submitted}
-                        onClick={() =>
-                          setSelectedAnswers((prev) => ({
-                            ...prev,
-                            [q.id]: oIdx,
-                          }))
-                        }
-                        className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition ${optionStyle}`}
-                      >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {String.fromCharCode(65 + oIdx)}
-                        </span>
-                        <span className="flex-1">{opt}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {submitted && (
-                  <div
-                    className={`rounded-xl p-3 text-xs ${
-                      isCorrect
-                        ? 'bg-emerald-100/70 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
-                        : 'bg-rose-100/70 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200'
-                    }`}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleRetake}
+                    disabled={submitting}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
-                    <div className="flex items-center gap-1.5 font-extrabold">
-                      {isCorrect ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          Chính xác!
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-4 w-4 text-rose-600" />
-                          Chưa đúng (Đáp án đúng là{' '}
-                          {String.fromCharCode(65 + q.correctIndex)}:{' '}
-                          {q.options[q.correctIndex]})
-                        </>
-                      )}
+                    <RotateCw className="h-4 w-4" />
+                    Làm lại bài
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSubmitResult()}
+                    disabled={submitting}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {submitting ? 'Đang nộp...' : 'Nộp bài & Lưu kết quả'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Danh sách câu hỏi */}
+          <div className="mt-4 space-y-5">
+            {questions.map((q, qIdx) => {
+              const chosen = selectedAnswers[q.id];
+              const isAnswered = chosen !== undefined;
+              const isCorrect = chosen === q.correctIndex;
+
+              return (
+                <div
+                  key={q.id}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-800/40"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                      Câu {qIdx + 1}: {q.question}
                     </div>
-                    {q.explanation && (
-                      <p className="mt-1 opacity-90">
-                        <strong>Giải thích:</strong> {q.explanation}
-                      </p>
+                    {effectiveTtsLang && q.relatedTerm && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          speakTextWithTts(q.relatedTerm!, effectiveTtsLang, false)
+                        }
+                        title={`Nghe phát âm: ${q.relatedTerm}`}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                      >
+                        <Volume2 className="h-3.5 w-3.5" />
+                        Nghe
+                      </button>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
 
-        {!submitted && (
-          <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-            <span className="text-xs font-semibold text-slate-500">
-              Đã chọn {Object.keys(selectedAnswers).length} / {questions.length} câu
-            </span>
-            <button
-              type="button"
-              disabled={saving || Object.keys(selectedAnswers).length === 0}
-              onClick={() => void handleFinishQuiz()}
-              className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {saving ? 'Đang chấm điểm & lưu...' : 'Nộp bài kiểm tra'}
-            </button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {q.options.map((opt, oIdx) => {
+                      const isSelected = chosen === oIdx;
+                      let optionStyle =
+                        'border-slate-200 bg-white text-slate-800 hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+
+                      if (!isEvaluated && isSelected) {
+                        optionStyle =
+                          'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/40 dark:bg-emerald-950/60 dark:text-emerald-200';
+                      } else if (isEvaluated) {
+                        if (oIdx === q.correctIndex) {
+                          optionStyle =
+                            'border-emerald-600 bg-emerald-100/90 text-emerald-950 font-extrabold dark:bg-emerald-950/70 dark:text-emerald-200';
+                        } else if (isSelected && oIdx !== q.correctIndex) {
+                          optionStyle =
+                            'border-rose-500 bg-rose-100/80 text-rose-900 line-through dark:bg-rose-950/60 dark:text-rose-200';
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={oIdx}
+                          type="button"
+                          disabled={isEvaluated}
+                          onClick={() =>
+                            setSelectedAnswers((prev) => ({
+                              ...prev,
+                              [q.id]: oIdx,
+                            }))
+                          }
+                          className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition ${optionStyle}`}
+                        >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {String.fromCharCode(65 + oIdx)}
+                          </span>
+                          <span className="flex-1">{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Giải thích khi đã chấm điểm */}
+                  {isEvaluated && (
+                    <div
+                      className={`rounded-xl p-3 text-xs ${
+                        isCorrect
+                          ? 'bg-emerald-100/70 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                          : 'bg-rose-100/70 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-extrabold">
+                        {isCorrect ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            Chính xác!
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4 text-rose-600" />
+                            {isAnswered
+                              ? `Chưa đúng (Đáp án đúng là ${String.fromCharCode(
+                                  65 + q.correctIndex
+                                )}: ${q.options[q.correctIndex]})`
+                              : `Chưa chọn đáp án (Đáp án đúng là ${String.fromCharCode(
+                                  65 + q.correctIndex
+                                )}: ${q.options[q.correctIndex]})`}
+                          </>
+                        )}
+                      </div>
+                      {q.explanation && (
+                        <p className="mt-1 opacity-90">
+                          <strong>Giải thích:</strong> {q.explanation}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Footer khi đang làm bài */}
+          {!isEvaluated && (
+            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+              <span className="text-xs font-semibold text-slate-500">
+                Đã chọn {answeredCount} / {questions.length} câu
+              </span>
+              <button
+                type="button"
+                disabled={answeredCount === 0}
+                onClick={handleEvaluate}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Chấm điểm & Xem kết quả
+              </button>
+            </div>
+          )}
+
+          {/* Footer khi đã chấm điểm */}
+          {isEvaluated && (
+            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={handleRetake}
+                disabled={submitting}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <RotateCw className="h-4 w-4" />
+                Làm lại bài kiểm tra
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmitResult()}
+                disabled={submitting}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {submitting ? 'Đang nộp bài...' : 'Nộp bài & Lưu kết quả'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </ModalPortal>
   );
 }

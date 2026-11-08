@@ -166,3 +166,4 @@ export async function forceClearCacheAndReload(): Promise<void> {
   url.searchParams.set('_v', Date.now().toString());
   window.location.replace(url.toString());
 }
+

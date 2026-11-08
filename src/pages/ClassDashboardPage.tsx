@@ -680,6 +680,8 @@ export function ClassDashboardPage() {
             todayStr={today}
             onClose={() => setActiveFlashcardTask(null)}
             onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
+              const currentTask = activeFlashcardTask;
+              setActiveFlashcardTask(null);
               await saveStudentSrsStates({
                 classId: studyClass.id,
                 studentUid: user.uid,
@@ -692,9 +694,9 @@ export function ClassDashboardPage() {
                 studentUid: user.uid,
                 studentName: user.displayName,
                 type: 'assignment',
-                assignmentId: activeFlashcardTask.id,
-                sessionId: activeFlashcardTask.sessionId,
-                title: activeFlashcardTask.title,
+                assignmentId: currentTask.id,
+                sessionId: currentTask.sessionId,
+                title: currentTask.title,
                 date: today,
                 studentNote: summaryNote,
               });
@@ -720,6 +722,8 @@ export function ClassDashboardPage() {
               studentNote,
               updatedSrsPatch,
             }) => {
+              const currentTask = activeQuizTask;
+              setActiveQuizTask(null);
               if (Object.keys(updatedSrsPatch).length > 0) {
                 await saveStudentSrsStates({
                   classId: studyClass.id,
@@ -734,9 +738,9 @@ export function ClassDashboardPage() {
                 studentUid: user.uid,
                 studentName: user.displayName,
                 type: 'assignment',
-                assignmentId: activeQuizTask.id,
-                sessionId: activeQuizTask.sessionId,
-                title: activeQuizTask.title,
+                assignmentId: currentTask.id,
+                sessionId: currentTask.sessionId,
+                title: currentTask.title,
                 date: today,
                 studentNote,
                 quizScore: score,
