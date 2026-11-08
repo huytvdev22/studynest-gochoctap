@@ -191,6 +191,9 @@ export function SessionsAndTasksPage() {
           studentNotes[task.id]?.trim() || 'Em đã hoàn thành nhiệm vụ ạ!',
       });
       await loadAll();
+    } catch (err) {
+      console.error('Lỗi khi nộp bài:', err);
+      alert('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
     } finally {
       setSubmittingId(null);
     }
@@ -220,6 +223,9 @@ export function SessionsAndTasksPage() {
         instructorComment: 'Đã kiểm tra bài làm, hoàn thành rất tốt!',
       });
       await loadAll();
+    } catch (err) {
+      console.error('Lỗi khi duyệt bài:', err);
+      alert('Không thể xác nhận bài nộp. Vui lòng thử lại!');
     } finally {
       setSubmittingId(null);
     }

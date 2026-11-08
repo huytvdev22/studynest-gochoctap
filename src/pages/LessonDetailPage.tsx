@@ -26,6 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import type {
+  Assignment,
   Lesson,
   LessonKeyword,
   LessonNote,
@@ -39,6 +40,7 @@ import {
   getLessonById,
   getLessonTeacherNote,
   getStudentSrsStates,
+  listAssignments,
   listLessons,
   saveAssignment,
   saveLessonWithTeacherNote,
@@ -69,6 +71,7 @@ export function LessonDetailPage() {
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
+  const [classAssignments, setClassAssignments] = useState<Assignment[]>([]);
   const [teacherNote, setTeacherNote] = useState<LessonNote | null>(null);
   const [noteDraft, setNoteDraft] = useState<string>('');
   const [srsStates, setSrsStates] = useState<Record<string, SrsCardProgress>>(
@@ -140,10 +143,14 @@ export function LessonDetailPage() {
 
       // 2. Tải dữ liệu SRS cho học sinh (bọc try-catch riêng để không chặn hiển thị bài học)
       try {
-        const srs = await getStudentSrsStates(studyClass.id, user.uid);
+        const [srs, asgs] = await Promise.all([
+          getStudentSrsStates(studyClass.id, user.uid),
+          listAssignments(studyClass.id, user.uid, role),
+        ]);
         setSrsStates(srs);
+        setClassAssignments(asgs);
       } catch (err) {
-        console.warn('Lỗi lấy tiến độ SRS học sinh:', err);
+        console.warn('Lỗi lấy tiến độ SRS/Nhiệm vụ học sinh:', err);
       }
 
       // 3. Nếu là Người hướng dẫn hoặc Chủ lớp, tải thêm danh sách bài học và ghi chú sư phạm
@@ -1196,27 +1203,52 @@ export function LessonDetailPage() {
           todayStr={todayStr}
           onClose={() => setShowFlashcardPlayer(false)}
           onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
-            const merged = await saveStudentSrsStates({
-              classId: studyClass.id,
-              studentUid: user.uid,
-              studentName: user.displayName,
-              todayDateStr: todayStr,
-              srsStates: updatedSrsPatch,
-            });
-            setSrsStates(merged);
-
-            if (isStudent) {
-              await submitStudentCompletion({
+            try {
+              const merged = await saveStudentSrsStates({
                 classId: studyClass.id,
                 studentUid: user.uid,
                 studentName: user.displayName,
-                type: 'assignment',
-                assignmentId: null,
-                sessionId: null,
-                title: `Ôn tập Flashcard: ${lesson.title}`,
-                date: todayStr,
-                studentNote: summaryNote,
+                todayDateStr: todayStr,
+                srsStates: updatedSrsPatch,
               });
+              setSrsStates(merged);
+
+              if (isStudent) {
+                const matchingAssignment = classAssignments.find(
+                  (a) => a.lessonId === lesson.id
+                );
+                await submitStudentCompletion({
+                  classId: studyClass.id,
+                  studentUid: user.uid,
+                  studentName: user.displayName,
+                  type: 'assignment',
+                  assignmentId: matchingAssignment ? matchingAssignment.id : null,
+                  sessionId: matchingAssignment?.sessionId || null,
+                  title:
+                    matchingAssignment?.title ||
+                    `Học bài: ${lesson.title}`,
+                  date: todayStr,
+                  studentNote: summaryNote,
+                });
+                setAssignMessage(
+                  'Đã lưu kết quả ôn tập và ghi nhận hoàn thành bài học thành công!'
+                );
+                try {
+                  const refreshed = await listAssignments(
+                    studyClass.id,
+                    user.uid,
+                    role
+                  );
+                  setClassAssignments(refreshed);
+                } catch {
+                  // ignore
+                }
+              }
+            } catch (err) {
+              console.error('Lỗi khi lưu kết quả ôn tập:', err);
+              alert(
+                'Không thể lưu kết quả học tập. Vui lòng kiểm tra lại kết nối mạng!'
+              );
             }
           }}
         />

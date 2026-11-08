@@ -362,6 +362,7 @@ service cloud.firestore {
             isClassStudent(classId)
             && (
               recordId == ('srs_' + request.auth.uid)
+              || recordId.matches('.*_' + request.auth.uid + '$')
               || (resource != null && resource.data.studentUid == request.auth.uid)
             )
           );

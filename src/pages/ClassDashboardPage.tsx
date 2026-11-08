@@ -178,6 +178,9 @@ export function ClassDashboardPage() {
         studentNote: 'Em đã hoàn thành nhiệm vụ này ạ!',
       });
       await loadDashboardData();
+    } catch (err) {
+      console.error('Lỗi khi nộp bài:', err);
+      alert('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
     } finally {
       setSubmittingTaskId(null);
     }
@@ -206,6 +209,9 @@ export function ClassDashboardPage() {
         instructorComment: comment,
       });
       await loadDashboardData();
+    } catch (err) {
+      console.error('Lỗi khi duyệt bài:', err);
+      alert('Không thể xác nhận bài nộp. Vui lòng thử lại!');
     } finally {
       setConfirmingRecordId(null);
     }

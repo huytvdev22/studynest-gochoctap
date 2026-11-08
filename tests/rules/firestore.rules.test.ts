@@ -471,6 +471,11 @@ describe('Firestore Security Rules – StudyNest', () => {
 
     const recordId = `task_for_b_${STUDENT_B_UID}`;
 
+    // Kiểm tra xem học sinh có thể getDoc record trước khi tạo không
+    await assertSucceeds(
+      getDoc(doc(studentBDb, 'classes', CLASS_1_ID, 'learningRecords', recordId))
+    );
+
     // Học sinh B cố tình tự chấm 5 sao hoặc tự đặt instructorStatus = 'confirmed' -> BỊ TỪ CHỐI
     await assertFails(
       setDoc(doc(studentBDb, 'classes', CLASS_1_ID, 'learningRecords', recordId), {
@@ -517,6 +522,15 @@ describe('Firestore Security Rules – StudyNest', () => {
         confirmedBy: null,
         confirmedAt: null,
         createdAt: now,
+        updatedAt: now,
+      })
+    );
+
+    // Học sinh B cập nhật lại ghi chú bài nộp khi chưa được giáo viên duyệt -> THÀNH CÔNG
+    await assertSucceeds(
+      updateDoc(doc(studentBDb, 'classes', CLASS_1_ID, 'learningRecords', recordId), {
+        studentStatus: 'submitted',
+        studentNote: 'Em vừa kiểm tra lại kết quả và cập nhật ghi chú ạ!',
         updatedAt: now,
       })
     );
