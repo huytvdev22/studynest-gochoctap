@@ -26,6 +26,10 @@ import {
 } from '@/lib/validation';
 import { parseScheduleJsonFromAiResponse } from '@/lib/scheduleAiParser';
 import {
+  formatBuildTime,
+  getCurrentVersionInfo,
+} from '@/services/versionService';
+import {
   classifySrsCardBucket,
   computeNextSrsState,
   detectTextTtsLang,
@@ -481,6 +485,16 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(detectTextTtsLang('It is a book', 'en-US')).toBe('en-US');
     expect(detectTextTtsLang('Dùng để đính chính khi nhìn một đồ vật', 'en-US')).toBe('vi-VN');
     expect(detectTextTtsLang('', 'en-US')).toBe('');
+
+    // Kiểm tra Version Service & Định dạng giờ đóng gói (Asia/Ho_Chi_Minh)
+    const formatted = formatBuildTime('2026-11-08T12:00:00.000Z');
+    expect(formatted).toContain('08/11/2026');
+    expect(formatted).toContain('19:00:00'); // UTC+7
+
+    const currentVer = getCurrentVersionInfo();
+    expect(currentVer.version).toBeDefined();
+    expect(currentVer.commitHash).toBeDefined();
+    expect(currentVer.formattedBuildTime).toBeDefined();
   });
 });
 

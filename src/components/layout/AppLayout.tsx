@@ -5,6 +5,7 @@ import {
   FolderKanban,
   LogOut,
   Moon,
+  RefreshCw,
   RotateCcw,
   ShieldAlert,
   Sparkles,
@@ -12,6 +13,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserAvatar } from '@/components/ui/ThemeBadges';
+import {
+  checkForUpdates,
+  forceClearCacheAndReload,
+  getCurrentVersionInfo,
+} from '@/services/versionService';
+import { UpdateNotification } from '@/components/layout/UpdateNotification';
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const {
@@ -28,6 +35,30 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isWorkspaceRoute =
     location.pathname.startsWith('/app/classes/') &&
     location.pathname !== '/app/classes';
+
+  const versionInfo = getCurrentVersionInfo();
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateStatusMsg, setUpdateStatusMsg] = useState<string | null>(null);
+
+  const handleManualCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    setUpdateStatusMsg(null);
+    try {
+      const res = await checkForUpdates();
+      if (res.hasUpdate) {
+        setUpdateStatusMsg(`Đã có bản mới (#${res.remoteHash})! Bấm Cập nhật ngay.`);
+      } else {
+        setUpdateStatusMsg('Ứng dụng đang ở phiên bản mới nhất!');
+      }
+      setTimeout(() => setUpdateStatusMsg(null), 4500);
+    } catch {
+      setUpdateStatusMsg('Không thể kết nối máy chủ để kiểm tra.');
+      setTimeout(() => setUpdateStatusMsg(null), 4500);
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
   const [dark, setDark] = useState<boolean>(() => {
     try {
       return localStorage.getItem('studynest_theme') === 'dark';
@@ -198,16 +229,55 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
       <footer className="border-t border-slate-200/70 bg-white/60 py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
         <div
-          className={`mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 ${
+          className={`mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5 ${
             isWorkspaceRoute ? 'max-w-[1600px]' : 'max-w-6xl'
           }`}
         >
           <span>
             <strong>StudyNest – Workspace học tập</strong> • Thiết kế tối giản, an toàn dữ liệu cho học sinh nhỏ tuổi.
           </span>
-          <span>Múi giờ mặc định: Asia/Ho_Chi_Minh • Không mạng xã hội / Không hồ sơ công khai</span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+              v{versionInfo.version} (#{versionInfo.commitHash})
+            </span>
+            <span>•</span>
+            <button
+              type="button"
+              disabled={checkingUpdate}
+              onClick={() => void handleManualCheckUpdate()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 transition"
+              title="Kiểm tra xem có bản cập nhật mới trên máy chủ hay không"
+            >
+              <RefreshCw
+                className={`h-3 w-3 ${
+                  checkingUpdate ? 'animate-spin text-emerald-600' : ''
+                }`}
+              />
+              <span>{checkingUpdate ? 'Đang kiểm tra...' : 'Kiểm tra bản cập nhật'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void forceClearCacheAndReload()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition"
+              title="Xóa toàn bộ Cache Storage của trình duyệt và tải lại trang mới nhất"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Xóa cache</span>
+            </button>
+          </div>
         </div>
+
+        {updateStatusMsg && (
+          <div className="mx-auto mt-2 max-w-md px-4">
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-900 shadow-2xs animate-in fade-in dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
+              {updateStatusMsg}
+            </div>
+          </div>
+        )}
       </footer>
+
+      {/* Thông báo tự động khi phát hiện bản cập nhật mới trên server */}
+      <UpdateNotification />
     </div>
   );
 }
