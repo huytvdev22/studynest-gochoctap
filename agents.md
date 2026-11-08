@@ -74,3 +74,4 @@ npm run typecheck && npm run lint && npm test && npm run build
 
 - **Unit Tests**: Đặt tại `tests/unit/streak-and-helpers.test.ts` (kiểm thử múi giờ `Asia/Ho_Chi_Minh`, tính toán Streak & Sao thưởng, băm SHA-256 mã mời, parser JSON Thời khóa biểu, parser JSON Flashcard/Quiz và thuật toán Đường cong quên lãng SRS).
 - **Triển khai (Deployment)**: Dự án đã cấu hình sẵn GitHub Actions CI/CD (`.github/workflows/deploy.yml`). Khi push lên nhánh `main` (`git push origin main`), hệ thống tự động kiểm thử, build và deploy lên Firebase Hosting (`https://studynest-gochoctap.web.app`).
+

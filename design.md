@@ -123,3 +123,4 @@ src/
    - Học sinh làm bài trắc nghiệm trực tiếp trên web $\rightarrow$ Hệ thống chấm điểm ngay, giải thích đáp án và tự động đưa các từ làm sai về nhóm **🔴 Hay quên** để nhắc ôn lại vào tối hôm sau.
 5. **Xác nhận & Trao thưởng**:
    - Người hướng dẫn bấm **Xác nhận +⭐** để cộng sao thưởng và nối dài **Chuỗi ngày học (Streak)** cho học sinh.
+
