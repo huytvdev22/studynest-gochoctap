@@ -28,6 +28,7 @@ import {
   formatVietnameseDate,
 } from '@/lib/date';
 import { calculateStudentProgressAndStreak } from '@/lib/streak';
+import { UserAvatar } from '@/components/ui/ThemeBadges';
 
 export function ProgressPage() {
   const { user } = useAuth();
@@ -181,12 +182,19 @@ export function ProgressPage() {
                   key={st.uid}
                   type="button"
                   onClick={() => setSelectedStudentUid(st.uid)}
-                  className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     selectedStudentUid === st.uid
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                   }`}
                 >
+                  <UserAvatar
+                    name={st.displayName}
+                    avatarUrl={
+                      st.avatarUrl || (st.uid === user.uid ? user.photoURL : '')
+                    }
+                    size="xs"
+                  />
                   {st.displayName}
                 </button>
               ))
@@ -279,8 +287,16 @@ export function ProgressPage() {
           onSubmit={(e) => void handleDirectAwardSession(e)}
           className="rounded-3xl border border-emerald-200 bg-emerald-50/40 p-6 space-y-4 dark:border-emerald-900/50 dark:bg-emerald-950/20"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Plus className="h-5 w-5 text-emerald-600" />
+            <UserAvatar
+              name={activeStudent.displayName}
+              avatarUrl={
+                activeStudent.avatarUrl ||
+                (activeStudent.uid === user.uid ? user.photoURL : '')
+              }
+              size="sm"
+            />
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
               Xác nhận buổi học & Tưởng thưởng sao cho {activeStudent.displayName}
             </h3>
@@ -387,6 +403,10 @@ export function ProgressPage() {
           <div className="mt-4 space-y-3">
             {studentRecords.map((rec) => {
               const isConfirmed = rec.instructorStatus === 'confirmed';
+              const recStudent = students.find((s) => s.uid === rec.studentUid);
+              const recAvatarUrl =
+                recStudent?.avatarUrl ||
+                (rec.studentUid === user.uid ? user.photoURL : '');
               return (
                 <div
                   key={rec.id}
@@ -402,7 +422,12 @@ export function ProgressPage() {
                         {formatVietnameseDate(rec.date)}
                       </span>
                       <span className="text-xs text-slate-400">•</span>
-                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        <UserAvatar
+                          name={rec.studentName}
+                          avatarUrl={recAvatarUrl}
+                          size="xs"
+                        />
                         {rec.studentName}
                       </span>
                     </div>

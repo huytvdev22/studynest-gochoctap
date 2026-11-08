@@ -11,6 +11,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserAvatar } from '@/components/ui/ThemeBadges';
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const {
@@ -161,9 +162,11 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
             {user && (
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-1.5 dark:border-slate-800 dark:bg-slate-800/70">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
-                    {user.displayName.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={user.displayName}
+                    avatarUrl={user.photoURL}
+                    size="sm"
+                  />
                   <span className="max-w-[140px] truncate text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {user.displayName}
                   </span>

@@ -46,6 +46,7 @@ import {
   ClassIconView,
   RoleBadge,
   THEME_COLOR_STYLES,
+  UserAvatar,
 } from '@/components/ui/ThemeBadges';
 
 export function MembersAndSettingsPage() {
@@ -234,17 +235,24 @@ export function MembersAndSettingsPage() {
                   key={req.uid}
                   className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-300 bg-white p-4 sm:flex-row sm:items-center dark:border-amber-800 dark:bg-slate-900"
                 >
-                  <div>
-                    <div className="text-sm font-extrabold text-slate-900 dark:text-white">
-                      {req.displayName}
-                    </div>
-                    {req.message && (
-                      <div className="text-xs text-slate-600 dark:text-slate-400">
-                        Lời nhắn: “{req.message}”
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={req.displayName}
+                      avatarUrl={req.avatarUrl}
+                      size="lg"
+                    />
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        {req.displayName}
                       </div>
-                    )}
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      Mã đã xác thực: <strong>{req.submittedCode}</strong>
+                      {req.message && (
+                        <div className="text-xs text-slate-600 dark:text-slate-400">
+                          Lời nhắn: “{req.message}”
+                        </div>
+                      )}
+                      <div className="mt-1 text-[11px] text-slate-400">
+                        Mã đã xác thực: <strong>{req.submittedCode}</strong>
+                      </div>
                     </div>
                   </div>
 
@@ -421,9 +429,13 @@ export function MembersAndSettingsPage() {
                 className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-sm font-extrabold text-white">
-                    {m.displayName.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={m.displayName}
+                    avatarUrl={
+                      m.avatarUrl || (m.uid === user.uid ? user.photoURL : '')
+                    }
+                    size="lg"
+                  />
                   <div>
                     <div className="text-sm font-extrabold text-slate-900 dark:text-white">
                       {m.displayName} {m.uid === user.uid && '(Bạn)'}

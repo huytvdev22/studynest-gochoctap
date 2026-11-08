@@ -38,7 +38,7 @@ import {
   validateSessionInput,
 } from '@/lib/validation';
 import { formatDateInTimezone, formatVietnameseDate } from '@/lib/date';
-import { EmptyState } from '@/components/ui/ThemeBadges';
+import { EmptyState, UserAvatar } from '@/components/ui/ThemeBadges';
 
 export function SessionsAndTasksPage() {
   const { user } = useAuth();
@@ -506,16 +506,26 @@ export function SessionsAndTasksPage() {
                                 key={st.uid}
                                 className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/40"
                               >
-                                <div>
-                                  <div className="font-bold text-slate-900 dark:text-white">
-                                    {st.displayName}
-                                  </div>
-                                  <div className="text-[11px] text-slate-500">
-                                    {confirmed
-                                      ? `Đã xác nhận (+${rec.starsAwarded} sao)`
-                                      : submitted
-                                      ? `Đã nộp: “${rec.studentNote || 'Đã làm xong'}”`
-                                      : 'Chưa nộp'}
+                                <div className="flex items-center gap-2.5">
+                                  <UserAvatar
+                                    name={st.displayName}
+                                    avatarUrl={
+                                      st.avatarUrl ||
+                                      (st.uid === user.uid ? user.photoURL : '')
+                                    }
+                                    size="sm"
+                                  />
+                                  <div>
+                                    <div className="font-bold text-slate-900 dark:text-white">
+                                      {st.displayName}
+                                    </div>
+                                    <div className="text-[11px] text-slate-500">
+                                      {confirmed
+                                        ? `Đã xác nhận (+${rec.starsAwarded} sao)`
+                                        : submitted
+                                        ? `Đã nộp: “${rec.studentNote || 'Đã làm xong'}”`
+                                        : 'Chưa nộp'}
+                                    </div>
                                   </div>
                                 </div>
 

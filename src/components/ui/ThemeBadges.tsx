@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BookOpen,
   Compass,
@@ -108,6 +108,52 @@ export function RoleBadge({ role }: { role: ClassRole }) {
       <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
       Học sinh
     </span>
+  );
+}
+
+const AVATAR_SIZE_CLASSES = {
+  xs: 'h-6 w-6 text-[10px]',
+  sm: 'h-7 w-7 text-xs',
+  md: 'h-9 w-9 text-xs',
+  lg: 'h-10 w-10 text-sm',
+} as const;
+
+export function UserAvatar({
+  name,
+  avatarUrl,
+  size = 'md',
+  className = '',
+}: {
+  name: string;
+  avatarUrl?: string | null;
+  size?: keyof typeof AVATAR_SIZE_CLASSES;
+  className?: string;
+}) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const trimmedUrl = avatarUrl?.trim() || '';
+  const showImage = Boolean(trimmedUrl) && failedUrl !== trimmedUrl;
+  const sizeClass = AVATAR_SIZE_CLASSES[size];
+  const initial = (name?.trim().charAt(0) || 'U').toUpperCase();
+
+  if (showImage) {
+    return (
+      <img
+        src={trimmedUrl}
+        alt={name}
+        referrerPolicy="no-referrer"
+        onError={() => setFailedUrl(trimmedUrl)}
+        className={`${sizeClass} shrink-0 rounded-full object-cover ring-1 ring-slate-200/80 dark:ring-slate-700 ${className}`}
+      />
+    );
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-emerald-600 font-extrabold text-white ${className}`}
+    >
+      {initial}
+    </div>
   );
 }
 
