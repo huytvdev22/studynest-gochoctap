@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sn-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="60%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="sn-star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="sn-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#064e3b" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Nền Squircle chuẩn iOS App Icon -->
+  <rect width="512" height="512" rx="116" fill="url(#sn-bg)" />
+
+  <!-- Cuốn sách mở tri thức trắng tinh khôi kết hợp ánh sao StudyNest -->
+  <g filter="url(#sn-shadow)">
+    <!-- Trang sách bên trái -->
+    <path d="M256 364C216 332 152 332 108 344V168C152 156 216 156 256 188V364Z" fill="#ffffff" />
+    <!-- Trang sách bên phải -->
+    <path d="M256 364C296 332 360 332 404 344V168C360 156 296 156 256 188V364Z" fill="#f0fdf4" />
+    <!-- Gáy sách trung tâm -->
+    <path d="M256 188V364" stroke="#d1fae5" stroke-width="8" stroke-linecap="round" />
+    <!-- Các dòng text cách điệu trên trang sách trái -->
+    <path d="M140 216H224M140 252H224M140 288H196" stroke="#059669" stroke-width="8" stroke-linecap="round" opacity="0.25" />
+    <!-- Các dòng text cách điệu trên trang sách phải -->
+    <path d="M288 216H372M288 252H372M288 288H336" stroke="#059669" stroke-width="8" stroke-linecap="round" opacity="0.25" />
+  </g>
+
+  <!-- Ngôi sao tri thức tỏa sáng ở góc trên giữa -->
+  <g transform="translate(256, 136)">
+    <path d="M0 -34L9 -10L34 0L9 10L0 34L-9 10L-34 0L-9 -10Z" fill="url(#sn-star)" />
+    <circle cx="0" cy="0" r="5" fill="#ffffff" />
+  </g>
+</svg>
