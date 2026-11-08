@@ -42,6 +42,7 @@ import {
   saveAssignment,
   saveLessonWithTeacherNote,
   saveStudentSrsStates,
+  submitStudentCompletion,
 } from '@/services/studyNestService';
 import { formatDateInTimezone } from '@/lib/date';
 import {
@@ -61,7 +62,7 @@ import {
 export function LessonDetailPage() {
   const { lessonId = '' } = useParams<{ lessonId: string }>();
   const { user } = useAuth();
-  const { studyClass, role, isInstructorOrOwner } = useClassContext();
+  const { studyClass, role, isInstructorOrOwner, isStudent } = useClassContext();
   const navigate = useNavigate();
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -1182,7 +1183,7 @@ export function LessonDetailPage() {
           srsStates={srsStates}
           todayStr={todayStr}
           onClose={() => setShowFlashcardPlayer(false)}
-          onSaveProgress={async ({ updatedSrsPatch }) => {
+          onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
             const merged = await saveStudentSrsStates({
               classId: studyClass.id,
               studentUid: user.uid,
@@ -1191,6 +1192,20 @@ export function LessonDetailPage() {
               srsStates: updatedSrsPatch,
             });
             setSrsStates(merged);
+
+            if (isStudent) {
+              await submitStudentCompletion({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                type: 'assignment',
+                assignmentId: null,
+                sessionId: null,
+                title: `Ôn tập Flashcard: ${lesson.title}`,
+                date: todayStr,
+                studentNote: summaryNote,
+              });
+            }
           }}
         />
       )}

@@ -39,6 +39,7 @@ import {
   saveAssignment,
   saveLessonWithTeacherNote,
   saveStudentSrsStates,
+  submitStudentCompletion,
 } from '@/services/studyNestService';
 import { validateLessonInput } from '@/lib/validation';
 import { ModalPortal } from '@/components/ui/ModalPortal';
@@ -1000,7 +1001,7 @@ export function LessonsPage() {
           srsStates={srsStates}
           todayStr={todayStr}
           onClose={() => setActiveStudyDeck(null)}
-          onSaveProgress={async ({ updatedSrsPatch }) => {
+          onSaveProgress={async ({ updatedSrsPatch, summaryNote }) => {
             const targetUid = isStudent
               ? user.uid
               : selectedSrsStudentUid || user.uid;
@@ -1015,6 +1016,20 @@ export function LessonsPage() {
               srsStates: updatedSrsPatch,
             });
             setSrsStates(merged);
+
+            if (isStudent) {
+              await submitStudentCompletion({
+                classId: studyClass.id,
+                studentUid: user.uid,
+                studentName: user.displayName,
+                type: 'assignment',
+                assignmentId: null,
+                sessionId: null,
+                title: activeStudyDeck.title,
+                date: todayStr,
+                studentNote: summaryNote,
+              });
+            }
           }}
         />
       )}

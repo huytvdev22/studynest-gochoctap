@@ -15,9 +15,11 @@ import {
   Sparkles,
   Star,
   UserPlus,
+  Users,
 } from 'lucide-react';
 import type {
   Assignment,
+  ClassMember,
   JoinRequest,
   LearningRecord,
   Lesson,
@@ -31,6 +33,7 @@ import {
   confirmOrReviewLearningRecord,
   getStudentSrsStates,
   listAssignments,
+  listClassMembers,
   listJoinRequests,
   listLearningRecords,
   listLessons,
@@ -46,6 +49,7 @@ import {
 } from '@/lib/date';
 import { calculateStudentProgressAndStreak } from '@/lib/streak';
 import { inferDefaultTtsLang } from '@/lib/studyAiAndSrs';
+import { UserAvatar } from '@/components/ui/ThemeBadges';
 import {
   FlashcardStudyModal,
   QuizTakeModal,
@@ -53,7 +57,7 @@ import {
 
 export function ClassDashboardPage() {
   const { user } = useAuth();
-  const { studyClass, role, isOwner, isInstructorOrOwner, isStudent } =
+  const { studyClass, role, isOwner, isInstructorOrOwner } =
     useClassContext();
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -62,12 +66,10 @@ export function ClassDashboardPage() {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [exceptions, setExceptions] = useState<ScheduleException[]>([]);
   const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
+  const [students, setStudents] = useState<ClassMember[]>([]);
+  const [selectedStudentUid, setSelectedStudentUid] = useState<string>('');
+  const [reviewTab, setReviewTab] = useState<'pending' | 'reviewed'>('pending');
   const [loading, setLoading] = useState<boolean>(true);
-  // Mặc định mọi thành viên vào lớp đều hiển thị giao diện Góc học tập (giống học sinh);
-  // Người hướng dẫn / Chủ lớp có thể chuyển sang tab Quản lý lớp khi cần.
-  const [dashboardMode, setDashboardMode] = useState<'learning' | 'managing'>(
-    'learning'
-  );
 
   // State cho học sinh nộp bài nhanh & làm Flashcard / Quiz
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
@@ -91,13 +93,14 @@ export function ClassDashboardPage() {
     if (!studyClass || !user || !role) return;
     setLoading(true);
     try {
-      const [asg, rec, les, sch, exc, srs] = await Promise.all([
+      const [asg, rec, les, sch, exc, srs, mems] = await Promise.all([
         listAssignments(studyClass.id, user.uid, role),
-        listLearningRecords(studyClass.id, user.uid, role, 60),
+        listLearningRecords(studyClass.id, user.uid, role, 80),
         listLessons(studyClass.id, role),
         listSchedules(studyClass.id),
         listScheduleExceptions(studyClass.id),
         getStudentSrsStates(studyClass.id, user.uid),
+        listClassMembers(studyClass.id),
       ]);
       setAssignments(asg);
       setRecords(rec);
@@ -105,6 +108,7 @@ export function ClassDashboardPage() {
       setSchedules(sch);
       setExceptions(exc);
       setSrsStates(srs);
+      setStudents(mems.filter((m) => m.role === 'student'));
 
       if (isOwner) {
         const reqs = await listJoinRequests(studyClass.id);
@@ -143,9 +147,21 @@ export function ClassDashboardPage() {
     dayOffDates,
   });
 
+  // Danh sách bài nộp chờ duyệt và bài đã đánh giá gần đây
   const unverifiedRecords = records.filter(
     (r) => r.studentStatus === 'submitted' && r.instructorStatus === 'unverified'
   );
+  const reviewedRecords = records.filter(
+    (r) => r.instructorStatus === 'confirmed'
+  );
+
+  const displayedUnverified = selectedStudentUid
+    ? unverifiedRecords.filter((r) => r.studentUid === selectedStudentUid)
+    : unverifiedRecords;
+
+  const displayedReviewed = selectedStudentUid
+    ? reviewedRecords.filter((r) => r.studentUid === selectedStudentUid)
+    : reviewedRecords;
 
   const handleStudentSubmitTask = async (task: Assignment) => {
     setSubmittingTaskId(task.id);
@@ -208,51 +224,13 @@ export function ClassDashboardPage() {
     );
   }
 
-  const pendingActionCount = unverifiedRecords.length + pendingRequests.length;
-  const modeToggleBar = isInstructorOrOwner ? (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-        Chế độ hiển thị trang tổng quan:
-      </span>
-      <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-        <button
-          type="button"
-          onClick={() => setDashboardMode('learning')}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-            dashboardMode === 'learning'
-              ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
-              : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-          }`}
-        >
-          Góc học tập (Mặc định)
-        </button>
-        <button
-          type="button"
-          onClick={() => setDashboardMode('managing')}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-            dashboardMode === 'managing'
-              ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
-              : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-          }`}
-        >
-          <span>Dành cho người hướng dẫn</span>
-          {pendingActionCount > 0 && (
-            <span className="rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">
-              {pendingActionCount}
-            </span>
-          )}
-        </button>
-      </div>
-    </div>
-  ) : null;
-
   // =========================================================================
-  // STUDENT DASHBOARD ("Hôm nay học gì?" - Mặc định cho mọi thành viên trong lớp)
+  // STUDENT DASHBOARD ("Góc học hôm nay" - Dành riêng cho học sinh)
+  // Nếu là Người hướng dẫn hoặc Chủ lớp, bỏ hoàn toàn giao diện này!
   // =========================================================================
-  if (isStudent || dashboardMode === 'learning') {
+  if (!isInstructorOrOwner) {
     return (
       <div className="space-y-6">
-        {modeToggleBar}
         {/* Hàng thẻ chỉ số Sao & Streak cho học sinh */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/50 dark:bg-amber-950/30">
@@ -748,11 +726,13 @@ export function ClassDashboardPage() {
   }
 
   // =========================================================================
-  // INSTRUCTOR / OWNER DASHBOARD
+  // INSTRUCTOR / OWNER DASHBOARD (Giao diện dành riêng cho Người hướng dẫn & Chủ lớp)
+  // Bỏ hoàn toàn chế độ "Góc học tập (Mặc định)" cho giáo viên theo yêu cầu
   // =========================================================================
+  const activeSelectedStudent = students.find((s) => s.uid === selectedStudentUid);
+
   return (
     <div className="space-y-6">
-      {modeToggleBar}
       {/* Thống kê nhanh cho người hướng dẫn */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
@@ -817,149 +797,404 @@ export function ClassDashboardPage() {
       </div>
 
       {/* Thao tác nhanh cho Instructor / Owner */}
-      {isInstructorOrOwner && (
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Thao tác nhanh:
-          </span>
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          Thao tác nhanh:
+        </span>
+        <Link
+          to={`/app/classes/${studyClass.id}/lessons`}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Soạn bài học mới
+        </Link>
+        <Link
+          to={`/app/classes/${studyClass.id}/sessions`}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+        >
+          <ClipboardCheck className="h-3.5 w-3.5" />
+          Giao nhiệm vụ mới
+        </Link>
+        <Link
+          to={`/app/classes/${studyClass.id}/schedule`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
+        >
+          <Calendar className="h-3.5 w-3.5" />
+          Cập nhật thời khóa biểu
+        </Link>
+        {isOwner && (
           <Link
-            to={`/app/classes/${studyClass.id}/lessons`}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Soạn bài học mới
-          </Link>
-          <Link
-            to={`/app/classes/${studyClass.id}/sessions`}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-          >
-            <ClipboardCheck className="h-3.5 w-3.5" />
-            Giao nhiệm vụ mới
-          </Link>
-          <Link
-            to={`/app/classes/${studyClass.id}/schedule`}
+            to={`/app/classes/${studyClass.id}/members`}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
           >
-            <Calendar className="h-3.5 w-3.5" />
-            Cập nhật thời khóa biểu
+            <UserPlus className="h-3.5 w-3.5" />
+            Tạo link mời học sinh
           </Link>
-          {isOwner && (
-            <Link
-              to={`/app/classes/${studyClass.id}/members`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
+        )}
+      </div>
+
+      {/* Thanh lọc theo từng học sinh trong lớp */}
+      {students.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              <Users className="h-3.5 w-3.5 text-emerald-600" />
+              Theo dõi & Đánh giá theo từng học sinh ({students.length}):
+            </span>
+            {activeSelectedStudent && (
+              <button
+                type="button"
+                onClick={() => setSelectedStudentUid('')}
+                className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+              >
+                Xem tất cả học sinh
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setSelectedStudentUid('')}
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                selectedStudentUid === ''
+                  ? 'bg-slate-900 text-white shadow-xs dark:bg-white dark:text-slate-900'
+                  : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300'
+              }`}
             >
-              <UserPlus className="h-3.5 w-3.5" />
-              Tạo link mời học sinh
-            </Link>
-          )}
+              <span>Tất cả</span>
+              <span className="rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] font-extrabold text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                {students.length}
+              </span>
+              {unverifiedRecords.length > 0 && (
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">
+                  {unverifiedRecords.length} bài chờ
+                </span>
+              )}
+            </button>
+
+            {students.map((st) => {
+              const pendingCount = unverifiedRecords.filter(
+                (r) => r.studentUid === st.uid
+              ).length;
+              const isSelected = selectedStudentUid === st.uid;
+              return (
+                <button
+                  key={st.uid}
+                  type="button"
+                  onClick={() => setSelectedStudentUid(st.uid)}
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                  }`}
+                >
+                  <UserAvatar
+                    name={st.displayName}
+                    avatarUrl={st.avatarUrl}
+                    size="xs"
+                  />
+                  <span>{st.displayName}</span>
+                  {pendingCount > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
+                        isSelected
+                          ? 'bg-white text-emerald-800'
+                          : 'bg-amber-500 text-white'
+                      }`}
+                    >
+                      {pendingCount} bài chờ
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Cột trái: Duyệt nhanh bài nộp của học sinh */}
+        {/* Cột trái: Duyệt & Đánh giá bài nộp của học sinh */}
         <div className="space-y-6 lg:col-span-7">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                Học sinh báo cáo hoàn thành ({unverifiedRecords.length})
-              </h2>
-              <Link
-                to={`/app/classes/${studyClass.id}/progress`}
-                className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
-              >
-                Xem toàn bộ nhật ký
-              </Link>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                  Duyệt & Đánh giá bài nộp{' '}
+                  {activeSelectedStudent ? (
+                    <span className="text-emerald-700 dark:text-emerald-400">
+                      • {activeSelectedStudent.displayName}
+                    </span>
+                  ) : (
+                    `(${displayedUnverified.length} chờ duyệt)`
+                  )}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Xem kết quả Flashcard, bài làm trắc nghiệm & tặng sao cho học sinh.
+                </p>
+              </div>
+
+              {/* Tab chuyển đổi giữa Chờ xác nhận và Đã đánh giá */}
+              <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setReviewTab('pending')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                    reviewTab === 'pending'
+                      ? 'bg-white text-amber-700 shadow-2xs dark:bg-slate-900 dark:text-amber-400'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Chờ xác nhận</span>
+                  <span className="rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">
+                    {displayedUnverified.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReviewTab('reviewed')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                    reviewTab === 'reviewed'
+                      ? 'bg-white text-emerald-700 shadow-2xs dark:bg-slate-900 dark:text-emerald-400'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Đã đánh giá</span>
+                  <span className="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] font-extrabold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                    {displayedReviewed.length}
+                  </span>
+                </button>
+              </div>
             </div>
 
-            {unverifiedRecords.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-800">
-                Hiện không có bài nộp nào đang chờ xác nhận.
-              </div>
-            ) : (
-              <div className="mt-4 space-y-4">
-                {unverifiedRecords.map((rec) => (
-                  <div
-                    key={rec.id}
-                    className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900/50 dark:bg-amber-950/20"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                          {rec.studentName} • Ngày {formatVietnameseDate(rec.date, false)}
-                        </span>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                          {rec.title}
-                        </h3>
-                      </div>
-                      <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-xs font-bold text-amber-950">
-                        Chờ xác nhận
-                      </span>
-                    </div>
-
-                    {rec.studentNote && (
-                      <p className="mt-2 rounded-xl bg-white p-3 text-xs text-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                        <strong>Học sinh nhắn:</strong> “{rec.studentNote}”
-                      </p>
-                    )}
-
-                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-12 items-center">
-                      <div className="sm:col-span-3">
-                        <label
-                          htmlFor={`stars-${rec.id}`}
-                          className="sr-only"
-                        >
-                          Số sao thưởng
-                        </label>
-                        <select
-                          id={`stars-${rec.id}`}
-                          value={reviewStars[rec.id] ?? 3}
-                          onChange={(e) =>
-                            setReviewStars((prev) => ({
-                              ...prev,
-                              [rec.id]: Number(e.target.value),
-                            }))
-                          }
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        >
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <option key={s} value={s}>
-                              Thưởng +{s} sao
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="sm:col-span-6">
-                        <input
-                          type="text"
-                          aria-label="Nhận xét của người hướng dẫn"
-                          value={reviewComments[rec.id] ?? ''}
-                          onChange={(e) =>
-                            setReviewComments((prev) => ({
-                              ...prev,
-                              [rec.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Nhận xét khích lệ em..."
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <button
-                          type="button"
-                          disabled={confirmingRecordId === rec.id}
-                          onClick={() => void handleInstructorConfirm(rec)}
-                          className="w-full rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          {confirmingRecordId === rec.id
-                            ? 'Đang lưu...'
-                            : 'Xác nhận & Tặng sao'}
-                        </button>
-                      </div>
-                    </div>
+            {/* DANH SÁCH BÀI NỘP: TAB CHỜ XÁC NHẬN */}
+            {reviewTab === 'pending' && (
+              <div className="mt-4">
+                {displayedUnverified.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-800">
+                    <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500 mb-2 opacity-80" />
+                    <p className="font-bold text-slate-700 dark:text-slate-300">
+                      Tất cả bài nộp đã được xác nhận!
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {activeSelectedStudent
+                        ? `${activeSelectedStudent.displayName} không có bài nộp nào đang chờ duyệt.`
+                        : 'Hiện không có học sinh nào đang có bài chờ xác nhận.'}
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-4">
+                    {displayedUnverified.map((rec) => {
+                      const isFlashcard =
+                        rec.title.toLowerCase().includes('flashcard') ||
+                        rec.studentNote.toLowerCase().includes('flashcard') ||
+                        rec.studentNote.toLowerCase().includes('thẻ');
+                      const isQuiz =
+                        typeof rec.quizScore === 'number' ||
+                        rec.title.toLowerCase().includes('trắc nghiệm') ||
+                        rec.title.toLowerCase().includes('quiz');
+
+                      const studentMember = students.find(
+                        (s) => s.uid === rec.studentUid
+                      );
+
+                      return (
+                        <div
+                          key={rec.id}
+                          className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4.5 dark:border-amber-900/50 dark:bg-amber-950/20"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <UserAvatar
+                                name={rec.studentName}
+                                avatarUrl={studentMember?.avatarUrl}
+                                size="sm"
+                              />
+                              <div>
+                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                  {rec.studentName} • {formatVietnameseDate(rec.date, false)}
+                                </span>
+                                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                                  {rec.title}
+                                </h3>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {isFlashcard ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                  <Layers className="h-3 w-3" />
+                                  Bộ Flashcard
+                                </span>
+                              ) : isQuiz ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-800 dark:bg-violet-950/80 dark:text-violet-300">
+                                  <ClipboardCheck className="h-3 w-3" />
+                                  Trắc nghiệm
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-950/80 dark:text-sky-300">
+                                  <BookOpen className="h-3 w-3" />
+                                  Nhiệm vụ
+                                </span>
+                              )}
+                              <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-xs font-bold text-amber-950">
+                                Chờ xác nhận
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Chi tiết nội dung kết quả làm bài */}
+                          {rec.studentNote && (
+                            <div
+                              className={`mt-3 rounded-xl p-3 text-xs ${
+                                isFlashcard
+                                  ? 'border border-emerald-200/80 bg-emerald-50/70 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200'
+                                  : isQuiz
+                                  ? 'border border-violet-200/80 bg-violet-50/70 text-violet-950 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200'
+                                  : 'border border-slate-200/80 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                              }`}
+                            >
+                              <div className="font-bold flex items-center gap-1.5 mb-1">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                <span>Kết quả báo cáo của học sinh:</span>
+                              </div>
+                              <p className="leading-relaxed">“{rec.studentNote}”</p>
+                              {typeof rec.quizScore === 'number' && typeof rec.quizTotal === 'number' && (
+                                <div className="mt-1.5 font-bold text-violet-700 dark:text-violet-300">
+                                  Điểm đạt: {rec.quizScore}/{rec.quizTotal} câu đúng (
+                                  {Math.round((rec.quizScore / (rec.quizTotal || 1)) * 100)}%)
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Form chấm điểm & nhận xét của giáo viên */}
+                          <div className="mt-3.5 grid grid-cols-1 gap-2 sm:grid-cols-12 items-center">
+                            <div className="sm:col-span-3">
+                              <label
+                                htmlFor={`stars-${rec.id}`}
+                                className="sr-only"
+                              >
+                                Số sao thưởng
+                              </label>
+                              <select
+                                id={`stars-${rec.id}`}
+                                value={reviewStars[rec.id] ?? 3}
+                                onChange={(e) =>
+                                  setReviewStars((prev) => ({
+                                    ...prev,
+                                    [rec.id]: Number(e.target.value),
+                                  }))
+                                }
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                              >
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <option key={s} value={s}>
+                                    Thưởng +{s} sao
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                              <input
+                                type="text"
+                                aria-label="Nhận xét của người hướng dẫn"
+                                value={reviewComments[rec.id] ?? ''}
+                                onChange={(e) =>
+                                  setReviewComments((prev) => ({
+                                    ...prev,
+                                    [rec.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Nhận xét khích lệ em (VD: Làm bài rất tốt, tiếp tục phát huy nhé!)..."
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <button
+                                type="button"
+                                disabled={confirmingRecordId === rec.id}
+                                onClick={() => void handleInstructorConfirm(rec)}
+                                className="w-full rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50 shadow-xs"
+                              >
+                                {confirmingRecordId === rec.id
+                                  ? 'Đang lưu...'
+                                  : 'Xác nhận & Tặng sao'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* DANH SÁCH BÀI NỘP: TAB ĐÃ ĐÁNH GIÁ GẦN ĐÂY */}
+            {reviewTab === 'reviewed' && (
+              <div className="mt-4">
+                {displayedReviewed.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-800">
+                    Chưa có bài nộp nào được đánh giá gần đây.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {displayedReviewed.slice(0, 15).map((rec) => {
+                      const studentMember = students.find(
+                        (s) => s.uid === rec.studentUid
+                      );
+                      return (
+                        <div
+                          key={rec.id}
+                          className="rounded-2xl border border-emerald-200/80 bg-emerald-50/20 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/10 space-y-2"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <UserAvatar
+                                name={rec.studentName}
+                                avatarUrl={studentMember?.avatarUrl}
+                                size="xs"
+                              />
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {rec.studentName}
+                              </span>
+                              <span className="text-xs text-slate-400">•</span>
+                              <span className="text-xs text-slate-500">
+                                {formatVietnameseDate(rec.date, false)}
+                              </span>
+                            </div>
+
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                              +{rec.starsAwarded} sao
+                            </span>
+                          </div>
+
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">
+                            {rec.title}
+                          </div>
+
+                          {rec.studentNote && (
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Học sinh báo cáo: “{rec.studentNote}”
+                            </p>
+                          )}
+
+                          {rec.instructorComment && (
+                            <div className="rounded-xl border border-emerald-200 bg-white/90 p-2.5 text-xs text-emerald-950 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300">
+                              <strong>Nhận xét của bạn:</strong> “{rec.instructorComment}”
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -1035,6 +1270,44 @@ export function ClassDashboardPage() {
               </div>
             )}
           </section>
+
+          {/* Thời khóa biểu hôm nay & ngày mai của lớp */}
+          {todaySchedules.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  Thời khóa biểu hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
+                </h3>
+                <Link
+                  to={`/app/classes/${studyClass.id}/schedule`}
+                  className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                >
+                  Xem cả tuần
+                </Link>
+              </div>
+              <div className="mt-3 space-y-2">
+                {todaySchedules.map((sch) => (
+                  <div
+                    key={sch.id}
+                    className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/40"
+                  >
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      Tiết {sch.periodNumber}: {sch.subject}
+                    </span>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                        sch.type === 'tutoring'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                      }`}
+                    >
+                      {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
