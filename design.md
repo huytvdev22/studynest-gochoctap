@@ -95,11 +95,25 @@ src/
   - Sử dụng bo góc mềm mại (`rounded-2xl` cho thẻ con, `rounded-3xl` cho khung chính và Modal).
   - Font chữ rõ ràng, tiêu đề dùng `font-extrabold`, nút bấm có biểu tượng trực quan đi kèm.
 
-### 4.2. Bảng màu Ngữ nghĩa (Semantic Color Palette)
-- **Xanh ngọc (`emerald-600`)**: Màu chủ đạo của thương hiệu StudyNest, biểu thị hành động chính (Học bài, Lật Flashcard, Hoàn thành, Đã nhớ kỹ 🟢).
+### 4.2. Bảng màu Ngữ nghĩa & Quy chuẩn Icon Hệ thống (Semantic Colors & Icons)
+
+> [!IMPORTANT]
+> **Tuyệt đối KHÔNG sử dụng icon dạng emoji Unicode** (như 📚, ⭐, 🔴, 🟡, 🟢, ⚪, 🔊, 🐢, ✏️, 🎯, 📖, 📝, ⚡, 🎒, ☀️, 🌤️, 🌙...) trong giao diện, tiêu đề, nút bấm hay nhãn trạng thái. Việc lạm dụng emoji tạo cảm giác "đặc sệt AI", thiếu chuyên nghiệp và không đồng nhất giữa các hệ điều hành (Windows, macOS, iOS, Android hiển thị emoji khác nhau).
+> 
+> **Bắt buộc 100% sử dụng icon vector SVG chuẩn từ thư viện `lucide-react`**:
+> - Sao thưởng: Dùng `<Star className="h-4 w-4 fill-amber-400 text-amber-500" />`
+> - Đọc phát âm / Loa: Dùng `<Volume2 className="h-4 w-4" />`
+> - Đọc chậm: Dùng `<Turtle className="h-4 w-4" />` hoặc `<Gauge className="h-4 w-4" />`
+> - Các mức độ nhớ SRS (Đường cong quên lãng): Dùng chấm tròn màu SVG `<span className="h-2 w-2 rounded-full bg-rose-500" />` hoặc icon trạng thái (`AlertCircle`, `Clock`, `CheckCircle2`) kết hợp chữ rõ nghĩa, không dùng chấm tròn emoji (🔴 🟡 🟢 ⚪).
+> - Sách / Giáo trình: Dùng `<BookOpen className="h-4 w-4" />` hoặc `<Bookmark className="h-4 w-4" />`
+> - Mục tiêu: Dùng `<Target className="h-4 w-4" />`
+> - Soạn cặp / Dụng cụ: Dùng `<Backpack className="h-4 w-4" />`
+> - Buổi sáng / chiều / tối: Dùng `<Sun className="h-4 w-4" />`, `<CloudSun className="h-4 w-4" />`, `<Moon className="h-4 w-4" />`
+
+- **Xanh ngọc (`emerald-600`)**: Màu chủ đạo của thương hiệu StudyNest, biểu thị hành động chính (Học bài, Lật Flashcard, Hoàn thành, Đã nhớ kỹ).
 - **Tím (`violet-600`)**: Biểu thị các tính năng **Trợ lý AI** (Copy Prompt AI, Đọc JSON AI) và **Bài kiểm tra Trắc nghiệm**.
-- **Vàng hổ phách (`amber-500`)**: Biểu thị **Sao thưởng (⭐)**, trạng thái **Bản nháp**, ghi chú riêng của giáo viên, và thẻ **Sắp quên / Cần ôn hôm nay 🟡**.
-- **Đỏ hồng (`rose-600`)**: Biểu thị cảnh báo xóa, câu trả lời sai, và thẻ **Hay quên 🔴 (Cần ôn lại sau +1 ngày)**.
+- **Vàng hổ phách (`amber-500`)**: Biểu thị **Sao thưởng**, trạng thái **Bản nháp**, ghi chú riêng của giáo viên, và thẻ **Sắp quên / Cần ôn hôm nay**.
+- **Đỏ hồng (`rose-600`)**: Biểu thị cảnh báo xóa, câu trả lời sai, và thẻ **Hay quên (Cần ôn lại sau +1 ngày)**.
 - **Bảng màu Môn học trên Thời khóa biểu**: Tự động ánh xạ màu pastel dịu mắt theo tên môn học (Toán: Xanh dương `sky`, Tiếng Việt: Xanh lá `emerald`, Tiếng Anh: Tím `violet`, Tự nhiên & Xã hội: Vàng `amber`...).
 
 ### 4.3. Quy chuẩn Thiết kế Thời khóa biểu (`SchedulePage.tsx`)

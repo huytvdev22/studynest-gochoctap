@@ -46,10 +46,18 @@ Tài liệu này đúc rút toàn bộ quy tắc vận hành, kiến trúc kỹ 
 ### 2.5. Đường cong quên lãng Ebbinghaus (Spaced Repetition – SRS 4 mức độ nhớ)
 - Mọi thẻ Flashcard (`LessonKeyword`) được định danh bởi khóa `makeSrsCardKey(lessonId, term)`.
 - Khi học sinh tự lật thẻ hoặc nộp bài kiểm tra trắc nghiệm, hệ thống tự động tính toán mức độ nhớ (`SrsMemoryLevel`) và ngày hẹn ôn tiếp theo (`nextReviewDate`):
-  - **⚪ Mới học (`new`, `level = 0`)**: Thẻ chưa ôn lần nào.
-  - **🔴 Hay quên (`struggling`, `level = 1`)**: Học sinh bấm "Chưa thuộc" hoặc **trả lời sai câu hỏi trắc nghiệm có `relatedTerm` tương ứng** $\rightarrow$ Hẹn ôn lại ngay ngày mai (**+1 ngày**).
-  - **🟡 Tạm nhớ / Sắp quên (`due_soon`, `level = 2` hoặc đã đến hạn `nextReviewDate <= todayStr`)**: Học sinh bấm "Tạm nhớ" $\rightarrow$ Hẹn ôn lại sau **+3 đến 7 ngày**.
-  - **🟢 Đã nhớ kỹ (`mastered`, `level = 3` và `nextReviewDate > todayStr`)**: Học sinh bấm "Đã nhớ kỹ" $\rightarrow$ Hẹn ôn lại sau **+14 đến 30 ngày**.
+  - **Mới học (`new`, `level = 0`)**: Thẻ chưa ôn lần nào.
+  - **Hay quên (`struggling`, `level = 1`)**: Học sinh bấm "Chưa thuộc" hoặc **trả lời sai câu hỏi trắc nghiệm có `relatedTerm` tương ứng** $\rightarrow$ Hẹn ôn lại ngay ngày mai (**+1 ngày**).
+  - **Tạm nhớ / Sắp quên (`due_soon`, `level = 2` hoặc đã đến hạn `nextReviewDate <= todayStr`)**: Học sinh bấm "Tạm nhớ" $\rightarrow$ Hẹn ôn lại sau **+3 đến 7 ngày**.
+  - **Đã nhớ kỹ (`mastered`, `level = 3` và `nextReviewDate > todayStr`)**: Học sinh bấm "Đã nhớ kỹ" $\rightarrow$ Hẹn ôn lại sau **+14 đến 30 ngày**.
+
+### 2.6. Tuyệt đối KHÔNG dùng Icon dạng Emoji Unicode
+- **Quy tắc**: Không sử dụng emoji Unicode (như 📚, ⭐, 🔴, 🟡, 🟢, ⚪, 🔊, 🐢, ✏️, 🎯, 📖, 📝, ⚡, 🎒...) trong UI, text, nhãn và nút bấm.
+- **Bắt buộc 100% sử dụng icon vector SVG từ thư viện `lucide-react`**:
+  - Giao diện phải sạch sẽ, tinh tế, không mang cảm giác "đặc sệt AI".
+  - Với các trạng thái màu (như mức nhớ SRS), dùng chấm tròn CSS/SVG (`<span className="h-2 w-2 rounded-full bg-rose-500" />`) kết hợp chữ rõ nghĩa thay vì chèn emoji.
+  - Với sao thưởng, dùng `<Star className="h-4 w-4 fill-amber-400 text-amber-500" />`.
+  - Với các nhãn môn học, dùng `<BookOpen className="h-4 w-4" />` thay cho 📚.
 
 ---
 
