@@ -284,9 +284,8 @@ export function SchedulePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [filterType, setFilterType] = useState<'all' | ScheduleType>('all');
 
-  // Chế độ "Cọ điền nhanh 1 chạm" (Quick Stamp) trích xuất trực tiếp từ các môn trong TKB
-  const [quickStampSubject, setQuickStampSubject] =
-    useState<SubjectBrushItem | null>(null);
+  // Bộ lọc theo môn học trong Thời khóa biểu
+  const [filterSubject, setFilterSubject] = useState<string | null>(null);
 
   // Ô đang được click để thêm/sửa trực tiếp giống Outlook Calendar
   const [activeCell, setActiveCell] = useState<ActiveCellState | null>(null);
@@ -343,41 +342,27 @@ export function SchedulePage() {
     (s) => s.dayOfWeek === tomorrowDayOfWeek
   );
 
-  const filteredSchedules = schedules.filter((s) =>
-    filterType === 'all' ? true : s.type === filterType
-  );
+  const filteredSchedules = schedules.filter((s) => {
+    if (filterType !== 'all' && s.type !== filterType) return false;
+    if (
+      filterSubject &&
+      s.subject.trim().toLowerCase() !== filterSubject.toLowerCase()
+    ) {
+      return false;
+    }
+    return true;
+  });
 
-  // Danh sách cọ môn học được tổng hợp trực tiếp từ các môn hiện có trong Thời khóa biểu
+  // Danh sách môn học được tổng hợp trực tiếp từ các môn hiện có trong Thời khóa biểu
   const subjectBrushes = deriveSubjectBrushesFromSchedules(schedules);
 
   // Mở popup chỉnh sửa/thêm nhanh ngay khi bấm vào một ô trên lịch tuần
-  const handleCellClick = async (
+  const handleCellClick = (
     dayOfWeek: number,
     slot: TimeSlotRow,
     existingItem?: ScheduleItem
   ) => {
     if (!isInstructorOrOwner) return;
-
-    if (quickStampSubject && !existingItem) {
-      setSavingCell(true);
-      try {
-        await saveScheduleItem(studyClass.id, user.uid, {
-          dayOfWeek,
-          sessionOfDay: slot.sessionOfDay,
-          periodNumber: slot.periodNumber,
-          subject: quickStampSubject.subject,
-          type: quickStampSubject.type || slot.defaultType,
-          teacherName: quickStampSubject.teacherName || '',
-          materialsNote: quickStampSubject.materials,
-          startTime: '',
-          endTime: '',
-        });
-        await loadScheduleData();
-      } finally {
-        setSavingCell(false);
-      }
-      return;
-    }
 
     setActiveCell({ dayOfWeek, slot, existingItem });
     setCellSubject(existingItem?.subject || '');
@@ -576,10 +561,10 @@ export function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      {/* Thanh công cụ Điền nhanh 1 chạm + Nhập từ Ảnh bằng AI */}
-      {isInstructorOrOwner && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Thanh công cụ Nhập từ Ảnh bằng AI + Bộ lọc theo môn học */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        {isInstructorOrOwner && (
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-3.5 mb-3.5 dark:border-slate-800">
             <div className="flex items-start gap-2.5">
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
               <div>
@@ -587,23 +572,12 @@ export function SchedulePage() {
                   Lịch tuần trực quan (Bấm trực tiếp vào ô trên bảng hoặc Nhập tự động từ ảnh chụp TKB)
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Chọn một <strong>Thẻ môn học</strong> bên dưới rồi click vào các ô trên bảng để điền 1 chạm, hoặc bấm nút <strong>Nhập TKB từ ảnh bằng AI</strong> để nhập cả tuần cùng lúc.
+                  Bấm vào ô bất kỳ trên bảng để thêm/sửa tiết học, hoặc dùng công cụ <strong>Nhập TKB từ ảnh bằng AI</strong> để nhập cả tuần cùng lúc.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {quickStampSubject && (
-                <button
-                  type="button"
-                  onClick={() => setQuickStampSubject(null)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800 hover:bg-rose-200 dark:bg-rose-950 dark:text-rose-200"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Tắt cọ ({quickStampSubject.subject})
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleCopyPrompt}
@@ -632,37 +606,47 @@ export function SchedulePage() {
               </button>
             </div>
           </div>
+        )}
 
-          <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-            <span className="text-xs font-bold text-slate-500 mr-1">
-              Cọ điền nhanh 1 chạm ({subjectBrushes.length} môn trong TKB):
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 mr-1">
+            Lọc theo môn học ({subjectBrushes.length} môn):
+          </span>
+          {subjectBrushes.length === 0 ? (
+            <span className="text-xs italic text-slate-400">
+              Chưa có môn học nào trong lịch.
             </span>
-            {subjectBrushes.length === 0 ? (
-              <span className="text-xs italic text-slate-400">
-                Chưa có môn học nào. Hãy bấm trực tiếp vào một ô bên dưới hoặc dùng nút “Dán JSON từ AI & Preview” để tạo lịch, các môn sẽ tự động hiện ở đây.
-              </span>
-            ) : (
-              subjectBrushes.map((brush) => {
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setFilterSubject(null)}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
+                  filterSubject === null
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-xs dark:border-white dark:bg-white dark:text-slate-900'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                }`}
+              >
+                Tất cả môn
+              </button>
+
+              {subjectBrushes.map((brush) => {
                 const isSelected =
-                  quickStampSubject?.subject.toLowerCase() ===
+                  filterSubject?.toLowerCase() ===
                   brush.subject.toLowerCase();
                 return (
                   <button
                     key={brush.subject}
                     type="button"
                     onClick={() =>
-                      setQuickStampSubject(isSelected ? null : brush)
+                      setFilterSubject(isSelected ? null : brush.subject)
                     }
-                    title={
-                      brush.materials
-                        ? `${brush.subject} (${brush.count} tiết) • Sách vở: ${brush.materials}`
-                        : `${brush.subject} (${brush.count} tiết)`
-                    }
+                    title={`Lọc môn ${brush.subject} (${brush.count} tiết)`}
                     className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
                       isSelected
                         ? 'ring-2 ring-slate-900 ring-offset-2 scale-105 shadow-xs dark:ring-white ' +
                           brush.colorClass
-                        : brush.colorClass + ' opacity-90 hover:opacity-100'
+                        : brush.colorClass + ' opacity-85 hover:opacity-100'
                     }`}
                   >
                     {isSelected && <Check className="h-3.5 w-3.5" />}
@@ -672,11 +656,11 @@ export function SchedulePage() {
                     </span>
                   </button>
                 );
-              })
-            )}
-          </div>
+              })}
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Bộ lọc hiển thị */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -717,9 +701,16 @@ export function SchedulePage() {
         </div>
 
         <div className="text-xs text-slate-500">
-          {quickStampSubject ? (
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-              👉 Đang chọn cọ “{quickStampSubject.subject}” – Hãy bấm vào các ô trống bên dưới để điền ngay!
+          {filterSubject ? (
+            <span className="inline-flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
+              <span>Đang lọc môn: “{filterSubject}”</span>
+              <button
+                type="button"
+                onClick={() => setFilterSubject(null)}
+                className="underline hover:text-rose-600"
+              >
+                Bỏ lọc
+              </button>
             </span>
           ) : (
             <span>Bấm vào ô bất kỳ để thêm hoặc sửa môn học</span>
@@ -865,12 +856,6 @@ export function SchedulePage() {
                                       </button>
                                     )}
                                   </div>
-
-                                  {primaryItem.materialsNote && (
-                                    <p className="mt-1 line-clamp-2 text-[10px] opacity-80 leading-snug">
-                                      🎒 {primaryItem.materialsNote}
-                                    </p>
-                                  )}
                                 </div>
 
                                 {primaryItem.teacherName && (
@@ -886,9 +871,7 @@ export function SchedulePage() {
                                 <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-transparent opacity-0 transition group-hover/row:border-slate-200 hover:!border-emerald-400 hover:!opacity-100 dark:group-hover/row:border-slate-800">
                                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                                     <Plus className="h-3.5 w-3.5" />
-                                    {quickStampSubject
-                                      ? quickStampSubject.subject
-                                      : 'Thêm'}
+                                    Thêm
                                   </span>
                                 </div>
                               )
@@ -976,23 +959,6 @@ export function SchedulePage() {
                   onChange={(e) => setCellSubject(e.target.value)}
                   placeholder="Nhập tên môn rồi nhấn Enter..."
                   className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="cell-materials-input"
-                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
-                >
-                  Sách vở & dụng cụ cần mang (Hiện ở Checklist soạn cặp)
-                </label>
-                <input
-                  id="cell-materials-input"
-                  type="text"
-                  value={cellMaterials}
-                  onChange={(e) => setCellMaterials(e.target.value)}
-                  placeholder="VD: SGK Toán 3, vở bài tập, thước kẻ..."
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
