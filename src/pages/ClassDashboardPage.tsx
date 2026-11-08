@@ -9,15 +9,18 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Clock,
+  CloudSun,
   Eye,
   Flame,
   Layers,
+  Moon,
   PartyPopper,
   Plus,
   RotateCw,
   Send,
   Sparkles,
   Star,
+  Sun,
   UserPlus,
   Users,
 } from 'lucide-react';
@@ -87,6 +90,9 @@ export function ClassDashboardPage() {
   const [todayTaskFilter, setTodayTaskFilter] = useState<
     'all' | 'pending' | 'completed'
   >('all');
+  const [tomorrowSessionTab, setTomorrowSessionTab] = useState<
+    'all' | 'morning' | 'afternoon' | 'evening'
+  >('all');
 
   // State cho instructor xác nhận nhanh
   const [confirmingRecordId, setConfirmingRecordId] = useState<string | null>(
@@ -146,6 +152,44 @@ export function ClassDashboardPage() {
     (s) => s.dayOfWeek === tomorrowDayOfWeek
   );
   const todaySchedules = schedules.filter((s) => s.dayOfWeek === todayDayOfWeek);
+
+  const sortScheduleItemsByPeriod = (items: ScheduleItem[]) => {
+    return [...items].sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
+  };
+
+  const tomorrowMorningSchedules = sortScheduleItemsByPeriod(
+    tomorrowSchedules.filter((s) => s.sessionOfDay === 'morning')
+  );
+  const tomorrowAfternoonSchedules = sortScheduleItemsByPeriod(
+    tomorrowSchedules.filter((s) => s.sessionOfDay === 'afternoon')
+  );
+  const tomorrowEveningSchedules = sortScheduleItemsByPeriod(
+    tomorrowSchedules.filter((s) => s.sessionOfDay === 'evening')
+  );
+  const tomorrowOtherSchedules = sortScheduleItemsByPeriod(
+    tomorrowSchedules.filter(
+      (s) => !['morning', 'afternoon', 'evening'].includes(s.sessionOfDay)
+    )
+  );
+
+  const hasMultipleTomorrowSessions =
+    [
+      tomorrowMorningSchedules.length > 0,
+      tomorrowAfternoonSchedules.length > 0,
+      tomorrowEveningSchedules.length > 0,
+    ].filter(Boolean).length > 1;
+
+  const sessionSortWeight: Record<string, number> = {
+    morning: 1,
+    afternoon: 2,
+    evening: 3,
+  };
+  const sortedTodaySchedules = [...todaySchedules].sort((a, b) => {
+    const wA = sessionSortWeight[a.sessionOfDay] || 4;
+    const wB = sessionSortWeight[b.sessionOfDay] || 4;
+    if (wA !== wB) return wA - wB;
+    return (a.periodNumber || 0) - (b.periodNumber || 0);
+  });
 
   const dayOffDates = exceptions.filter((e) => e.isDayOff).map((e) => e.date);
 
@@ -736,37 +780,47 @@ export function ClassDashboardPage() {
               )}
 
               {/* Thời khóa biểu hôm nay */}
-              {todaySchedules.length > 0 && (
+              {sortedTodaySchedules.length > 0 && (
                 <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Thời khóa biểu hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
                   </h3>
-                  {todaySchedules.map((sch) => (
-                    <div
-                      key={sch.id}
-                      className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3.5 py-2.5 text-sm dark:border-slate-800 dark:bg-slate-800/40"
-                    >
-                      <div>
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          Tiết {sch.periodNumber}: {sch.subject}
-                        </span>
-                        {sch.startTime && (
-                          <span className="ml-2 text-xs text-slate-500">
-                            ({sch.startTime} - {sch.endTime})
-                          </span>
-                        )}
-                      </div>
-                      <span
-                        className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
-                          sch.type === 'tutoring'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                            : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
-                        }`}
+                  {sortedTodaySchedules.map((sch) => {
+                    const sessionName =
+                      sch.sessionOfDay === 'morning'
+                        ? 'Sáng'
+                        : sch.sessionOfDay === 'afternoon'
+                        ? 'Chiều'
+                        : sch.sessionOfDay === 'evening'
+                        ? 'Tối'
+                        : '';
+                    return (
+                      <div
+                        key={sch.id}
+                        className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3.5 py-2.5 text-sm dark:border-slate-800 dark:bg-slate-800/40"
                       >
-                        {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
-                      </span>
-                    </div>
-                  ))}
+                        <div>
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {sessionName ? `${sessionName} • ` : ''}Tiết {sch.periodNumber}: {sch.subject}
+                          </span>
+                          {sch.startTime && (
+                            <span className="ml-2 text-xs text-slate-500">
+                              ({sch.startTime} - {sch.endTime})
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                            sch.type === 'tutoring'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -864,33 +918,202 @@ export function ClassDashboardPage() {
                 Checklist chuẩn bị sách vở tối nay trước khi đi ngủ:
               </p>
 
+              {/* Thẻ chip lọc buổi nếu có nhiều buổi */}
+              {hasMultipleTomorrowSessions && (
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTomorrowSessionTab('all')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                      tomorrowSessionTab === 'all'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
+                  >
+                    Tất cả ({tomorrowSchedules.length})
+                  </button>
+                  {tomorrowMorningSchedules.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setTomorrowSessionTab('morning')}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                        tomorrowSessionTab === 'morning'
+                          ? 'bg-amber-500 text-white shadow-xs'
+                          : 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300'
+                      }`}
+                    >
+                      <Sun className="h-3 w-3" />
+                      Sáng ({tomorrowMorningSchedules.length})
+                    </button>
+                  )}
+                  {tomorrowAfternoonSchedules.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setTomorrowSessionTab('afternoon')}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                        tomorrowSessionTab === 'afternoon'
+                          ? 'bg-sky-500 text-white shadow-xs'
+                          : 'bg-sky-50 text-sky-800 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300'
+                      }`}
+                    >
+                      <CloudSun className="h-3 w-3" />
+                      Chiều ({tomorrowAfternoonSchedules.length})
+                    </button>
+                  )}
+                  {tomorrowEveningSchedules.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setTomorrowSessionTab('evening')}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                        tomorrowSessionTab === 'evening'
+                          ? 'bg-indigo-500 text-white shadow-xs'
+                          : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300'
+                      }`}
+                    >
+                      <Moon className="h-3 w-3" />
+                      Tối ({tomorrowEveningSchedules.length})
+                    </button>
+                  )}
+                </div>
+              )}
+
               {tomorrowSchedules.length === 0 ? (
                 <p className="mt-3 rounded-xl bg-slate-50 p-2.5 text-xs sm:text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   Ngày mai không có tiết học trong thời khóa biểu.
                 </p>
               ) : (
-                <ul className="mt-3 space-y-2">
-                  {tomorrowSchedules.map((sch) => (
-                    <li
-                      key={sch.id}
-                      className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50"
-                    >
-                      <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                        <span>
-                          Tiết {sch.periodNumber}: {sch.subject}
-                        </span>
-                        <span className="text-[11px] font-medium text-slate-500">
-                          {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
-                        </span>
+                <div className="mt-3 space-y-3.5">
+                  {(tomorrowSessionTab === 'all' ||
+                    tomorrowSessionTab === 'morning') &&
+                    tomorrowMorningSchedules.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                          <Sun className="h-3.5 w-3.5 text-amber-500" />
+                          <span>Buổi Sáng ({tomorrowMorningSchedules.length} tiết)</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {tomorrowMorningSchedules.map((sch) => (
+                            <li
+                              key={sch.id}
+                              className="rounded-xl border border-amber-200/70 bg-amber-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-amber-900/40 dark:bg-amber-950/20"
+                            >
+                              <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                <span>
+                                  Tiết {sch.periodNumber}: {sch.subject}
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500">
+                                  {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
+                                </span>
+                              </div>
+                              {sch.materialsNote && (
+                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                  Chuẩn bị: {sch.materialsNote}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      {sch.materialsNote && (
-                        <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
-                          Chuẩn bị: {sch.materialsNote}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                    )}
+
+                  {(tomorrowSessionTab === 'all' ||
+                    tomorrowSessionTab === 'afternoon') &&
+                    tomorrowAfternoonSchedules.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
+                          <CloudSun className="h-3.5 w-3.5 text-sky-500" />
+                          <span>Buổi Chiều ({tomorrowAfternoonSchedules.length} tiết)</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {tomorrowAfternoonSchedules.map((sch) => (
+                            <li
+                              key={sch.id}
+                              className="rounded-xl border border-sky-200/70 bg-sky-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-sky-900/40 dark:bg-sky-950/20"
+                            >
+                              <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                <span>
+                                  Tiết {sch.periodNumber}: {sch.subject}
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500">
+                                  {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
+                                </span>
+                              </div>
+                              {sch.materialsNote && (
+                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                  Chuẩn bị: {sch.materialsNote}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {(tomorrowSessionTab === 'all' ||
+                    tomorrowSessionTab === 'evening') &&
+                    tomorrowEveningSchedules.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                          <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                          <span>Buổi Tối ({tomorrowEveningSchedules.length} tiết)</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {tomorrowEveningSchedules.map((sch) => (
+                            <li
+                              key={sch.id}
+                              className="rounded-xl border border-indigo-200/70 bg-indigo-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-indigo-900/40 dark:bg-indigo-950/20"
+                            >
+                              <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                <span>
+                                  Tiết {sch.periodNumber}: {sch.subject}
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500">
+                                  {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
+                                </span>
+                              </div>
+                              {sch.materialsNote && (
+                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                  Chuẩn bị: {sch.materialsNote}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {tomorrowSessionTab === 'all' &&
+                    tomorrowOtherSchedules.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          <Clock className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Tiết học khác ({tomorrowOtherSchedules.length} tiết)</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {tomorrowOtherSchedules.map((sch) => (
+                            <li
+                              key={sch.id}
+                              className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-slate-800 dark:bg-slate-800/50"
+                            >
+                              <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                <span>
+                                  Tiết {sch.periodNumber}: {sch.subject}
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500">
+                                  {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
+                                </span>
+                              </div>
+                              {sch.materialsNote && (
+                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                  Chuẩn bị: {sch.materialsNote}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
               )}
             </section>
 
@@ -1625,7 +1848,7 @@ export function ClassDashboardPage() {
           </section>
 
           {/* Thời khóa biểu hôm nay & ngày mai của lớp */}
-          {todaySchedules.length > 0 && (
+          {sortedTodaySchedules.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
@@ -1639,25 +1862,35 @@ export function ClassDashboardPage() {
                 </Link>
               </div>
               <div className="mt-3 space-y-2">
-                {todaySchedules.map((sch) => (
-                  <div
-                    key={sch.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/40"
-                  >
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      Tiết {sch.periodNumber}: {sch.subject}
-                    </span>
-                    <span
-                      className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                        sch.type === 'tutoring'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
-                      }`}
+                {sortedTodaySchedules.map((sch) => {
+                  const sessionName =
+                    sch.sessionOfDay === 'morning'
+                      ? 'Sáng'
+                      : sch.sessionOfDay === 'afternoon'
+                      ? 'Chiều'
+                      : sch.sessionOfDay === 'evening'
+                      ? 'Tối'
+                      : '';
+                  return (
+                    <div
+                      key={sch.id}
+                      className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/40"
                     >
-                      {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
-                    </span>
-                  </div>
-                ))}
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {sessionName ? `${sessionName} • ` : ''}Tiết {sch.periodNumber}: {sch.subject}
+                      </span>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                          sch.type === 'tutoring'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
