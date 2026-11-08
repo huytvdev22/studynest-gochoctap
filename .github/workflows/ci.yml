@@ -1,0 +1,50 @@
+name: CI – Kiểm tra Chất lượng & Bảo mật Firestore Rules
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  verify:
+    name: Typecheck, Lint, Unit Tests, Rules Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cài đặt Java 21 (Phục vụ Firebase Firestore Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cài đặt dependencies
+        run: npm ci
+
+      - name: Cài đặt Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Kiểm tra kiểu TypeScript (Typecheck)
+        run: npm run typecheck
+
+      - name: Kiểm tra quy chuẩn mã nguồn (ESLint)
+        run: npm run lint
+
+      - name: Chạy Unit Tests (Logic Ngày học, Streak, Crypto, Validation)
+        run: npm test
+
+      - name: Kiểm thử bảo mật Firestore Security Rules với Emulator
+        run: npm run test:rules
+
+      - name: Kiểm tra đóng gói Production Build
+        run: npm run build
+

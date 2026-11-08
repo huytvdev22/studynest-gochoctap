@@ -1,0 +1,442 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidDateStr(val) {
+      return val is string && val.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function classPath(classId) {
+      return /databases/$(database)/documents/classes/$(classId);
+    }
+
+    function memberPath(classId, uid) {
+      return /databases/$(database)/documents/classes/$(classId)/members/$(uid);
+    }
+
+    function hasActiveMemberDoc(classId) {
+      return isSignedIn()
+        && exists(memberPath(classId, request.auth.uid))
+        && get(memberPath(classId, request.auth.uid)).data.status == 'active';
+    }
+
+    function memberRole(classId) {
+      return get(memberPath(classId, request.auth.uid)).data.role;
+    }
+
+    function isClassMember(classId) {
+      return hasActiveMemberDoc(classId)
+        && memberRole(classId) in ['owner', 'instructor', 'student'];
+    }
+
+    function isClassOwner(classId) {
+      return hasActiveMemberDoc(classId)
+        && memberRole(classId) == 'owner';
+    }
+
+    function isClassInstructorOrOwner(classId) {
+      return hasActiveMemberDoc(classId)
+        && memberRole(classId) in ['owner', 'instructor'];
+    }
+
+    function isClassStudent(classId) {
+      return hasActiveMemberDoc(classId)
+        && memberRole(classId) == 'student';
+    }
+
+    // =========================================================================
+    // Collection Group Query: members (for "Lớp của tôi")
+    // =========================================================================
+
+    match /{path=**}/members/{memberUid} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == memberUid ||
+        resource.data.uid == request.auth.uid
+      );
+    }
+
+    // =========================================================================
+    // Users (Minimal Profile, Private per User)
+    // =========================================================================
+
+    match /users/{uid} {
+      allow read: if isUser(uid);
+      allow create, update: if isUser(uid)
+        && request.resource.data.uid == uid
+        && isValidString(request.resource.data.displayName, 1, 100)
+        && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'createdAt', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // Classes & Subcollections
+    // =========================================================================
+
+    match /classes/{classId} {
+      allow read: if isClassMember(classId);
+
+      // Atomic creation: class + initial owner member must be created together
+      allow create: if isSignedIn()
+        && request.resource.data.id == classId
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.createdBy == request.auth.uid
+        && isValidString(request.resource.data.name, 2, 100)
+        && isValidString(request.resource.data.description, 0, 500)
+        && request.resource.data.color in ['emerald', 'sky', 'amber', 'violet', 'rose']
+        && request.resource.data.icon in ['book-open', 'star', 'compass', 'sparkles', 'graduation-cap']
+        && isValidString(request.resource.data.timezone, 3, 60)
+        && request.resource.data.studyDaysOfWeek is list
+        && request.resource.data.studyDaysOfWeek.size() >= 1
+        && request.resource.data.studyDaysOfWeek.size() <= 7
+        && existsAfter(memberPath(classId, request.auth.uid))
+        && getAfter(memberPath(classId, request.auth.uid)).data.role == 'owner'
+        && getAfter(memberPath(classId, request.auth.uid)).data.uid == request.auth.uid
+        && getAfter(memberPath(classId, request.auth.uid)).data.classId == classId
+        && getAfter(memberPath(classId, request.auth.uid)).data.status == 'active';
+
+      allow update: if isClassOwner(classId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdBy == resource.data.createdBy
+        && isValidString(request.resource.data.name, 2, 100)
+        && isValidString(request.resource.data.description, 0, 500)
+        && request.resource.data.color in ['emerald', 'sky', 'amber', 'violet', 'rose']
+        && request.resource.data.icon in ['book-open', 'star', 'compass', 'sparkles', 'graduation-cap']
+        && isValidString(request.resource.data.timezone, 3, 60)
+        && request.resource.data.studyDaysOfWeek is list
+        && request.resource.data.studyDaysOfWeek.size() >= 1
+        && request.resource.data.studyDaysOfWeek.size() <= 7;
+
+      allow delete: if isClassOwner(classId);
+
+      // -----------------------------------------------------------------------
+      // Class Members
+      // -----------------------------------------------------------------------
+      match /members/{memberUid} {
+        allow read: if isUser(memberUid) || isClassMember(classId);
+
+        allow create: if (
+          // Case 1: Initial atomic owner creation alongside the class document
+          (
+            isUser(memberUid)
+            && !exists(classPath(classId))
+            && existsAfter(classPath(classId))
+            && getAfter(classPath(classId)).data.ownerId == request.auth.uid
+            && request.resource.data.uid == memberUid
+            && request.resource.data.classId == classId
+            && request.resource.data.role == 'owner'
+            && request.resource.data.status == 'active'
+            && isValidString(request.resource.data.displayName, 1, 100)
+          )
+          ||
+          // Case 2: Owner approving a join request or adding a member (never as 'owner')
+          (
+            isClassOwner(classId)
+            && memberUid != request.auth.uid
+            && request.resource.data.uid == memberUid
+            && request.resource.data.classId == classId
+            && request.resource.data.role in ['student', 'instructor']
+            && request.resource.data.status == 'active'
+            && isValidString(request.resource.data.displayName, 1, 100)
+          )
+        );
+
+        // Only owner can change a non-owner member's role/status; nobody can promote to 'owner' or demote 'owner'
+        allow update: if isClassOwner(classId)
+          && resource.data.role != 'owner'
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.classId == resource.data.classId
+          && request.resource.data.role in ['student', 'instructor']
+          && request.resource.data.status in ['active', 'removed']
+          && isValidString(request.resource.data.displayName, 1, 100);
+
+        allow delete: if isClassOwner(classId) && resource.data.role != 'owner';
+      }
+
+      // -----------------------------------------------------------------------
+      // Invitations (Token-gated get; no plaintext code allowed)
+      // -----------------------------------------------------------------------
+      match /invitations/{invitationId} {
+        allow get: if isSignedIn();
+        allow list: if isClassOwner(classId);
+
+        allow create: if isClassOwner(classId)
+          && request.resource.data.id == invitationId
+          && request.resource.data.classId == classId
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.status == 'active'
+          && isValidString(request.resource.data.className, 2, 100)
+          && isValidString(request.resource.data.codeHash, 64, 64)
+          && !('joinCode' in request.resource.data)
+          && !('pin' in request.resource.data)
+          && !('code' in request.resource.data)
+          && request.resource.data.expiresAt is timestamp
+          && request.resource.data.expiresAt > request.time;
+
+        allow update: if isClassOwner(classId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.classId == resource.data.classId
+          && request.resource.data.codeHash == resource.data.codeHash
+          && !('joinCode' in request.resource.data)
+          && request.resource.data.status in ['active', 'revoked'];
+
+        allow delete: if isClassOwner(classId);
+      }
+
+      // Owner-only secret vault so the owner can copy the join code later without exposing it
+      match /invitationSecrets/{invitationId} {
+        allow read, write: if isClassOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Join Requests (Pending approval by owner; verified against invitation hash)
+      // -----------------------------------------------------------------------
+      match /joinRequests/{requestUid} {
+        allow get: if isUser(requestUid) || isClassOwner(classId);
+        allow list: if isClassOwner(classId);
+
+        allow create: if isUser(requestUid)
+          && !isClassMember(classId)
+          && request.resource.data.uid == requestUid
+          && request.resource.data.classId == classId
+          && request.resource.data.status == 'pending'
+          && isValidString(request.resource.data.displayName, 1, 100)
+          && isValidString(request.resource.data.invitationId, 8, 128)
+          && isValidString(request.resource.data.submittedCode, 4, 16)
+          && exists(/databases/$(database)/documents/classes/$(classId)/invitations/$(request.resource.data.invitationId))
+          && get(/databases/$(database)/documents/classes/$(classId)/invitations/$(request.resource.data.invitationId)).data.status == 'active'
+          && get(/databases/$(database)/documents/classes/$(classId)/invitations/$(request.resource.data.invitationId)).data.expiresAt > request.time
+          && hashing.sha256((request.resource.data.invitationId + ':' + request.resource.data.submittedCode).toUtf8()).toHexString().lower()
+             == get(/databases/$(database)/documents/classes/$(classId)/invitations/$(request.resource.data.invitationId)).data.codeHash.lower();
+
+        allow update: if isClassOwner(classId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.classId == resource.data.classId
+          && request.resource.data.status in ['approved', 'rejected']
+          && (
+            request.resource.data.status == 'rejected'
+            || (
+              request.resource.data.status == 'approved'
+              && existsAfter(memberPath(classId, requestUid))
+              && getAfter(memberPath(classId, requestUid)).data.role == 'student'
+              && getAfter(memberPath(classId, requestUid)).data.status == 'active'
+            )
+          );
+
+        allow delete: if isClassOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Timetable Schedules & Exceptions
+      // -----------------------------------------------------------------------
+      match /schedules/{scheduleId} {
+        allow read: if isClassMember(classId);
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.id == scheduleId
+          && request.resource.data.classId == classId
+          && request.resource.data.dayOfWeek is int
+          && request.resource.data.dayOfWeek >= 0
+          && request.resource.data.dayOfWeek <= 6
+          && request.resource.data.sessionOfDay in ['morning', 'afternoon', 'evening']
+          && request.resource.data.periodNumber is int
+          && request.resource.data.periodNumber >= 1
+          && request.resource.data.periodNumber <= 12
+          && request.resource.data.type in ['regular', 'tutoring']
+          && isValidString(request.resource.data.subject, 1, 80);
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      match /scheduleExceptions/{exceptionId} {
+        allow read: if isClassMember(classId);
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.classId == classId
+          && isValidDateStr(request.resource.data.date)
+          && isValidString(request.resource.data.reason, 1, 200)
+          && request.resource.data.isDayOff is bool;
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Lessons & Teacher-Only Notes
+      // -----------------------------------------------------------------------
+      match /lessons/{lessonId} {
+        // Students can ONLY read published lessons; instructors/owners can read all
+        allow read: if isClassInstructorOrOwner(classId)
+          || (isClassMember(classId) && resource.data.status == 'published');
+
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.id == lessonId
+          && request.resource.data.classId == classId
+          && isValidString(request.resource.data.title, 2, 150)
+          && isValidString(request.resource.data.subject, 1, 80)
+          && isValidString(request.resource.data.goal, 0, 500)
+          && isValidString(request.resource.data.explanation, 0, 10000)
+          && request.resource.data.keywords is list
+          && request.resource.data.keywords.size() <= 30
+          && request.resource.data.status in ['draft', 'published']
+          && !('teacherNotes' in request.resource.data);
+
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      // Teacher-only notes are stored in a separate collection inaccessible to students
+      match /lessonNotes/{lessonId} {
+        allow read: if isClassInstructorOrOwner(classId);
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.lessonId == lessonId
+          && request.resource.data.classId == classId
+          && isValidString(request.resource.data.content, 0, 5000);
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Study Sessions
+      // -----------------------------------------------------------------------
+      match /sessions/{sessionId} {
+        allow read: if isClassMember(classId);
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.id == sessionId
+          && request.resource.data.classId == classId
+          && isValidDateStr(request.resource.data.date)
+          && isValidString(request.resource.data.title, 2, 150)
+          && isValidString(request.resource.data.goal, 0, 500)
+          && request.resource.data.durationMinutes is int
+          && request.resource.data.durationMinutes >= 5
+          && request.resource.data.durationMinutes <= 300
+          && request.resource.data.lessonIds is list
+          && request.resource.data.checklist is list
+          && request.resource.data.status in ['planned', 'in_progress', 'completed'];
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Assignments (Tasks)
+      // -----------------------------------------------------------------------
+      match /assignments/{assignmentId} {
+        // Students can ONLY read tasks assigned to them or 'ALL'
+        allow read: if isClassInstructorOrOwner(classId)
+          || (
+            isClassStudent(classId)
+            && resource.data.assignedStudentUids.hasAny([request.auth.uid, 'ALL'])
+          );
+
+        allow create, update: if isClassInstructorOrOwner(classId)
+          && request.resource.data.id == assignmentId
+          && request.resource.data.classId == classId
+          && isValidString(request.resource.data.title, 2, 150)
+          && isValidString(request.resource.data.description, 0, 2000)
+          && isValidDateStr(request.resource.data.dueDate)
+          && request.resource.data.assignedStudentUids is list
+          && request.resource.data.assignedStudentUids.size() >= 1
+          && request.resource.data.starsReward is int
+          && request.resource.data.starsReward >= 1
+          && request.resource.data.starsReward <= 10;
+
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+
+      // -----------------------------------------------------------------------
+      // Learning Records (Student Submissions & Instructor Confirmations/Stars)
+      // -----------------------------------------------------------------------
+      match /learningRecords/{recordId} {
+        allow read: if isClassInstructorOrOwner(classId)
+          || (isClassStudent(classId) && resource.data.studentUid == request.auth.uid);
+
+        allow create: if (
+          // Instructor/Owner creating a record directly
+          (
+            isClassInstructorOrOwner(classId)
+            && request.resource.data.id == recordId
+            && request.resource.data.classId == classId
+            && isValidDateStr(request.resource.data.date)
+            && request.resource.data.type in ['assignment', 'session']
+            && request.resource.data.studentStatus in ['pending', 'submitted']
+            && request.resource.data.instructorStatus in ['unverified', 'confirmed', 'needs_work']
+            && request.resource.data.starsAwarded is int
+            && request.resource.data.starsAwarded >= 0
+            && request.resource.data.starsAwarded <= 10
+          )
+          ||
+          // Student submitting their own completion (cannot self-confirm or award stars)
+          (
+            isClassStudent(classId)
+            && request.resource.data.id == recordId
+            && request.resource.data.classId == classId
+            && request.resource.data.studentUid == request.auth.uid
+            && isValidDateStr(request.resource.data.date)
+            && request.resource.data.type in ['assignment', 'session']
+            && request.resource.data.studentStatus == 'submitted'
+            && isValidString(request.resource.data.studentNote, 0, 500)
+            && request.resource.data.instructorStatus == 'unverified'
+            && request.resource.data.starsAwarded == 0
+            && request.resource.data.confirmedBy == null
+            && request.resource.data.instructorComment == ''
+            && (
+              request.resource.data.assignmentId == null
+              || (
+                exists(/databases/$(database)/documents/classes/$(classId)/assignments/$(request.resource.data.assignmentId))
+                && get(/databases/$(database)/documents/classes/$(classId)/assignments/$(request.resource.data.assignmentId)).data.assignedStudentUids.hasAny([request.auth.uid, 'ALL'])
+              )
+            )
+          )
+        );
+
+        allow update: if (
+          // Instructor/Owner reviewing/confirming & awarding stars
+          (
+            isClassInstructorOrOwner(classId)
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.classId == resource.data.classId
+            && request.resource.data.studentUid == resource.data.studentUid
+            && isValidDateStr(request.resource.data.date)
+            && request.resource.data.instructorStatus in ['unverified', 'confirmed', 'needs_work']
+            && request.resource.data.starsAwarded is int
+            && request.resource.data.starsAwarded >= 0
+            && request.resource.data.starsAwarded <= 10
+            && isValidString(request.resource.data.instructorComment, 0, 1000)
+          )
+          ||
+          // Student updating their own unconfirmed submission (cannot alter instructor fields)
+          (
+            isClassStudent(classId)
+            && resource.data.studentUid == request.auth.uid
+            && resource.data.instructorStatus != 'confirmed'
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.classId == resource.data.classId
+            && request.resource.data.studentUid == resource.data.studentUid
+            && request.resource.data.date == resource.data.date
+            && request.resource.data.type == resource.data.type
+            && request.resource.data.assignmentId == resource.data.assignmentId
+            && request.resource.data.sessionId == resource.data.sessionId
+            && request.resource.data.instructorStatus == resource.data.instructorStatus
+            && request.resource.data.starsAwarded == resource.data.starsAwarded
+            && request.resource.data.confirmedBy == resource.data.confirmedBy
+            && request.resource.data.instructorComment == resource.data.instructorComment
+            && request.resource.data.studentStatus in ['pending', 'submitted']
+            && isValidString(request.resource.data.studentNote, 0, 500)
+          )
+        );
+
+        allow delete: if isClassInstructorOrOwner(classId);
+      }
+    }
+  }
+}
+
