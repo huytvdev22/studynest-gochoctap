@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowRight,
@@ -19,6 +19,8 @@ import {
 
 export function JoinClassPage() {
   const { token = '' } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const queryCode = searchParams.get('code') || '';
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -28,15 +30,25 @@ export function JoinClassPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState<string>(queryCode);
   const [message, setMessage] = useState<string>('Em xin phép tham gia lớp học ạ!');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (queryCode && !code) {
+      setCode(queryCode);
+    }
+  }, [queryCode, code]);
+
   const loadInviteStatus = useCallback(async () => {
     if (authLoading) return;
     if (!user) {
-      navigate(`/login?redirect=${encodeURIComponent(`/join/${token}`)}`, {
+      const currentQuery = searchParams.toString();
+      const redirectTarget = `/join/${token}${
+        currentQuery ? `?${currentQuery}` : ''
+      }`;
+      navigate(`/login?redirect=${encodeURIComponent(redirectTarget)}`, {
         replace: true,
       });
       return;
@@ -69,7 +81,7 @@ export function JoinClassPage() {
     } finally {
       setLoading(false);
     }
-  }, [authLoading, user, token, navigate]);
+  }, [authLoading, user, token, navigate, searchParams]);
 
   useEffect(() => {
     void loadInviteStatus();

@@ -59,6 +59,7 @@ export function MyClassesPage() {
   // Ô nhập nhanh link / token tham gia lớp (Mặc định ẩn nếu đã có lớp để giao diện gọn cho học sinh)
   const [showJoinBox, setShowJoinBox] = useState<boolean>(false);
   const [joinInput, setJoinInput] = useState('');
+  const [joinInputError, setJoinInputError] = useState<string | null>(null);
 
   const loadClasses = useCallback(async () => {
     if (!user) return;
@@ -133,12 +134,41 @@ export function MyClassesPage() {
 
   const handleQuickJoinNavigate = (e: React.FormEvent) => {
     e.preventDefault();
+    setJoinInputError(null);
     const raw = joinInput.trim();
     if (!raw) return;
-    // Cho phép dán cả URL đầy đủ (https://.../join/cls.inv) hoặc chỉ token (cls.inv)
-    const match = raw.match(/\/join\/([^/?#]+)/);
-    const token = match ? match[1] : raw;
-    navigate(`/join/${encodeURIComponent(token)}`);
+
+    // Trường hợp 1: Dán URL đầy đủ có thể kèm ?code=...
+    // VD: https://studynest-gochoctap.web.app/join/cls_123.inv_456?code=ABCDEF
+    const urlMatch = raw.match(/\/join\/([^/?#]+)(?:\?code=([^&#]+))?/);
+    if (urlMatch) {
+      const token = urlMatch[1];
+      const codeParam = urlMatch[2];
+      navigate(
+        `/join/${encodeURIComponent(token)}${
+          codeParam ? `?code=${encodeURIComponent(codeParam)}` : ''
+        }`
+      );
+      return;
+    }
+
+    // Trường hợp 2: Dán composite token (cls_xxx.inv_xxx)
+    if (raw.includes('.')) {
+      navigate(`/join/${encodeURIComponent(raw)}`);
+      return;
+    }
+
+    // Trường hợp 3: Người dùng chỉ nhập mã PIN 6 ký tự (VD: KT2R7J, ETPD8A)
+    if (/^[a-zA-Z0-9_-]{4,10}$/.test(raw)) {
+      setJoinInputError(
+        `"${raw}" là Mã bảo vệ lớp học (PIN). Để vào lớp, em vui lòng dán toàn bộ Đường link lời mời (dạng https://.../join/cls_...) do Thầy/Cô gửi nhé!`
+      );
+      return;
+    }
+
+    setJoinInputError(
+      'Đường link lời mời không đúng định dạng. Vui lòng dán link có dạng https://.../join/cls_...'
+    );
   };
 
   const renderClassCard = ({
@@ -231,44 +261,58 @@ export function MyClassesPage() {
 
       {/* Thanh tham gia lớp bằng đường link / token lời mời (Chỉ hiện khi chưa có lớp nào hoặc khi bấm nút "Nhập mã vào lớp khác") */}
       {(showJoinBox || (!loading && items.length === 0)) && (
-        <form
-          onSubmit={handleQuickJoinNavigate}
-          className="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/50 dark:bg-emerald-950/20"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-              <KeyRound className="h-5 w-5" />
+        <div className="space-y-2">
+          <form
+            onSubmit={handleQuickJoinNavigate}
+            className="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/50 dark:bg-emerald-950/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                <KeyRound className="h-5 w-5" />
+              </div>
+              <div>
+                <label
+                  htmlFor="quick-join-input"
+                  className="block text-sm font-bold text-slate-900 dark:text-white"
+                >
+                  Tham gia lớp học bằng đường link lời mời
+                </label>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Dán toàn bộ đường link lời mời được gửi từ người hướng dẫn để gửi yêu cầu vào lớp.
+                </p>
+              </div>
             </div>
-            <div>
-              <label
-                htmlFor="quick-join-input"
-                className="block text-sm font-bold text-slate-900 dark:text-white"
-              >
-                Tham gia lớp học bằng mã lời mời
-              </label>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Dán đường link lời mời hoặc mã token được gửi từ người hướng dẫn để vào lớp.
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              id="quick-join-input"
-              type="text"
-              value={joinInput}
-              onChange={(e) => setJoinInput(e.target.value)}
-              placeholder="Dán link lời mời hoặc token..."
-              className="w-full sm:w-72 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+            <div className="flex items-center gap-2">
+              <input
+                id="quick-join-input"
+                type="text"
+                value={joinInput}
+                onChange={(e) => {
+                  setJoinInput(e.target.value);
+                  setJoinInputError(null);
+                }}
+                placeholder="Dán link lời mời (https://.../join/cls_...)"
+                className="w-full sm:w-80 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+              <button
+                type="submit"
+                className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 shadow-xs"
+              >
+                Mở lời mời
+              </button>
+            </div>
+          </form>
+
+          {joinInputError && (
+            <div
+              role="alert"
+              className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200"
             >
-              Mở lời mời
-            </button>
-          </div>
-        </form>
+              {joinInputError}
+            </div>
+          )}
+        </div>
       )}
 
       {error && (

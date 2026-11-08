@@ -324,7 +324,12 @@ export function MembersAndSettingsPage() {
 
           <div className="mt-4 space-y-3">
             {invitations.map(({ invitation, joinCode, compositeToken }) => {
-              const joinUrl = `${window.location.origin}/join/${compositeToken}`;
+              const joinUrlWithCode = `${window.location.origin}/join/${compositeToken}${
+                joinCode ? `?code=${joinCode}` : ''
+              }`;
+              const invitationMessage = `Mời em tham gia lớp học "${studyClass.name}" trên StudyNest!\n👉 Nhấp vào link để vào lớp: ${joinUrlWithCode}\nMã bảo vệ lớp học (PIN): ${
+                joinCode || 'Không có'
+              }`;
               const isExpired = invitation.expiresAt.toMillis() <= Date.now();
               const isActive = invitation.status === 'active' && !isExpired;
 
@@ -350,13 +355,13 @@ export function MembersAndSettingsPage() {
                       </span>
                       {joinCode && (
                         <span className="rounded-lg bg-amber-100 px-2.5 py-0.5 font-mono text-xs font-extrabold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
-                          Mã tham gia: {joinCode}
+                          Mã bảo vệ (PIN): {joinCode}
                         </span>
                       )}
                     </div>
 
                     <div className="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">
-                      Link: {joinUrl}
+                      Link vào lớp (1 chạm): {joinUrlWithCode}
                     </div>
                   </div>
 
@@ -364,14 +369,33 @@ export function MembersAndSettingsPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        void copyToClipboard(joinUrl, `url-${invitation.id}`)
+                        void copyToClipboard(
+                          joinUrlWithCode,
+                          `url-${invitation.id}`
+                        )
                       }
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      className="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       {copiedKey === `url-${invitation.id}`
                         ? 'Đã chép Link!'
-                        : 'Chép Link'}
+                        : 'Chép Link vào lớp'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void copyToClipboard(
+                          invitationMessage,
+                          `msg-${invitation.id}`
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copiedKey === `msg-${invitation.id}`
+                        ? 'Đã chép tin nhắn!'
+                        : 'Chép tin nhắn gửi em'}
                     </button>
 
                     {joinCode && (
@@ -387,8 +411,8 @@ export function MembersAndSettingsPage() {
                       >
                         <Copy className="h-3.5 w-3.5" />
                         {copiedKey === `code-${invitation.id}`
-                          ? 'Đã chép Mã!'
-                          : 'Chép Mã'}
+                          ? 'Đã chép mã PIN!'
+                          : `Chép PIN: ${joinCode}`}
                       </button>
                     )}
 
