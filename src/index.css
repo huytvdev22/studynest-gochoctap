@@ -34,29 +34,29 @@
 }
 
 .rotate-y-180 {
-  transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg) !important;
+  -webkit-transform: rotateY(180deg) !important;
 }
 
 @keyframes flashcardSlideInNext {
   from {
     opacity: 0;
-    transform: translate3d(36px, 0, 0) scale(0.96);
+    transform: translate3d(28px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes flashcardSlideInPrev {
   from {
     opacity: 0;
-    transform: translate3d(-36px, 0, 0) scale(0.96);
+    transform: translate3d(-28px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -73,11 +73,11 @@
 }
 
 .animate-card-next {
-  animation: flashcardSlideInNext 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: flashcardSlideInNext 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-card-prev {
-  animation: flashcardSlideInPrev 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: flashcardSlideInPrev 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-btn-pop {

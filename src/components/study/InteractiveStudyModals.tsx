@@ -421,165 +421,184 @@ export function FlashcardStudyModal({
               />
             </div>
 
-            {/* Thẻ Flashcard chính với hiệu ứng 3D Flip và Chuyển thẻ */}
-            <div className="perspective-1000 w-full min-h-[290px] select-none">
-              <div
-                key={currentIndex}
-                onClick={() => setFlipped((f) => !f)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setFlipped((f) => !f);
-                  }
-                }}
-                className={`relative w-full min-h-[290px] cursor-pointer transition-transform duration-500 preserve-3d ${
-                  slideDirection === 'next'
-                    ? 'animate-card-next'
-                    : slideDirection === 'prev'
-                    ? 'animate-card-prev'
-                    : ''
-                } ${flipped ? 'rotate-y-180' : ''}`}
-              >
-                {/* Mặt trước của Thẻ Flashcard */}
-                <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/40 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-emerald-400 transition-all dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30">
-                  <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
-                    Mặt trước (Từ / Mẫu câu / Câu hỏi)
-                  </span>
+            {/* Thẻ Flashcard chính với hiệu ứng chuyển thẻ và 3D Flip mượt mà tương thích Safari/WebKit */}
+            <div
+              key={currentIndex}
+              className={`w-full ${
+                slideDirection === 'next'
+                  ? 'animate-card-next'
+                  : slideDirection === 'prev'
+                  ? 'animate-card-prev'
+                  : ''
+              }`}
+            >
+              <div className="perspective-1000 w-full min-h-[290px] select-none">
+                <div
+                  onClick={() => setFlipped((f) => !f)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setFlipped((f) => !f);
+                    }
+                  }}
+                  aria-label={flipped ? 'Lật về mặt trước' : 'Lật xem mặt sau'}
+                  className={`relative w-full min-h-[290px] cursor-pointer transition-transform duration-500 preserve-3d ${
+                    flipped ? 'rotate-y-180' : ''
+                  }`}
+                >
+                  {/* Mặt trước của Thẻ Flashcard */}
+                  <div
+                    className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/40 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-emerald-400 transition-all duration-300 dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 ${
+                      flipped
+                        ? 'opacity-0 invisible pointer-events-none'
+                        : 'opacity-100 visible pointer-events-auto'
+                    }`}
+                  >
+                    <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
+                      Mặt trước (Từ / Mẫu câu / Câu hỏi)
+                    </span>
 
-                  <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                    <RotateCw className="h-3.5 w-3.5" />
-                    Bấm để lật thẻ
-                  </span>
+                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                      <RotateCw className="h-3.5 w-3.5" />
+                      Bấm để lật thẻ
+                    </span>
 
-                  <div className="mt-4 max-w-lg space-y-3 w-full">
-                    <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {currentCard.keyword.term}
-                    </div>
-
-                    {currentCard.keyword.pronunciation && (
-                      <div className="text-sm sm:text-base font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                        {currentCard.keyword.pronunciation}
+                    <div className="mt-4 max-w-lg space-y-3 w-full">
+                      <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                        {currentCard.keyword.term}
                       </div>
-                    )}
 
-                    {/* Nút phát âm ngoại ngữ (chỉ hiện khi có ttsLang) */}
-                    {activeTtsLang && (
-                      <div
-                        className="flex flex-wrap items-center justify-center gap-2 pt-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            speakTextWithTts(
-                              currentCard.keyword.term,
-                              activeTtsLang,
-                              false
-                            )
-                          }
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition"
+                      {currentCard.keyword.pronunciation && (
+                        <div className="text-sm sm:text-base font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                          {currentCard.keyword.pronunciation}
+                        </div>
+                      )}
+
+                      {/* Nút phát âm ngoại ngữ (chỉ hiện khi có ttsLang) */}
+                      {activeTtsLang && (
+                        <div
+                          className="flex flex-wrap items-center justify-center gap-2 pt-2"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Volume2 className="h-4 w-4" />
-                          Nghe phát âm ({activeTtsLang})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            speakTextWithTts(
-                              currentCard.keyword.term,
-                              activeTtsLang,
-                              true
-                            )
-                          }
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50 active:scale-95 transition dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
-                        >
-                          <Turtle className="h-4 w-4" />
-                          Đọc chậm
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              speakTextWithTts(
+                                currentCard.keyword.term,
+                                activeTtsLang,
+                                false
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition"
+                          >
+                            <Volume2 className="h-4 w-4" />
+                            Nghe phát âm ({activeTtsLang})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              speakTextWithTts(
+                                currentCard.keyword.term,
+                                activeTtsLang,
+                                true
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50 active:scale-95 transition dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
+                          >
+                            <Turtle className="h-4 w-4" />
+                            Đọc chậm
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="pt-2 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                        Chạm vào thẻ hoặc bấm nút Lật bên dưới để xem nghĩa
                       </div>
-                    )}
-
-                    <div className="pt-2 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                      Chạm vào thẻ hoặc bấm nút Lật bên dưới để xem nghĩa
                     </div>
                   </div>
-                </div>
 
-                {/* Mặt sau của Thẻ Flashcard */}
-                <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl border-2 border-teal-300/90 bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-teal-400 transition-all dark:border-teal-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/30 overflow-y-auto">
-                  <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-teal-700 shadow-2xs dark:bg-slate-800 dark:text-teal-300">
-                    Mặt sau (Nghĩa / Đáp án)
-                  </span>
+                  {/* Mặt sau của Thẻ Flashcard */}
+                  <div
+                    className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl border-2 border-teal-300/90 bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-teal-400 transition-all duration-300 dark:border-teal-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/30 overflow-y-auto ${
+                      !flipped
+                        ? 'opacity-0 invisible pointer-events-none'
+                        : 'opacity-100 visible pointer-events-auto'
+                    }`}
+                  >
+                    <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-teal-700 shadow-2xs dark:bg-slate-800 dark:text-teal-300">
+                      Mặt sau (Nghĩa / Đáp án)
+                    </span>
 
-                  <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-400">
-                    <RotateCw className="h-3.5 w-3.5" />
-                    Bấm để quay lại
-                  </span>
+                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-400">
+                      <RotateCw className="h-3.5 w-3.5" />
+                      Bấm để quay lại
+                    </span>
 
-                  <div className="mt-4 max-w-lg space-y-3 w-full">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                      {currentCard.keyword.term}
+                    <div className="mt-4 max-w-lg space-y-3 w-full">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {currentCard.keyword.term}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <span className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">
+                          {currentCard.keyword.meaning}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            speakTextWithTts(
+                              currentCard.keyword.meaning,
+                              'vi-VN',
+                              false
+                            );
+                          }}
+                          title="Nghe đọc nghĩa tiếng Việt (vi-VN)"
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 active:scale-95 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                        >
+                          <Volume2 className="h-3.5 w-3.5" />
+                          <span>Đọc nghĩa</span>
+                        </button>
+                      </div>
+
+                      {currentCard.keyword.example && (() => {
+                        const exampleTtsLang = detectTextTtsLang(
+                          currentCard.keyword.example,
+                          activeTtsLang
+                        );
+                        const isExampleVi = isVietnameseText(
+                          currentCard.keyword.example
+                        );
+
+                        return (
+                          <div className="rounded-2xl bg-white/90 p-3.5 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 shadow-2xs text-left">
+                            <strong>Ví dụ / Ghi chú:</strong>{' '}
+                            {currentCard.keyword.example}
+                            {exampleTtsLang && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  speakTextWithTts(
+                                    currentCard.keyword.example,
+                                    exampleTtsLang,
+                                    false
+                                  );
+                                }}
+                                className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline active:scale-95 dark:text-emerald-400"
+                              >
+                                <Volume2 className="h-3.5 w-3.5" />
+                                {isExampleVi
+                                  ? 'Đọc ghi chú'
+                                  : `Đọc câu (${exampleTtsLang})`}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      <span className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">
-                        {currentCard.keyword.meaning}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          speakTextWithTts(
-                            currentCard.keyword.meaning,
-                            'vi-VN',
-                            false
-                          );
-                        }}
-                        title="Nghe đọc nghĩa tiếng Việt (vi-VN)"
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 active:scale-95 dark:bg-emerald-950 dark:text-emerald-300 transition"
-                      >
-                        <Volume2 className="h-3.5 w-3.5" />
-                        <span>Đọc nghĩa</span>
-                      </button>
-                    </div>
-
-                    {currentCard.keyword.example && (() => {
-                      const exampleTtsLang = detectTextTtsLang(
-                        currentCard.keyword.example,
-                        activeTtsLang
-                      );
-                      const isExampleVi = isVietnameseText(
-                        currentCard.keyword.example
-                      );
-
-                      return (
-                        <div className="rounded-2xl bg-white/90 p-3.5 text-xs sm:text-sm text-slate-700 border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 shadow-2xs text-left">
-                          <strong>Ví dụ / Ghi chú:</strong>{' '}
-                          {currentCard.keyword.example}
-                          {exampleTtsLang && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                speakTextWithTts(
-                                  currentCard.keyword.example,
-                                  exampleTtsLang,
-                                  false
-                                );
-                              }}
-                              className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline active:scale-95 dark:text-emerald-400"
-                            >
-                              <Volume2 className="h-3.5 w-3.5" />
-                              {isExampleVi
-                                ? 'Đọc ghi chú'
-                                : `Đọc câu (${exampleTtsLang})`}
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })()}
                   </div>
                 </div>
               </div>
