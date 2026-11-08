@@ -819,7 +819,7 @@ export function LessonsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   {unitLessons.map((lesson) => {
                     const lessonLang = inferDefaultTtsLang(
                       lesson.subject,
@@ -831,97 +831,46 @@ export function LessonsPage() {
                     return (
                       <div
                         key={lesson.id}
-                        className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-emerald-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                        className="group flex flex-col justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs transition hover:border-emerald-400 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900"
                       >
-                        <div>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                {lesson.subject}
-                              </span>
-                              {lesson.unitTitle && (
-                                <span className="rounded-lg bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                  {lesson.unitTitle}
-                                </span>
-                              )}
-                              {lessonLang && (
-                                <span className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-300">
-                                  <Volume2 className="h-3 w-3" /> {lessonLang}
-                                </span>
-                              )}
-                            </div>
-
-                            {isInstructorOrOwner && (
-                              <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                                  lesson.status === 'published'
-                                    ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
-                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                                }`}
-                              >
-                                {lesson.status === 'published' ? (
-                                  <>
-                                    <Eye className="h-3 w-3" /> Đã công bố
-                                  </>
-                                ) : (
-                                  <>
-                                    <FileEdit className="h-3 w-3" /> Bản nháp
-                                  </>
-                                )}
-                              </span>
-                            )}
-                          </div>
-
+                        {/* Hàng 1: Icon + Tên bài học + Trạng thái */}
+                        <div className="flex items-start justify-between gap-2">
                           <Link
                             to={`/app/classes/${studyClass.id}/lessons/${lesson.id}`}
-                            className="mt-3 block text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400"
+                            className="flex items-center gap-2.5 min-w-0 flex-1"
                           >
-                            {lesson.title}
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/60 dark:text-emerald-300">
+                              <BookOpen className="h-4 w-4" />
+                            </span>
+                            <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-emerald-700 transition truncate dark:text-white dark:group-hover:text-emerald-400">
+                              {lesson.title}
+                            </h3>
                           </Link>
 
-                          {lesson.goal && (
-                            <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                              {lesson.goal}
-                            </p>
-                          )}
-
-                          {lesson.keywords.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              {lesson.keywords.slice(0, 6).map((kw, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                >
-                                  {kw.term}
-                                  {lessonLang && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        speakTextWithTts(
-                                          kw.term,
-                                          lessonLang,
-                                          false
-                                        );
-                                      }}
-                                      title={`Nghe phát âm: ${kw.term}`}
-                                      className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400"
-                                    >
-                                      <Volume2 className="h-3 w-3" />
-                                    </button>
-                                  )}
-                                </span>
-                              ))}
-                              {lesson.keywords.length > 6 && (
-                                <span className="text-xs font-bold text-slate-400">
-                                  +{lesson.keywords.length - 6} thẻ
-                                </span>
+                          {/* Trạng thái bài học cho giáo viên */}
+                          {isInstructorOrOwner && (
+                            <span
+                              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                lesson.status === 'published'
+                                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
+                                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                              }`}
+                            >
+                              {lesson.status === 'published' ? (
+                                <>
+                                  <Eye className="h-2.5 w-2.5" /> Đã công bố
+                                </>
+                              ) : (
+                                <>
+                                  <FileEdit className="h-2.5 w-2.5" /> Bản nháp
+                                </>
                               )}
-                            </div>
+                            </span>
                           )}
                         </div>
 
-                        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800">
+                        {/* Hàng 2: Thông số ngắn gọn + Nút thao tác nhanh */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs text-slate-500 dark:border-slate-800/80">
                           <div className="flex flex-wrap items-center gap-2">
                             {lesson.keywords.length > 0 && (
                               <button
@@ -941,33 +890,41 @@ export function LessonsPage() {
                                     })),
                                   })
                                 }
-                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 transition dark:bg-emerald-950/60 dark:text-emerald-300"
                               >
-                                <Layers className="h-3.5 w-3.5" />
-                                Học {lesson.keywords.length} Flashcard
+                                <Layers className="h-3 w-3" />
+                                {lesson.keywords.length} thẻ
                               </button>
+                            )}
+
+                            {lessonLang && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <Volume2 className="h-2.5 w-2.5" /> {lessonLang}
+                              </span>
                             )}
 
                             {isInstructorOrOwner && (
                               isAddedToToday ? (
-                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                  <Check className="h-3.5 w-3.5" /> Đã thêm vào hôm nay
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                  <Check className="h-3 w-3" /> Đã thêm hôm nay
                                 </span>
                               ) : (
                                 <button
                                   type="button"
                                   disabled={addingLessonId === lesson.id}
                                   onClick={() => void handleAddLessonToToday(lesson)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2 py-0.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50 active:scale-95 disabled:opacity-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 transition"
                                 >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  {addingLessonId === lesson.id ? 'Đang thêm...' : 'Thêm vào hôm nay'}
+                                  <Plus className="h-3 w-3" />
+                                  {addingLessonId === lesson.id
+                                    ? 'Đang thêm...'
+                                    : 'Thêm vào hôm nay'}
                                 </button>
                               )
                             )}
 
                             {lesson.resourceUrl && (
-                              <span className="inline-flex items-center gap-1 text-sky-600">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-sky-600">
                                 <ExternalLink className="h-3 w-3" /> Tài liệu
                               </span>
                             )}
@@ -975,12 +932,10 @@ export function LessonsPage() {
 
                           <Link
                             to={`/app/classes/${studyClass.id}/lessons/${lesson.id}`}
-                            className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                            className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 transition"
                           >
-                            {isInstructorOrOwner
-                              ? 'Xem & Chỉnh sửa'
-                              : 'Vào học bài này'}{' '}
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            <span>{isInstructorOrOwner ? 'Chi tiết' : 'Vào học'}</span>
+                            <ArrowRight className="h-3 w-3" />
                           </Link>
                         </div>
                       </div>
