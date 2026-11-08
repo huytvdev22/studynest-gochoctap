@@ -90,6 +90,12 @@ export function LessonsPage() {
   const [lessonCreationMode, setLessonCreationMode] = useState<'ai' | 'manual'>(
     'ai'
   );
+  const [subjectInputMode, setSubjectInputMode] = useState<'select' | 'custom'>(
+    'select'
+  );
+  const [unitInputMode, setUnitInputMode] = useState<'select' | 'custom'>(
+    'select'
+  );
   const [subject, setSubject] = useState<string>('Everybody Up');
   const [unitTitle, setUnitTitle] = useState<string>('Unit 1: First Day');
   const [title, setTitle] = useState<string>('Lesson 1: School Supplies');
@@ -177,6 +183,46 @@ export function LessonsPage() {
       new Set(base.map((l) => l.unitTitle?.trim() || 'Chưa phân Unit'))
     );
   }, [lessons, subjectFilter]);
+
+  // Danh sách Unit đã tồn tại của Giáo trình đang chọn trong Modal tạo bài mới
+  const unitsInModalSubject = useMemo(() => {
+    const list = lessons
+      .filter((l) => l.subject === subject)
+      .map((l) => (l.unitTitle || '').trim())
+      .filter(Boolean);
+    return Array.from(new Set(list));
+  }, [lessons, subject]);
+
+  const openCreateLessonModal = (defaultSubject?: string, defaultUnit?: string) => {
+    setLessonCreationMode('ai');
+    setFormError(null);
+    const chosenSubject =
+      defaultSubject && defaultSubject !== 'ALL'
+        ? defaultSubject
+        : subjectFilter !== 'ALL'
+        ? subjectFilter
+        : curriculums[0] || 'Everybody Up';
+    handleSubjectInputChange(chosenSubject);
+    setSubjectInputMode(curriculums.length > 0 ? 'select' : 'custom');
+
+    const existingUnits = Array.from(
+      new Set(
+        lessons
+          .filter((l) => l.subject === chosenSubject)
+          .map((l) => (l.unitTitle || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const chosenUnit =
+      defaultUnit && defaultUnit !== 'ALL'
+        ? defaultUnit
+        : unitFilter !== 'ALL'
+        ? unitFilter
+        : existingUnits[0] || 'Unit 1: First Day';
+    setUnitTitle(chosenUnit);
+    setUnitInputMode(existingUnits.length > 0 ? 'select' : 'custom');
+    setShowLessonModal(true);
+  };
 
   const todayStr = studyClass
     ? formatDateInTimezone(new Date(), studyClass.timezone)
@@ -499,20 +545,11 @@ export function LessonsPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setLessonCreationMode('ai');
-                  if (subjectFilter !== 'ALL') {
-                    handleSubjectInputChange(subjectFilter);
-                  }
-                  if (unitFilter !== 'ALL') {
-                    setUnitTitle(unitFilter);
-                  }
-                  setShowLessonModal(true);
-                }}
+                onClick={() => openCreateLessonModal()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-emerald-700"
               >
                 <Bot className="h-4 w-4" />
-                Tạo Bài học & Flashcard (AI)
+                Thêm Bài học & Flashcard (AI)
               </button>
 
               <button
@@ -791,6 +828,22 @@ export function LessonsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {isInstructorOrOwner && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openCreateLessonModal(
+                            firstLes.subject,
+                            firstLes.unitTitle?.trim() || 'Unit 1: First Day'
+                          )
+                        }
+                        className="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Thêm bài vào Unit này
+                      </button>
+                    )}
+
                     {unitCards.length > 0 && (
                       <button
                         type="button"
@@ -961,7 +1014,10 @@ export function LessonsPage() {
                             to={`/app/classes/${studyClass.id}/lessons/${lesson.id}`}
                             className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                           >
-                            Chi tiết <ArrowRight className="h-3.5 w-3.5" />
+                            {isInstructorOrOwner
+                              ? 'Xem & Chỉnh sửa'
+                              : 'Vào học bài này'}{' '}
+                            <ArrowRight className="h-3.5 w-3.5" />
                           </Link>
                         </div>
                       </div>
@@ -1071,30 +1127,82 @@ export function LessonsPage() {
                 </div>
               )}
 
-              {/* Thông tin Giáo trình, Unit, Tên bài & Ngôn ngữ đọc âm thanh */}
+              {/* Thông tin Giáo trình (Droplist), Unit (Droplist), Tên bài & Ngôn ngữ đọc âm thanh */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label
                     htmlFor="les-subject"
                     className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                   >
-                    Tên Giáo trình / Môn học độc lập *
+                    Chọn Giáo trình / Môn học *
                   </label>
-                  <input
-                    id="les-subject"
-                    type="text"
-                    required
-                    list="existing-curriculums-list"
-                    value={subject}
-                    onChange={(e) => handleSubjectInputChange(e.target.value)}
-                    placeholder="VD: Everybody Up 1, Toán Lớp 3..."
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                  />
-                  <datalist id="existing-curriculums-list">
-                    {curriculums.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
+                  {subjectInputMode === 'select' && curriculums.length > 0 ? (
+                    <div className="mt-1 flex gap-2">
+                      <select
+                        id="les-subject"
+                        value={
+                          curriculums.includes(subject)
+                            ? subject
+                            : curriculums[0]
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '__NEW_CURRICULUM__') {
+                            setSubjectInputMode('custom');
+                            setSubject('');
+                            setUnitInputMode('custom');
+                            setUnitTitle('Unit 1: First Day');
+                          } else {
+                            const nextSub = e.target.value;
+                            handleSubjectInputChange(nextSub);
+                            const nextUnits = lessons
+                              .filter((l) => l.subject === nextSub)
+                              .map((l) => (l.unitTitle || '').trim())
+                              .filter(Boolean);
+                            if (nextUnits.length > 0) {
+                              setUnitInputMode('select');
+                              setUnitTitle(nextUnits[0]);
+                            } else {
+                              setUnitInputMode('custom');
+                            }
+                          }
+                        }}
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        {curriculums.map((c) => (
+                          <option key={c} value={c}>
+                            📚 {c}
+                          </option>
+                        ))}
+                        <option value="__NEW_CURRICULUM__">
+                          + Tạo giáo trình mới...
+                        </option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="mt-1 flex gap-2">
+                      <input
+                        id="les-subject"
+                        type="text"
+                        required
+                        value={subject}
+                        onChange={(e) => handleSubjectInputChange(e.target.value)}
+                        placeholder="Nhập tên giáo trình mới (VD: Everybody Up 1, Toán Lớp 3...)"
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                      />
+                      {curriculums.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSubjectInputMode('select');
+                            handleSubjectInputChange(curriculums[0]);
+                          }}
+                          className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
+                        >
+                          Chọn có sẵn
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1102,16 +1210,61 @@ export function LessonsPage() {
                     htmlFor="les-unit"
                     className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                   >
-                    Tên Unit / Chương
+                    Chọn Unit / Chương
                   </label>
-                  <input
-                    id="les-unit"
-                    type="text"
-                    value={unitTitle}
-                    onChange={(e) => setUnitTitle(e.target.value)}
-                    placeholder="VD: Unit 1: First Day, Chương 1..."
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                  />
+                  {unitInputMode === 'select' && unitsInModalSubject.length > 0 ? (
+                    <div className="mt-1 flex gap-2">
+                      <select
+                        id="les-unit"
+                        value={
+                          unitsInModalSubject.includes(unitTitle)
+                            ? unitTitle
+                            : unitsInModalSubject[0]
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '__NEW_UNIT__') {
+                            setUnitInputMode('custom');
+                            setUnitTitle('');
+                          } else {
+                            setUnitTitle(e.target.value);
+                          }
+                        }}
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        {unitsInModalSubject.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                        <option value="__NEW_UNIT__">
+                          + Thêm Unit / Chương mới...
+                        </option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="mt-1 flex gap-2">
+                      <input
+                        id="les-unit"
+                        type="text"
+                        value={unitTitle}
+                        onChange={(e) => setUnitTitle(e.target.value)}
+                        placeholder="VD: Unit 1: First Day, Unit 2: Art Class..."
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                      />
+                      {unitsInModalSubject.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUnitInputMode('select');
+                            setUnitTitle(unitsInModalSubject[0]);
+                          }}
+                          className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
+                        >
+                          Chọn Unit có sẵn
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
