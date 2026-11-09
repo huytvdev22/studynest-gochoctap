@@ -785,58 +785,6 @@ export function ClassDashboardPage() {
                   )}
                 </div>
               )}
-
-              {/* Thời khóa biểu hôm nay (Compact & Khung cuộn) */}
-              {sortedTodaySchedules.length > 0 && (
-                <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 dark:border-slate-800">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      Thời khóa biểu hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
-                    </h3>
-                    <span className="text-[10px] font-medium text-slate-400">
-                      {sortedTodaySchedules.length} tiết
-                    </span>
-                  </div>
-                  <div className="max-h-[170px] overflow-y-auto pr-1 space-y-1.5">
-                    {sortedTodaySchedules.map((sch) => {
-                      const sessionName =
-                        sch.sessionOfDay === 'morning'
-                          ? 'Sáng'
-                          : sch.sessionOfDay === 'afternoon'
-                          ? 'Chiều'
-                          : sch.sessionOfDay === 'evening'
-                          ? 'Tối'
-                          : '';
-                      return (
-                        <div
-                          key={sch.id}
-                          className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-800/40"
-                        >
-                          <div>
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              {sessionName ? `${sessionName} • ` : ''}Tiết {sch.periodNumber}: {sch.subject}
-                            </span>
-                            {sch.startTime && (
-                              <span className="ml-1.5 text-[11px] text-slate-500">
-                                ({sch.startTime} - {sch.endTime})
-                              </span>
-                            )}
-                          </div>
-                          <span
-                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
-                              sch.type === 'tutoring'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
-                            }`}
-                          >
-                            {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </section>
 
             {/* Nhiệm vụ khác (Compact & Khung cuộn) */}
