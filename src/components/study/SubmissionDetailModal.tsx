@@ -385,10 +385,19 @@ export function SubmissionDetailModal({
 
                       const cardLang = card.ttsLang || ttsLang;
 
+                      const cardBorderClass =
+                        effectiveRating === 'forgot' || srsBucket === 'struggling'
+                          ? 'border-rose-300 bg-rose-50/30 dark:border-rose-900/60 dark:bg-rose-950/20'
+                          : effectiveRating === 'good' || srsBucket === 'due_soon'
+                          ? 'border-amber-300 bg-amber-50/30 dark:border-amber-900/60 dark:bg-amber-950/20'
+                          : effectiveRating === 'easy' || srsBucket === 'mastered'
+                          ? 'border-emerald-300 bg-emerald-50/30 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                          : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
+
                       return (
                         <div
                           key={idx}
-                          className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-850"
+                          className={`flex flex-col justify-between rounded-2xl border ${cardBorderClass} p-3.5 transition shadow-2xs`}
                         >
                           <div>
                             <div className="flex items-start justify-between gap-2">

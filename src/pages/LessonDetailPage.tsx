@@ -1051,10 +1051,19 @@ export function LessonDetailPage() {
                 const cardLang =
                   kw.ttsLang !== undefined ? kw.ttsLang : lessonTtsLang;
 
+                const borderClass =
+                  bucket === 'struggling'
+                    ? 'border-rose-300 bg-rose-50/40 dark:border-rose-900/60 dark:bg-rose-950/20'
+                    : bucket === 'due_soon'
+                    ? 'border-amber-300 bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/20'
+                    : bucket === 'mastered'
+                    ? 'border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                    : 'border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/60';
+
                 return (
                   <div
                     key={idx}
-                    className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 space-y-2 dark:border-slate-800 dark:bg-slate-800/50"
+                    className={`rounded-2xl border ${borderClass} p-4 space-y-2 transition shadow-2xs`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>

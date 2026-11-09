@@ -132,6 +132,60 @@ export interface StudyDeckCard {
   ttsLang: SupportedTtsLang;
 }
 
+const SRS_FLASHCARD_THEMES: Record<
+  SrsBucket,
+  {
+    frontBorder: string;
+    backBorder: string;
+    frontBg: string;
+    backBg: string;
+    tagText: string;
+  }
+> = {
+  new: {
+    frontBorder:
+      'border-2 border-slate-200/90 hover:border-slate-300 dark:border-slate-700/80 dark:hover:border-slate-600',
+    backBorder:
+      'border-2 border-slate-200/90 hover:border-slate-300 dark:border-slate-700/80 dark:hover:border-slate-600',
+    frontBg: 'bg-white dark:bg-slate-900',
+    backBg: 'bg-white dark:bg-slate-900',
+    tagText: 'text-slate-600 dark:text-slate-300',
+  },
+  struggling: {
+    frontBorder:
+      'border-2 border-rose-300 hover:border-rose-400 dark:border-rose-800 dark:hover:border-rose-700',
+    backBorder:
+      'border-2 border-rose-300 hover:border-rose-400 dark:border-rose-800 dark:hover:border-rose-700',
+    frontBg:
+      'bg-gradient-to-br from-rose-50/70 via-white to-rose-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-rose-950/30',
+    backBg:
+      'bg-gradient-to-br from-rose-50/70 via-white to-rose-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-rose-950/30',
+    tagText: 'text-rose-700 dark:text-rose-300',
+  },
+  due_soon: {
+    frontBorder:
+      'border-2 border-amber-300 hover:border-amber-400 dark:border-amber-800 dark:hover:border-amber-700',
+    backBorder:
+      'border-2 border-amber-300 hover:border-amber-400 dark:border-amber-800 dark:hover:border-amber-700',
+    frontBg:
+      'bg-gradient-to-br from-amber-50/70 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30',
+    backBg:
+      'bg-gradient-to-br from-amber-50/70 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30',
+    tagText: 'text-amber-800 dark:text-amber-300',
+  },
+  mastered: {
+    frontBorder:
+      'border-2 border-emerald-400 hover:border-emerald-500 dark:border-emerald-700 dark:hover:border-emerald-600',
+    backBorder:
+      'border-2 border-teal-400 hover:border-teal-500 dark:border-teal-700 dark:hover:border-teal-600',
+    frontBg:
+      'bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30',
+    backBg:
+      'bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/30',
+    tagText: 'text-emerald-700 dark:text-emerald-300',
+  },
+};
+
 export function FlashcardStudyModal({
   title,
   cards,
@@ -187,6 +241,8 @@ export function FlashcardStudyModal({
     : '';
   const effectiveSrs = cardKey ? localPatch[cardKey] || srsStates[cardKey] : undefined;
   const currentBucket = classifySrsCardBucket(effectiveSrs, todayStr);
+  const srsTheme =
+    SRS_FLASHCARD_THEMES[currentBucket] || SRS_FLASHCARD_THEMES.new;
   const activeTtsLang = currentCard
     ? currentCard.keyword.ttsLang !== undefined
       ? currentCard.keyword.ttsLang
@@ -519,17 +575,19 @@ export function FlashcardStudyModal({
                 >
                   {/* Mặt trước của Thẻ Flashcard */}
                   <div
-                    className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/40 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-emerald-400 transition-all duration-300 dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 ${
+                    className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl ${srsTheme.frontBorder} ${srsTheme.frontBg} p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-all duration-300 ${
                       flipped
                         ? 'opacity-0 invisible pointer-events-none'
                         : 'opacity-100 visible pointer-events-auto'
                     }`}
                   >
-                    <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
+                    <span
+                      className={`absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold shadow-2xs dark:bg-slate-800 ${srsTheme.tagText}`}
+                    >
                       Mặt trước (Từ / Mẫu câu / Câu hỏi)
                     </span>
 
-                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                       <RotateCw className="h-3.5 w-3.5" />
                       Bấm để lật thẻ
                     </span>
@@ -590,17 +648,19 @@ export function FlashcardStudyModal({
 
                   {/* Mặt sau của Thẻ Flashcard */}
                   <div
-                    className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl border-2 border-teal-300/90 bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg hover:border-teal-400 transition-all duration-300 dark:border-teal-900/70 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/30 overflow-y-auto ${
+                    className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl ${srsTheme.backBorder} ${srsTheme.backBg} p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-all duration-300 overflow-y-auto ${
                       !flipped
                         ? 'opacity-0 invisible pointer-events-none'
                         : 'opacity-100 visible pointer-events-auto'
                     }`}
                   >
-                    <span className="absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-teal-700 shadow-2xs dark:bg-slate-800 dark:text-teal-300">
+                    <span
+                      className={`absolute top-3.5 left-4 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold shadow-2xs dark:bg-slate-800 ${srsTheme.tagText}`}
+                    >
                       Mặt sau (Nghĩa / Đáp án)
                     </span>
 
-                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-400">
+                    <span className="absolute top-3.5 right-4 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                       <RotateCw className="h-3.5 w-3.5" />
                       Bấm để quay lại
                     </span>
