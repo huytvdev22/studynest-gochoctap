@@ -18,6 +18,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  RotateCw,
   Settings,
   ShieldAlert,
   Trophy,
@@ -69,9 +70,20 @@ function ClassLayoutInner() {
   // Trạng thái mở bộ chuyển đổi Workspace (Workspace Switcher)
   const [switcherOpen, setSwitcherOpen] = useState<boolean>(false);
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [allWorkspaces, setAllWorkspaces] = useState<
     Array<{ studyClass: StudyClass; membership: ClassMember }>
   >([]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await new Promise((r) => setTimeout(r, 350));
+      window.location.reload();
+    } catch {
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     try {
@@ -404,8 +416,28 @@ function ClassLayoutInner() {
           </nav>
         </div>
 
-        {/* Phần chân Sidebar: Nút Cài đặt/Cập nhật, quay về danh sách Workspace & thu gọn */}
+        {/* Phần chân Sidebar: Nút Làm mới, Cài đặt/Cập nhật, quay về danh sách Workspace & thu gọn */}
         <div className="mt-6 border-t border-slate-200/80 pt-3 dark:border-slate-800 space-y-1">
+          <button
+            type="button"
+            disabled={isRefreshing}
+            onClick={() => void handleRefresh()}
+            title="Làm mới trang và đồng bộ dữ liệu"
+            aria-label="Làm mới trang và đồng bộ dữ liệu"
+            className={`inline-flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-emerald-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400 transition ${
+              isMini
+                ? 'mx-auto h-9 w-9 justify-center p-0'
+                : 'w-full gap-2 px-3 py-2 text-left'
+            }`}
+          >
+            <RotateCw
+              className={`h-4 w-4 shrink-0 transition-transform ${
+                isRefreshing ? 'animate-spin text-emerald-600' : ''
+              }`}
+            />
+            {!isMini && <span>Làm mới dữ liệu</span>}
+          </button>
+
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -502,6 +534,21 @@ function ClassLayoutInner() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            disabled={isRefreshing}
+            onClick={() => void handleRefresh()}
+            aria-label="Làm mới trang"
+            title="Làm mới trang và đồng bộ dữ liệu mới nhất"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-emerald-400 transition"
+          >
+            <RotateCw
+              className={`h-4 w-4 transition-transform ${
+                isRefreshing ? 'animate-spin text-emerald-600' : ''
+              }`}
+            />
+          </button>
+
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}

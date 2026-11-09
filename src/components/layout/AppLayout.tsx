@@ -7,6 +7,7 @@ import {
   Moon,
   RefreshCw,
   RotateCcw,
+  RotateCw,
   Settings,
   ShieldAlert,
   Sparkles,
@@ -21,6 +22,7 @@ import {
 } from '@/services/versionService';
 import { UpdateNotification } from '@/components/layout/UpdateNotification';
 import { AppSettingsModal } from '@/components/layout/AppSettingsModal';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const {
@@ -42,6 +44,17 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateStatusMsg, setUpdateStatusMsg] = useState<string | null>(null);
+  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
+
+  const handlePageRefresh = async () => {
+    setIsPageRefreshing(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      window.location.reload();
+    } catch {
+      window.location.reload();
+    }
+  };
 
   const handleManualCheckUpdate = async () => {
     setCheckingUpdate(true);
@@ -186,6 +199,21 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
+              disabled={isPageRefreshing}
+              onClick={() => void handlePageRefresh()}
+              aria-label="Làm mới trang"
+              title="Làm mới trang và đồng bộ dữ liệu mới nhất"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 transition"
+            >
+              <RotateCw
+                className={`h-4 w-4 transition-transform ${
+                  isPageRefreshing ? 'animate-spin text-emerald-600' : ''
+                }`}
+              />
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowSettingsModal(true)}
               aria-label="Cài đặt & Cập nhật ứng dụng (PWA)"
               title="Cài đặt & Cập nhật ứng dụng (PWA)"
@@ -230,15 +258,17 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
         </div>
       </header>
 
-      <main
-        className={`mx-auto w-full flex-1 ${
-          isWorkspaceRoute
-            ? 'max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6'
-            : 'max-w-6xl px-4 py-6 sm:px-6 sm:py-8'
-        }`}
-      >
-        {children ?? <Outlet />}
-      </main>
+      <PullToRefresh onRefresh={handlePageRefresh}>
+        <main
+          className={`mx-auto w-full flex-1 ${
+            isWorkspaceRoute
+              ? 'max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6'
+              : 'max-w-6xl px-4 py-6 sm:px-6 sm:py-8'
+          }`}
+        >
+          {children ?? <Outlet />}
+        </main>
+      </PullToRefresh>
 
       <footer className="border-t border-slate-200/70 bg-white/60 py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
         <div
