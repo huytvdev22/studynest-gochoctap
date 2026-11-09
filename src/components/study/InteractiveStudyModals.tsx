@@ -888,86 +888,111 @@ export function QuizTakeModal({
   return (
     <ModalPortal>
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-3 sm:p-5 backdrop-blur-xs animate-in fade-in duration-150"
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !submitting) onClose();
+        }}
       >
         <div
-          ref={scrollContainerRef}
-          className="my-6 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto"
+          className="relative flex flex-col w-full max-w-3xl max-h-[92vh] rounded-3xl bg-white shadow-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                {subject} {unitTitle ? `• ${unitTitle}` : ''}
-              </span>
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+          {/* Header Modal - Cố định ở đỉnh (Sticky Header) */}
+          <div className="relative shrink-0 flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 sm:px-6 py-4 dark:border-slate-800 dark:bg-slate-900/90 z-10">
+            <div className="space-y-0.5 pr-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  {subject} {unitTitle ? `• ${unitTitle}` : ''}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Đã làm {answeredCount}/{questions.length} câu
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white line-clamp-1">
                 {title} ({questions.length} câu)
               </h2>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={submitting}
+                aria-label="Đóng bài trắc nghiệm"
+                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Thanh tiến độ trực quan mỏng ở mép dưới Header */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-200/60 dark:bg-slate-800">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-300 ease-out"
+                style={{
+                  width: `${Math.round((answeredCount / (questions.length || 1)) * 100)}%`,
+                }}
+              />
+            </div>
           </div>
 
-          {/* Banner kết quả khi đã chấm điểm */}
-          {isEvaluated && (
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/40">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Kết quả làm bài
+          {/* Vùng cuộn nội dung câu hỏi */}
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 py-5 space-y-5"
+          >
+            {/* Banner kết quả khi đã chấm điểm */}
+            {isEvaluated && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/40">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Kết quả làm bài
+                    </div>
+                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                      {correctCount} / {questions.length} câu đúng{' '}
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                        ({scorePercentage}%)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">
+                      {scorePercentage === 100
+                        ? 'Xuất sắc! Em đã trả lời đúng tất cả các câu hỏi.'
+                        : scorePercentage >= 80
+                        ? 'Rất tốt! Em đã nắm vững hầu hết kiến thức của bài.'
+                        : scorePercentage >= 50
+                        ? 'Khá tốt! Hãy xem lại các câu chưa đúng bên dưới để nhớ sâu hơn nhé.'
+                        : 'Hãy xem lại lời giải thích bên dưới hoặc làm lại bài để cải thiện điểm số nhé.'}
+                    </p>
                   </div>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white">
-                    {correctCount} / {questions.length} câu đúng{' '}
-                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                      ({scorePercentage}%)
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">
-                    {scorePercentage === 100
-                      ? 'Xuất sắc! Em đã trả lời đúng tất cả các câu hỏi.'
-                      : scorePercentage >= 80
-                      ? 'Rất tốt! Em đã nắm vững hầu hết kiến thức của bài.'
-                      : scorePercentage >= 50
-                      ? 'Khá tốt! Hãy xem lại các câu chưa đúng bên dưới để nhớ sâu hơn nhé.'
-                      : 'Hãy xem lại lời giải thích bên dưới hoặc làm lại bài để cải thiện điểm số nhé.'}
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleRetake}
-                    disabled={submitting}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                  >
-                    <RotateCw className="h-4 w-4" />
-                    Làm lại bài
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleSubmitResult()}
-                    disabled={submitting}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    {submitting ? 'Đang nộp...' : 'Nộp bài & Lưu kết quả'}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleRetake}
+                      disabled={submitting}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
+                    >
+                      <RotateCw className="h-4 w-4" />
+                      Làm lại bài
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSubmitResult()}
+                      disabled={submitting}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 transition"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      {submitting ? 'Đang nộp...' : 'Nộp bài & Lưu kết quả'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Danh sách câu hỏi */}
-          <div className="mt-4 space-y-5">
+            {/* Danh sách câu hỏi */}
             {questions.map((q, qIdx) => {
               const chosen = selectedAnswers[q.id];
               const isAnswered = chosen !== undefined;
@@ -989,7 +1014,7 @@ export function QuizTakeModal({
                           speakTextWithTts(q.relatedTerm!, effectiveTtsLang, false)
                         }
                         title={`Nghe phát âm: ${q.relatedTerm}`}
-                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 transition"
                       >
                         <Volume2 className="h-3.5 w-3.5" />
                         Nghe
@@ -1078,47 +1103,55 @@ export function QuizTakeModal({
             })}
           </div>
 
-          {/* Footer khi đang làm bài */}
-          {!isEvaluated && (
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-              <span className="text-xs font-semibold text-slate-500">
-                Đã chọn {answeredCount} / {questions.length} câu
-              </span>
-              <button
-                type="button"
-                disabled={answeredCount === 0}
-                onClick={handleEvaluate}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Chấm điểm & Xem kết quả
-              </button>
-            </div>
-          )}
-
-          {/* Footer khi đã chấm điểm */}
-          {isEvaluated && (
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={handleRetake}
-                disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              >
-                <RotateCw className="h-4 w-4" />
-                Làm lại bài kiểm tra
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSubmitResult()}
-                disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {submitting ? 'Đang nộp bài...' : 'Nộp bài & Lưu kết quả'}
-              </button>
-            </div>
-          )}
+          {/* Footer Modal - Cố định ở đáy (Sticky/Fixed Footer) */}
+          <div className="shrink-0 border-t border-slate-200 bg-slate-50/90 px-5 sm:px-6 py-3.5 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/90 z-10">
+            {!isEvaluated ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {answeredCount === questions.length ? (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      Đã chọn đủ {questions.length}/{questions.length} câu
+                    </span>
+                  ) : (
+                    <span>
+                      Đã chọn <strong className="text-slate-900 dark:text-white">{answeredCount}</strong> / {questions.length} câu
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={answeredCount === 0}
+                  onClick={handleEvaluate}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Chấm điểm & Xem kết quả
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleRetake}
+                  disabled={submitting}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 active:scale-95 transition disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <RotateCw className="h-4 w-4" />
+                  Làm lại bài kiểm tra
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitResult()}
+                  disabled={submitting}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  {submitting ? 'Đang nộp bài...' : 'Nộp bài & Lưu kết quả'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </ModalPortal>
