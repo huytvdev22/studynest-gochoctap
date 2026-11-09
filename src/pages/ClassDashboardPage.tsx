@@ -354,55 +354,55 @@ export function ClassDashboardPage() {
   // =========================================================================
   if (!isInstructorOrOwner) {
     return (
-      <div className="space-y-6">
-        {/* Hàng thẻ chỉ số Sao & Streak cho học sinh */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/50 dark:bg-amber-950/30">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm">
-              <Star className="h-6 w-6 fill-white" />
+      <div className="space-y-4 sm:space-y-5">
+        {/* Hàng thẻ chỉ số Sao & Streak cho học sinh (Compact) */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="flex items-center gap-3.5 rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 sm:p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
+              <Star className="h-5 w-5 fill-white" />
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
                 Tổng sao thưởng
               </div>
-              <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">
                 {streakSummary.totalStars} sao
               </div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 Do người hướng dẫn xác nhận
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
-              <Flame className="h-6 w-6" />
+          <div className="flex items-center gap-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 sm:p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+              <Flame className="h-5 w-5" />
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                 Chuỗi ngày học (Streak)
               </div>
-              <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">
                 {streakSummary.currentStreak} ngày liên tiếp
               </div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 Kỷ lục: {streakSummary.longestStreak} ngày
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 rounded-2xl border border-sky-200 bg-sky-50/80 p-5 dark:border-sky-900/50 dark:bg-sky-950/30">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm">
-              <Calendar className="h-6 w-6" />
+          <div className="flex items-center gap-3.5 rounded-2xl border border-sky-200 bg-sky-50/80 p-3.5 sm:p-4 dark:border-sky-900/50 dark:bg-sky-950/30">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
+              <Calendar className="h-5 w-5" />
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
                 Hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
               </div>
-              <div className="text-base font-extrabold text-slate-900 dark:text-white">
+              <div className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white leading-tight">
                 {formatVietnameseDate(today, false)}
               </div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 {streakSummary.isTodayConfirmed
                   ? 'Đã hoàn thành & được xác nhận!'
                   : 'Hãy hoàn thành bài học tối nay nhé!'}
@@ -411,27 +411,27 @@ export function ClassDashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
           {/* Cột chính: Hôm nay học gì & Nhiệm vụ của em */}
-          <div className="space-y-5 lg:col-span-7">
+          <div className="space-y-4 lg:col-span-7">
             {/* Hôm nay học gì? */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-3.5">
+            <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                    <Sparkles className="h-4 w-4" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    <Sparkles className="h-3.5 w-3.5" />
                   </span>
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                     Hôm nay học gì?
                   </h2>
                 </div>
                 {allTodayTasksCompleted ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-black text-white shadow-xs">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-black text-white shadow-2xs">
+                    <CheckCircle2 className="h-3 w-3" />
                     Đã hoàn thành tất cả ({completedTodayTasksCount}/{todayTasks.length})
                   </span>
                 ) : (
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                     {completedTodayTasksCount > 0
                       ? `Đã xong ${completedTodayTasksCount}/${todayTasks.length} bài`
                       : `${todayTasks.length} bài học & nhiệm vụ`}
@@ -441,11 +441,11 @@ export function ClassDashboardPage() {
 
               {/* Thẻ chip lọc bài học hôm nay (Tất cả / Cần làm / Đã hoàn thành) */}
               {todayTasks.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <div className="flex flex-wrap items-center gap-1 pt-0.5">
                   <button
                     type="button"
                     onClick={() => setTodayTaskFilter('all')}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition active:scale-95 ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'all'
                         ? 'bg-emerald-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
@@ -466,7 +466,7 @@ export function ClassDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setTodayTaskFilter('pending')}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition active:scale-95 ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'pending'
                         ? 'bg-emerald-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
@@ -487,7 +487,7 @@ export function ClassDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setTodayTaskFilter('completed')}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition active:scale-95 ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'completed'
                         ? 'bg-emerald-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
@@ -509,9 +509,9 @@ export function ClassDashboardPage() {
               )}
 
               {allTodayTasksCompleted && todayTaskFilter !== 'pending' && (
-                <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-100/70 via-teal-50 to-white px-3.5 py-2.5 flex items-center gap-3 shadow-2xs dark:border-emerald-800 dark:from-emerald-950/50 dark:to-slate-900">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                    <PartyPopper className="h-4 w-4" />
+                <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-100/70 via-teal-50 to-white px-3 py-2 flex items-center gap-2.5 shadow-2xs dark:border-emerald-800 dark:from-emerald-950/50 dark:to-slate-900">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                    <PartyPopper className="h-3.5 w-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-xs sm:text-sm font-extrabold text-emerald-950 dark:text-emerald-200">
@@ -522,7 +522,8 @@ export function ClassDashboardPage() {
               )}
 
               {displayedTodayTasks.length > 0 ? (
-                <div className="space-y-2.5">
+                /* Khung cuộn nội bộ có chiều cao tối đa (Cách 2) để trang không bị kéo dài vô tận */
+                <div className="max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 sm:pr-1.5 space-y-2 focus:outline-none">
                   {displayedTodayTasks.map((task) => {
                     const rec = findTaskRecord(task);
                     const isConfirmed = rec?.instructorStatus === 'confirmed';
@@ -560,9 +561,10 @@ export function ClassDashboardPage() {
                       Boolean(task.lessonId);
 
                     return (
+                      /* Thẻ bài học Compact (Cách 4) gọn gàng, tinh tế */
                       <div
                         key={task.id}
-                        className={`rounded-2xl border p-3 sm:p-3.5 transition shadow-2xs hover:shadow-xs ${
+                        className={`rounded-2xl border p-2.5 sm:p-3 transition shadow-2xs hover:shadow-xs ${
                           isConfirmed
                             ? 'border-emerald-300 bg-emerald-50/35 dark:border-emerald-800 dark:bg-emerald-950/20'
                             : isSubmitted
@@ -570,80 +572,83 @@ export function ClassDashboardPage() {
                             : 'border-emerald-300/80 bg-white hover:border-emerald-400 dark:border-emerald-900/50 dark:bg-slate-900'
                         }`}
                       >
-                        {/* Header: Giáo trình, Unit, Sao thưởng & Trạng thái hoàn thành */}
-                        <div className="flex flex-wrap items-center justify-between gap-1.5">
-                          <div className="flex flex-wrap items-center gap-1.5">
+                        {/* Dòng 1: Icon trạng thái + Chips môn, Unit, Sao, SRS + Badge hoàn thành */}
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                            {isConfirmed ? (
+                              <span
+                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white shadow-2xs"
+                                title="Đã hoàn thành bài học này"
+                              >
+                                <Check className="h-3 w-3 stroke-[3]" />
+                              </span>
+                            ) : isSubmitted ? (
+                              <span
+                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-500 text-white shadow-2xs"
+                                title="Đã nộp bài, đang chờ giáo viên xác nhận"
+                              >
+                                <Clock className="h-3 w-3" />
+                              </span>
+                            ) : (
+                              <span
+                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                title="Chưa học"
+                              >
+                                <BookOpen className="h-3 w-3" />
+                              </span>
+                            )}
+
                             {task.subject && (
-                              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                                 {task.subject}
                               </span>
                             )}
                             {task.unitTitle && (
-                              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300 truncate max-w-[140px]">
                                 {task.unitTitle}
                               </span>
                             )}
                             <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-500" />
                               +{task.starsReward} sao
                             </span>
                             {isPartiallyStudied && (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
                                 <Layers className="h-2.5 w-2.5" />
-                                Đã ôn {reviewedKeywordsTodayCount}/{lessonKeywords.length} thẻ
+                                {reviewedKeywordsTodayCount}/{lessonKeywords.length} thẻ
                               </span>
                             )}
                           </div>
 
-                          {isConfirmed ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-2xs">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Đã hoàn thành (+{rec.starsAwarded} sao)
-                            </span>
-                          ) : isSubmitted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-2xs">
-                              <Clock className="h-3 w-3" />
-                              Đã nộp (Chờ duyệt)
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                              Chưa làm
-                            </span>
-                          )}
+                          <div className="shrink-0">
+                            {isConfirmed ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-black text-white shadow-2xs">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                Đã xong (+{rec.starsAwarded}★)
+                              </span>
+                            ) : isSubmitted ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs">
+                                <Clock className="h-2.5 w-2.5" />
+                                Chờ duyệt
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                Chưa làm
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Tiêu đề bài học kèm Biểu tượng trực quan thể hiện trạng thái */}
-                        <div className="mt-2 flex items-start gap-2.5">
-                          {isConfirmed ? (
-                            <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs mt-0.5"
-                              title="Đã hoàn thành bài học này"
-                            >
-                              <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                          ) : isSubmitted ? (
-                            <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-xs mt-0.5"
-                              title="Đã nộp bài, đang chờ giáo viên xác nhận"
-                            >
-                              <Clock className="h-3.5 w-3.5" />
-                            </span>
-                          ) : (
-                            <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 mt-0.5"
-                              title="Chưa học"
-                            >
-                              <BookOpen className="h-3.5 w-3.5" />
-                            </span>
-                          )}
-
+                        {/* Dòng 2: Tiêu đề bài học + Các nút hành động */}
+                        <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-slate-100/80 pt-2 dark:border-slate-800/60">
                           <div className="min-w-0 flex-1">
                             <h3
-                              className={`text-sm sm:text-base font-extrabold leading-snug truncate ${
+                              className={`text-xs sm:text-sm font-bold leading-snug truncate ${
                                 isConfirmed
                                   ? 'text-emerald-950 dark:text-emerald-100'
                                   : 'text-slate-900 dark:text-white'
                               }`}
+                              title={task.title}
                             >
                               {task.title}
                             </h3>
@@ -656,22 +661,20 @@ export function ClassDashboardPage() {
 
                             {isSubmitted && !isConfirmed && (
                               <p className="mt-0.5 text-[11px] text-amber-800 font-medium dark:text-amber-300 truncate">
-                                {rec?.studentNote || 'Em đã hoàn thành bài học và gửi báo cáo!'}
+                                {rec?.studentNote || 'Em đã nộp bài và gửi báo cáo!'}
                               </p>
                             )}
                           </div>
-                        </div>
 
-                        {/* Các nút hành động để vào học */}
-                        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 dark:border-slate-800/80">
-                          <div className="flex flex-wrap items-center gap-1.5">
+                          {/* Các nút hành động Compact */}
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                             {task.taskType === 'flashcard' &&
                               task.flashcards &&
                               task.flashcards.length > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => setActiveFlashcardTask(task)}
-                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition active:scale-95 ${
+                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                                     isConfirmed
                                       ? 'border border-emerald-300 bg-white text-emerald-800 shadow-2xs hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300'
                                       : isSubmitted
@@ -682,17 +685,17 @@ export function ClassDashboardPage() {
                                   {isConfirmed ? (
                                     <>
                                       <RotateCw className="h-3 w-3 text-emerald-600" />
-                                      Ôn lại {task.flashcards.length} Flashcard
+                                      Ôn lại ({task.flashcards.length})
                                     </>
                                   ) : isSubmitted ? (
                                     <>
                                       <RotateCw className="h-3 w-3 text-amber-600" />
-                                      Luyện tập thêm Flashcard
+                                      Học thêm ({task.flashcards.length})
                                     </>
                                   ) : (
                                     <>
                                       <Layers className="h-3 w-3" />
-                                      Học {task.flashcards.length} Flashcard
+                                      Học {task.flashcards.length} thẻ
                                     </>
                                   )}
                                 </button>
@@ -704,7 +707,7 @@ export function ClassDashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => setActiveQuizTask(task)}
-                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition active:scale-95 ${
+                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                                     isConfirmed
                                       ? 'border border-violet-300 bg-white text-violet-800 shadow-2xs hover:bg-violet-50 dark:border-violet-700 dark:bg-slate-800 dark:text-violet-300'
                                       : 'bg-violet-600 text-white shadow-xs hover:bg-violet-700'
@@ -713,12 +716,12 @@ export function ClassDashboardPage() {
                                   {isConfirmed ? (
                                     <>
                                       <RotateCw className="h-3 w-3 text-violet-600" />
-                                      Làm lại kiểm tra ({task.quizQuestions.length} câu)
+                                      Làm lại ({task.quizQuestions.length} câu)
                                     </>
                                   ) : (
                                     <>
                                       <ClipboardCheck className="h-3 w-3" />
-                                      Làm bài kiểm tra ({task.quizQuestions.length} câu)
+                                      Làm trắc nghiệm ({task.quizQuestions.length} câu)
                                     </>
                                   )}
                                 </button>
@@ -727,37 +730,41 @@ export function ClassDashboardPage() {
                             {task.lessonId && (
                               <Link
                                 to={`/app/classes/${studyClass.id}/lessons/${task.lessonId}`}
-                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
                               >
                                 <BookOpen className="h-3 w-3" />
-                                {isConfirmed ? 'Xem bài học' : 'Vào học bài này'}
+                                {isConfirmed ? 'Xem bài' : 'Vào bài'}
                               </Link>
                             )}
-                          </div>
 
-                          {/* Chỉ bài tập thông thường (không có flashcard/quiz/bài học) mới hiện nút nộp báo cáo ngoài này */}
-                          {!hasStudyFlow && !isConfirmed && (
-                            <button
-                              type="button"
-                              disabled={submittingTaskId === task.id}
-                              onClick={() => void handleStudentSubmitTask(task)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
-                            >
-                              <Send className="h-3 w-3" />
-                              {submittingTaskId === task.id
-                                ? 'Đang gửi...'
-                                : isSubmitted
-                                ? 'Nộp lại báo cáo'
-                                : 'Báo đã hoàn thành'}
-                            </button>
-                          )}
+                            {!hasStudyFlow && !isConfirmed && (
+                              <button
+                                type="button"
+                                disabled={submittingTaskId === task.id}
+                                onClick={() => void handleStudentSubmitTask(task)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
+                              >
+                                <Send className="h-3 w-3" />
+                                {submittingTaskId === task.id
+                                  ? 'Đang gửi...'
+                                  : isSubmitted
+                                  ? 'Nộp lại'
+                                  : 'Báo xong'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
+                  {displayedTodayTasks.length > 5 && (
+                    <div className="pt-1 text-center text-[11px] font-medium text-slate-400">
+                      Đang hiển thị {displayedTodayTasks.length} bài • Cuộn bên trong khung để xem tiếp
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-3.5 text-center dark:border-slate-800 dark:bg-slate-800/40">
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     {todayTaskFilter === 'completed'
                       ? 'Chưa có bài học nào được hoàn thành hôm nay.'
@@ -766,10 +773,10 @@ export function ClassDashboardPage() {
                       : 'Hôm nay chưa có bài học nào được chỉ định.'}
                   </p>
                   {todayTaskFilter === 'all' && (
-                    <div className="mt-2.5 flex justify-center">
+                    <div className="mt-2 flex justify-center">
                       <Link
                         to={`/app/classes/${studyClass.id}/lessons`}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         Vào Thư viện tự ôn tập
@@ -779,68 +786,75 @@ export function ClassDashboardPage() {
                 </div>
               )}
 
-              {/* Thời khóa biểu hôm nay */}
+              {/* Thời khóa biểu hôm nay (Compact & Khung cuộn) */}
               {sortedTodaySchedules.length > 0 && (
-                <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Thời khóa biểu hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
-                  </h3>
-                  {sortedTodaySchedules.map((sch) => {
-                    const sessionName =
-                      sch.sessionOfDay === 'morning'
-                        ? 'Sáng'
-                        : sch.sessionOfDay === 'afternoon'
-                        ? 'Chiều'
-                        : sch.sessionOfDay === 'evening'
-                        ? 'Tối'
-                        : '';
-                    return (
-                      <div
-                        key={sch.id}
-                        className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3.5 py-2.5 text-sm dark:border-slate-800 dark:bg-slate-800/40"
-                      >
-                        <div>
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            {sessionName ? `${sessionName} • ` : ''}Tiết {sch.periodNumber}: {sch.subject}
-                          </span>
-                          {sch.startTime && (
-                            <span className="ml-2 text-xs text-slate-500">
-                              ({sch.startTime} - {sch.endTime})
-                            </span>
-                          )}
-                        </div>
-                        <span
-                          className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
-                            sch.type === 'tutoring'
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
-                          }`}
+                <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      Thời khóa biểu hôm nay ({DAY_OF_WEEK_LABELS[todayDayOfWeek]})
+                    </h3>
+                    <span className="text-[10px] font-medium text-slate-400">
+                      {sortedTodaySchedules.length} tiết
+                    </span>
+                  </div>
+                  <div className="max-h-[170px] overflow-y-auto pr-1 space-y-1.5">
+                    {sortedTodaySchedules.map((sch) => {
+                      const sessionName =
+                        sch.sessionOfDay === 'morning'
+                          ? 'Sáng'
+                          : sch.sessionOfDay === 'afternoon'
+                          ? 'Chiều'
+                          : sch.sessionOfDay === 'evening'
+                          ? 'Tối'
+                          : '';
+                      return (
+                        <div
+                          key={sch.id}
+                          className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-800/40"
                         >
-                          {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {sessionName ? `${sessionName} • ` : ''}Tiết {sch.periodNumber}: {sch.subject}
+                            </span>
+                            {sch.startTime && (
+                              <span className="ml-1.5 text-[11px] text-slate-500">
+                                ({sch.startTime} - {sch.endTime})
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
+                              sch.type === 'tutoring'
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            {sch.type === 'tutoring' ? 'Kèm tại nhà' : 'Chính khóa'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </section>
 
-            {/* Nhiệm vụ khác (nếu có bài tập hạn khác hôm nay) */}
+            {/* Nhiệm vụ khác (Compact & Khung cuộn) */}
             {otherTasks.length > 0 && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                     Nhiệm vụ khác ({otherTasks.length})
                   </h2>
                   <Link
                     to={`/app/classes/${studyClass.id}/sessions`}
-                    className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                    className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                   >
                     Xem tất cả
                   </Link>
                 </div>
 
-                <div className="mt-3 space-y-2.5">
+                <div className="mt-2.5 max-h-[220px] overflow-y-auto pr-1 space-y-2">
                   {otherTasks.map((task) => {
                     const rec = records.find(
                       (r) =>
@@ -852,7 +866,7 @@ export function ClassDashboardPage() {
                     return (
                       <div
                         key={task.id}
-                        className={`rounded-2xl border p-3 sm:p-3.5 transition ${
+                        className={`rounded-xl border p-2.5 sm:p-3 transition ${
                           isConfirmed
                             ? 'border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20'
                             : isSubmitted
@@ -860,38 +874,40 @@ export function ClassDashboardPage() {
                             : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-800/50'
                         }`}
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                        <div className="flex flex-wrap items-start justify-between gap-1.5">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                               {task.title}
                             </h3>
-                            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
-                              {task.description}
-                            </p>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                            {task.description && (
+                              <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300 line-clamp-1">
+                                {task.description}
+                              </p>
+                            )}
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
                               <span>Hạn: {formatVietnameseDate(task.dueDate, false)}</span>
-                              <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                                <Star className="h-3 w-3 fill-amber-400" />
-                                Thưởng tối đa {task.starsReward} sao
+                              <span className="inline-flex items-center gap-0.5 font-bold text-amber-600 dark:text-amber-400">
+                                <Star className="h-2.5 w-2.5 fill-amber-400" />
+                                Thưởng {task.starsReward} sao
                               </span>
                             </div>
                           </div>
 
                           {isConfirmed ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-bold text-white">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Đã xác nhận (+{rec.starsAwarded} sao)
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                              <CheckCircle2 className="h-2.5 w-2.5" />
+                              Đã xác nhận (+{rec.starsAwarded}★)
                             </span>
                           ) : isSubmitted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                              <Clock className="h-3 w-3" />
-                              Đã nộp • Chờ xác nhận
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                              <Clock className="h-2.5 w-2.5" />
+                              Chờ duyệt
                             </span>
                           ) : null}
                         </div>
 
                         {rec?.instructorComment && (
-                          <div className="mt-2 rounded-xl bg-white/80 p-2 text-xs text-slate-700 border border-emerald-200 dark:bg-slate-900 dark:border-emerald-800 dark:text-slate-200">
+                          <div className="mt-1.5 rounded-lg bg-white/80 p-1.5 text-[11px] text-slate-700 border border-emerald-200 dark:bg-slate-900 dark:border-emerald-800 dark:text-slate-200">
                             <strong>Nhận xét:</strong> {rec.instructorComment}
                           </div>
                         )}
@@ -904,29 +920,35 @@ export function ClassDashboardPage() {
           </div>
 
           {/* Cột phụ: Soạn cặp ngày mai & Bài học đã công bố */}
-          <div className="space-y-5 lg:col-span-5">
-            <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                  <Backpack className="h-4 w-4" />
+          <div className="space-y-4 lg:col-span-5">
+            {/* Khối Ngày mai học gì? (Compact & Khung cuộn nội bộ đồng bộ chiều cao) */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                    <Backpack className="h-3.5 w-3.5" />
+                  </span>
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                    Ngày mai học gì? ({DAY_OF_WEEK_LABELS[tomorrowDayOfWeek]})
+                  </h2>
+                </div>
+                <span className="text-[11px] font-bold text-sky-700 dark:text-sky-400">
+                  {tomorrowSchedules.length} tiết
                 </span>
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
-                  Ngày mai học gì? ({DAY_OF_WEEK_LABELS[tomorrowDayOfWeek]})
-                </h2>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-0.5 text-[11px] text-slate-500">
                 Checklist chuẩn bị sách vở tối nay trước khi đi ngủ:
               </p>
 
-              {/* Thẻ chip lọc buổi nếu có nhiều buổi */}
+              {/* Thẻ chip lọc buổi */}
               {hasMultipleTomorrowSessions && (
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap gap-1">
                   <button
                     type="button"
                     onClick={() => setTomorrowSessionTab('all')}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                    className={`rounded-lg px-2 py-0.5 text-[11px] font-bold transition ${
                       tomorrowSessionTab === 'all'
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -936,13 +958,13 @@ export function ClassDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setTomorrowSessionTab('morning')}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold transition ${
                         tomorrowSessionTab === 'morning'
-                          ? 'bg-amber-500 text-white shadow-xs'
+                          ? 'bg-amber-500 text-white shadow-2xs'
                           : 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300'
                       }`}
                     >
-                      <Sun className="h-3 w-3" />
+                      <Sun className="h-2.5 w-2.5" />
                       Sáng ({tomorrowMorningSchedules.length})
                     </button>
                   )}
@@ -950,13 +972,13 @@ export function ClassDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setTomorrowSessionTab('afternoon')}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold transition ${
                         tomorrowSessionTab === 'afternoon'
-                          ? 'bg-sky-500 text-white shadow-xs'
+                          ? 'bg-sky-500 text-white shadow-2xs'
                           : 'bg-sky-50 text-sky-800 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300'
                       }`}
                     >
-                      <CloudSun className="h-3 w-3" />
+                      <CloudSun className="h-2.5 w-2.5" />
                       Chiều ({tomorrowAfternoonSchedules.length})
                     </button>
                   )}
@@ -964,13 +986,13 @@ export function ClassDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setTomorrowSessionTab('evening')}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold transition ${
                         tomorrowSessionTab === 'evening'
-                          ? 'bg-indigo-500 text-white shadow-xs'
+                          ? 'bg-indigo-500 text-white shadow-2xs'
                           : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300'
                       }`}
                     >
-                      <Moon className="h-3 w-3" />
+                      <Moon className="h-2.5 w-2.5" />
                       Tối ({tomorrowEveningSchedules.length})
                     </button>
                   )}
@@ -978,35 +1000,36 @@ export function ClassDashboardPage() {
               )}
 
               {tomorrowSchedules.length === 0 ? (
-                <p className="mt-3 rounded-xl bg-slate-50 p-2.5 text-xs sm:text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <p className="mt-2.5 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   Ngày mai không có tiết học trong thời khóa biểu.
                 </p>
               ) : (
-                <div className="mt-3 space-y-3.5">
+                /* Khung cuộn nội bộ đồng bộ chiều cao với khối bài học bên trái */
+                <div className="mt-2.5 max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 space-y-2.5 focus:outline-none">
                   {(tomorrowSessionTab === 'all' ||
                     tomorrowSessionTab === 'morning') &&
                     tomorrowMorningSchedules.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                          <Sun className="h-3.5 w-3.5 text-amber-500" />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 pt-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                          <Sun className="h-3 w-3 text-amber-500" />
                           <span>Buổi Sáng ({tomorrowMorningSchedules.length} tiết)</span>
                         </div>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-1">
                           {tomorrowMorningSchedules.map((sch) => (
                             <li
                               key={sch.id}
-                              className="rounded-xl border border-amber-200/70 bg-amber-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-amber-900/40 dark:bg-amber-950/20"
+                              className="rounded-xl border border-amber-200/70 bg-amber-50/40 px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:shadow-2xs dark:border-amber-900/40 dark:bg-amber-950/20"
                             >
                               <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                 <span>
                                   Tiết {sch.periodNumber}: {sch.subject}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[10px] font-medium text-slate-500">
                                   {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1019,27 +1042,27 @@ export function ClassDashboardPage() {
                   {(tomorrowSessionTab === 'all' ||
                     tomorrowSessionTab === 'afternoon') &&
                     tomorrowAfternoonSchedules.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
-                          <CloudSun className="h-3.5 w-3.5 text-sky-500" />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 pt-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
+                          <CloudSun className="h-3 w-3 text-sky-500" />
                           <span>Buổi Chiều ({tomorrowAfternoonSchedules.length} tiết)</span>
                         </div>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-1">
                           {tomorrowAfternoonSchedules.map((sch) => (
                             <li
                               key={sch.id}
-                              className="rounded-xl border border-sky-200/70 bg-sky-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-sky-900/40 dark:bg-sky-950/20"
+                              className="rounded-xl border border-sky-200/70 bg-sky-50/40 px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:shadow-2xs dark:border-sky-900/40 dark:bg-sky-950/20"
                             >
                               <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                 <span>
                                   Tiết {sch.periodNumber}: {sch.subject}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[10px] font-medium text-slate-500">
                                   {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1052,27 +1075,27 @@ export function ClassDashboardPage() {
                   {(tomorrowSessionTab === 'all' ||
                     tomorrowSessionTab === 'evening') &&
                     tomorrowEveningSchedules.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
-                          <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 pt-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                          <Moon className="h-3 w-3 text-indigo-500" />
                           <span>Buổi Tối ({tomorrowEveningSchedules.length} tiết)</span>
                         </div>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-1">
                           {tomorrowEveningSchedules.map((sch) => (
                             <li
                               key={sch.id}
-                              className="rounded-xl border border-indigo-200/70 bg-indigo-50/40 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-indigo-900/40 dark:bg-indigo-950/20"
+                              className="rounded-xl border border-indigo-200/70 bg-indigo-50/40 px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:shadow-2xs dark:border-indigo-900/40 dark:bg-indigo-950/20"
                             >
                               <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                 <span>
                                   Tiết {sch.periodNumber}: {sch.subject}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[10px] font-medium text-slate-500">
                                   {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1084,27 +1107,27 @@ export function ClassDashboardPage() {
 
                   {tomorrowSessionTab === 'all' &&
                     tomorrowOtherSchedules.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                          <Clock className="h-3.5 w-3.5 text-slate-500" />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 pt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          <Clock className="h-3 w-3 text-slate-500" />
                           <span>Tiết học khác ({tomorrowOtherSchedules.length} tiết)</span>
                         </div>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-1">
                           {tomorrowOtherSchedules.map((sch) => (
                             <li
                               key={sch.id}
-                              className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 sm:p-2.5 transition hover:shadow-xs dark:border-slate-800 dark:bg-slate-800/50"
+                              className="rounded-xl border border-slate-200/80 bg-slate-50/70 px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:shadow-2xs dark:border-slate-800 dark:bg-slate-800/50"
                             >
                               <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                 <span>
                                   Tiết {sch.periodNumber}: {sch.subject}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[10px] font-medium text-slate-500">
                                   {sch.type === 'tutoring' ? 'Kèm học' : 'Ở trường'}
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1117,36 +1140,37 @@ export function ClassDashboardPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            {/* Khối Bài học của lớp (Compact) */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                    <BookOpen className="h-4 w-4" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                    <BookOpen className="h-3.5 w-3.5" />
                   </span>
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                     Bài học của lớp ({lessons.length})
                   </h2>
                 </div>
                 <Link
                   to={`/app/classes/${studyClass.id}/lessons`}
-                  className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                  className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                 >
                   Thư viện
                 </Link>
               </div>
-              <div className="mt-3 space-y-2">
+              <div className="mt-2.5 space-y-1.5">
                 {lessons.slice(0, 4).map((l) => (
                   <Link
                     key={l.id}
                     to={`/app/classes/${studyClass.id}/lessons/${l.id}`}
-                    className="block rounded-xl border border-slate-200/80 p-2.5 transition hover:border-emerald-400 dark:border-slate-800 dark:hover:border-emerald-700"
+                    className="flex items-center justify-between rounded-xl border border-slate-200/80 px-2.5 py-1.5 transition hover:border-emerald-400 dark:border-slate-800 dark:hover:border-emerald-700"
                   >
-                    <span className="inline-block rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800 dark:bg-violet-950 dark:text-violet-300">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate pr-2">
+                      {l.title}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-800 dark:bg-violet-950 dark:text-violet-300">
                       {l.subject}
                     </span>
-                    <div className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
-                      {l.title}
-                    </div>
                   </Link>
                 ))}
               </div>
