@@ -363,10 +363,22 @@ export function SubmissionDetailModal({
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {flashcardList.map((card, idx) => {
                       const lessonIdForSrs = assignment?.lessonId || lesson?.id || '';
-                      const cardKey = lessonIdForSrs
+                      const srsMap = record.srsStates || studentSrs;
+                      const targetTermClean = card.term.trim().toLowerCase().replace(/\s+/g, '_');
+                      const directKey = lessonIdForSrs
                         ? makeSrsCardKey(lessonIdForSrs, card.term)
                         : '';
-                      const srsProg = studentSrs[cardKey];
+                      let srsProg = directKey ? srsMap[directKey] : undefined;
+                      if (!srsProg) {
+                        const foundKey = Object.keys(srsMap).find((k) =>
+                          k.endsWith(`::${targetTermClean}`)
+                        );
+                        if (foundKey) {
+                          srsProg = srsMap[foundKey];
+                        }
+                      }
+
+                      const effectiveRating = srsProg?.lastRating;
                       const srsBucket = srsProg
                         ? classifySrsCardBucket(srsProg, today)
                         : 'new';
@@ -393,6 +405,7 @@ export function SubmissionDetailModal({
 
                               <SrsStatusBadge
                                 bucket={srsBucket}
+                                rating={effectiveRating}
                                 nextReviewDate={srsProg?.nextReviewDate}
                               />
                             </div>

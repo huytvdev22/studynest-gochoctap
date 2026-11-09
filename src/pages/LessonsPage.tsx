@@ -1389,6 +1389,7 @@ export function LessonsPage() {
                 title: activeStudyDeck.title,
                 date: todayStr,
                 studentNote: summaryNote,
+                srsStates: updatedSrsPatch,
               });
             }
           }}
@@ -2325,6 +2326,7 @@ export function LessonsPage() {
               studentNote,
               quizScore: score,
               quizTotal: total,
+              srsStates: updatedSrsPatch,
             });
             await loadData();
           }}

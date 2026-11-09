@@ -171,6 +171,12 @@ export interface SrsCardProgress {
   streakCorrect: number;
   lastReviewedDate: string; // YYYY-MM-DD
   nextReviewDate: string; // YYYY-MM-DD
+  lastRating?: 'forgot' | 'good' | 'easy';
+  history?: Array<{
+    date: string;
+    rating: 'forgot' | 'good' | 'easy';
+    intervalDays: number;
+  }>;
 }
 
 export interface LessonNote {

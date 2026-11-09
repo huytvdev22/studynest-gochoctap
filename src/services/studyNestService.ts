@@ -1215,6 +1215,7 @@ export async function submitStudentCompletion(params: {
   studentNote: string;
   quizScore?: number;
   quizTotal?: number;
+  srsStates?: Record<string, SrsCardProgress>;
 }): Promise<LearningRecord> {
   const now = Timestamp.now();
   const recordId = params.assignmentId
@@ -1241,6 +1242,7 @@ export async function submitStudentCompletion(params: {
     confirmedAt: null,
     ...(params.quizScore !== undefined ? { quizScore: params.quizScore } : {}),
     ...(params.quizTotal !== undefined ? { quizTotal: params.quizTotal } : {}),
+    ...(params.srsStates ? { srsStates: params.srsStates } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -1270,6 +1272,7 @@ export async function submitStudentCompletion(params: {
       updatedAt: now,
       ...(params.quizScore !== undefined ? { quizScore: params.quizScore } : {}),
       ...(params.quizTotal !== undefined ? { quizTotal: params.quizTotal } : {}),
+      ...(params.srsStates ? { srsStates: params.srsStates } : {}),
     });
     return { ...(existingSnap.data() as LearningRecord), ...record };
   }

@@ -1229,6 +1229,7 @@ export function LessonDetailPage() {
                     `Học bài: ${lesson.title}`,
                   date: todayStr,
                   studentNote: summaryNote,
+                  srsStates: updatedSrsPatch,
                 });
                 setAssignMessage(
                   'Đã lưu kết quả ôn tập và ghi nhận hoàn thành bài học thành công!'

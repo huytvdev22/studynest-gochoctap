@@ -41,10 +41,48 @@ import {
 export function SrsStatusBadge({
   bucket,
   nextReviewDate,
+  rating,
 }: {
-  bucket: SrsBucket;
+  bucket?: SrsBucket;
   nextReviewDate?: string;
+  rating?: SrsReviewRating;
 }) {
+  // Nếu có đánh giá trực tiếp từ học sinh (rating)
+  if (rating === 'forgot') {
+    return (
+      <span
+        title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
+        className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800 dark:bg-rose-950/70 dark:text-rose-300"
+      >
+        <span className="h-2 w-2 rounded-full bg-rose-500" />
+        Chưa thuộc
+      </span>
+    );
+  }
+  if (rating === 'good') {
+    return (
+      <span
+        title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
+        className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900 dark:bg-amber-950/70 dark:text-amber-300"
+      >
+        <span className="h-2 w-2 rounded-full bg-amber-500" />
+        Tạm nhớ
+      </span>
+    );
+  }
+  if (rating === 'easy') {
+    return (
+      <span
+        title={nextReviewDate ? `Hẹn ôn: ${nextReviewDate}` : undefined}
+        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+      >
+        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        Đã nhớ kỹ
+      </span>
+    );
+  }
+
+  // Fallback theo bucket tích lũy của SRS
   if (bucket === 'struggling') {
     return (
       <span
@@ -63,7 +101,7 @@ export function SrsStatusBadge({
         className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900 dark:bg-amber-950/70 dark:text-amber-300"
       >
         <span className="h-2 w-2 rounded-full bg-amber-500" />
-        Sắp quên / Cần ôn
+        Tạm nhớ
       </span>
     );
   }

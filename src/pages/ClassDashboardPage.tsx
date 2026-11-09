@@ -1165,6 +1165,7 @@ export function ClassDashboardPage() {
                 title: currentTask.title,
                 date: today,
                 studentNote: summaryNote,
+                srsStates: updatedSrsPatch,
               });
               await loadDashboardData();
             }}
@@ -1211,6 +1212,7 @@ export function ClassDashboardPage() {
                 studentNote,
                 quizScore: score,
                 quizTotal: total,
+                srsStates: updatedSrsPatch,
               });
               await loadDashboardData();
             }}

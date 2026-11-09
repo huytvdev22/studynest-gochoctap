@@ -243,9 +243,9 @@ export function computeNextSrsState(params: {
     nextStreak = 0;
     intervalDays = 1;
   } else if (rating === 'good') {
-    // Tạm nhớ -> Lên Mức 2 (Đang nhớ), hẹn ôn sau 3 ngày hoặc 7 ngày nếu đã nhớ liên tiếp
+    // Tạm nhớ -> Giữ Mức 2 (Tạm nhớ), hẹn ôn sau 3 ngày (hoặc 7 ngày nếu đã liên tiếp nhớ)
     nextStreak = prevStreak + 1;
-    nextLevel = nextStreak >= 3 ? 3 : 2;
+    nextLevel = 2; // Luôn giữ ở Mức 2 (Tạm nhớ), chỉ khi bấm "Đã nhớ kỹ" mới lên Mức 3!
     intervalDays = nextStreak >= 2 ? 7 : 3;
   } else {
     // Nhớ kỹ ('easy') -> Lên Mức 3 (Đã nhớ kỹ), hẹn ôn sau 14 ngày hoặc 30 ngày

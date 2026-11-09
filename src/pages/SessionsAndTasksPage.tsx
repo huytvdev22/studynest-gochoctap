@@ -802,6 +802,7 @@ export function SessionsAndTasksPage() {
               title: currentTask.title,
               date: today,
               studentNote: summaryNote,
+              srsStates: updatedSrsPatch,
             });
             await loadAll();
           }}
@@ -849,6 +850,7 @@ export function SessionsAndTasksPage() {
               studentNote,
               quizScore: score,
               quizTotal: total,
+              srsStates: updatedSrsPatch,
             });
             await loadAll();
           }}
