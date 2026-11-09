@@ -143,10 +143,65 @@ export function ClassDashboardPage() {
   const { today, todayDayOfWeek, tomorrowDayOfWeek } =
     getTodayAndTomorrow(new Date(), studyClass.timezone);
 
-  // Các bài học & nhiệm vụ được chỉ định cho HÔM NAY (dueDate === today)
-  const todayTasks = assignments.filter((a) => a.dueDate === today);
-  // Các nhiệm vụ khác (có hạn ngày khác)
-  const otherTasks = assignments.filter((a) => a.dueDate !== today);
+  // Hàm tìm bản ghi học tập của học sinh cho 1 bài học / nhiệm vụ
+  const findTaskRecord = (task: Assignment) => {
+    return records.find((r) => {
+      if (r.studentUid !== user.uid) return false;
+      if (r.assignmentId && r.assignmentId === task.id) return true;
+      if (task.lessonId && r.assignmentId === task.lessonId) return true;
+      if (task.title && r.title) {
+        const cleanTaskTitle = task.title.trim().toLowerCase();
+        const cleanRecTitle = r.title.trim().toLowerCase();
+        if (cleanTaskTitle === cleanRecTitle) return true;
+        if (
+          cleanRecTitle.includes(cleanTaskTitle) ||
+          cleanTaskTitle.includes(cleanRecTitle)
+        ) {
+          return true;
+        }
+      }
+      return false;
+    });
+  };
+
+  // Kiểm tra bài đã được hoàn thành trước ngày hôm nay chưa (để cất khỏi Hôm nay học gì)
+  const isTaskCompletedBeforeToday = (task: Assignment) => {
+    const r = findTaskRecord(task);
+    if (!r || r.instructorStatus !== 'confirmed') return false;
+    return Boolean(r.date && r.date < today);
+  };
+
+  // Hướng A (Tự động chuyển tiếp - Rollover nhiệm vụ chưa hoàn thành):
+  // 1. Bài có hạn hôm nay (dueDate === today) -> Luôn nằm trong Hôm nay.
+  // 2. Bài có hạn quá khứ (dueDate < today):
+  //    - Nếu hoàn thành trong hôm nay (r.date === today) -> Vẫn hiển thị ở tab Đã hoàn thành của hôm nay.
+  //    - Nếu chưa hoàn thành -> Tự động chuyển tiếp vào Hôm nay để học sinh tiếp tục làm cho xong.
+  //    - Nếu đã hoàn thành từ ngày cũ trước hôm nay (r.date < today) -> Ẩn khỏi Hôm nay để không chiếm chỗ (lưu trong Lịch sử).
+  const todayTasks = assignments.filter((a) => {
+    if (a.dueDate === today) return true;
+    if (a.dueDate && a.dueDate < today) {
+      if (role === 'student') {
+        return !isTaskCompletedBeforeToday(a);
+      }
+      if (selectedStudentUid) {
+        const studentRec = records.find(
+          (r) =>
+            r.studentUid === selectedStudentUid &&
+            (r.assignmentId === a.id || (a.lessonId && r.assignmentId === a.lessonId)) &&
+            r.instructorStatus === 'confirmed'
+        );
+        if (studentRec && studentRec.date && studentRec.date < today) {
+          return false;
+        }
+        return true;
+      }
+      return true;
+    }
+    return false;
+  });
+
+  // Nhiệm vụ sắp tới (có hạn trong tương lai sau ngày hôm nay)
+  const otherTasks = assignments.filter((a) => a.dueDate && a.dueDate > today);
 
   const tomorrowSchedules = schedules.filter(
     (s) => s.dayOfWeek === tomorrowDayOfWeek
@@ -192,27 +247,6 @@ export function ClassDashboardPage() {
   });
 
   const dayOffDates = exceptions.filter((e) => e.isDayOff).map((e) => e.date);
-
-  // Hàm tìm bản ghi hoàn thành của học sinh cho 1 bài học / nhiệm vụ
-  const findTaskRecord = (task: Assignment) => {
-    return records.find((r) => {
-      if (r.studentUid !== user.uid) return false;
-      if (r.assignmentId && r.assignmentId === task.id) return true;
-      if (task.lessonId && r.assignmentId === task.lessonId) return true;
-      if (task.title && r.title && r.date === today) {
-        const cleanTaskTitle = task.title.trim().toLowerCase();
-        const cleanRecTitle = r.title.trim().toLowerCase();
-        if (cleanTaskTitle === cleanRecTitle) return true;
-        if (
-          cleanRecTitle.includes(cleanTaskTitle) ||
-          cleanTaskTitle.includes(cleanRecTitle)
-        ) {
-          return true;
-        }
-      }
-      return false;
-    });
-  };
 
   const completedTodayTasksCount = todayTasks.filter((t) => {
     const r = findTaskRecord(t);
@@ -787,12 +821,12 @@ export function ClassDashboardPage() {
               )}
             </section>
 
-            {/* Nhiệm vụ khác (Compact & Khung cuộn) */}
+            {/* Nhiệm vụ sắp tới (Compact & Khung cuộn) */}
             {otherTasks.length > 0 && (
               <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                    Nhiệm vụ khác ({otherTasks.length})
+                    Nhiệm vụ sắp tới ({otherTasks.length})
                   </h2>
                   <Link
                     to={`/app/classes/${studyClass.id}/sessions`}
