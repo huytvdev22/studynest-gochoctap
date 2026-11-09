@@ -828,6 +828,10 @@ export function QuizTakeModal({
   const effectiveTtsLang = inferDefaultTtsLang(subject, ttsLang);
 
   const answeredCount = Object.keys(selectedAnswers).length;
+  const isAllAnswered =
+    answeredCount === questions.length && questions.length > 0;
+  const remainingCount = Math.max(0, questions.length - answeredCount);
+
   const correctCount = questions.reduce((acc, q) => {
     return selectedAnswers[q.id] === q.correctIndex ? acc + 1 : acc;
   }, 0);
@@ -836,7 +840,7 @@ export function QuizTakeModal({
   );
 
   const handleEvaluate = () => {
-    if (answeredCount === 0) return;
+    if (!isAllAnswered) return;
     setIsEvaluated(true);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -944,9 +948,21 @@ export function QuizTakeModal({
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                   {subject} {unitTitle ? `• ${unitTitle}` : ''}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Đã làm {answeredCount}/{questions.length} câu
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold transition ${
+                    isAllAnswered
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
+                      : 'bg-amber-100/90 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      isAllAnswered ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}
+                  />
+                  {isAllAnswered
+                    ? `Đã làm đủ ${questions.length}/${questions.length} câu`
+                    : `Đã làm ${answeredCount}/${questions.length} câu`}
                 </span>
               </div>
               <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white line-clamp-1">
@@ -1144,24 +1160,32 @@ export function QuizTakeModal({
           {/* Footer Modal - Cố định ở đáy (Sticky/Fixed Footer) */}
           <div className="shrink-0 border-t border-slate-200 bg-slate-50/90 px-5 sm:px-6 py-3.5 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/90 z-10">
             {!isEvaluated ? (
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  {answeredCount === questions.length ? (
+                  {isAllAnswered ? (
                     <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      Đã chọn đủ {questions.length}/{questions.length} câu
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      Đã chọn đủ {questions.length}/{questions.length} câu! Em có thể chấm điểm ngay.
                     </span>
                   ) : (
                     <span>
-                      Đã chọn <strong className="text-slate-900 dark:text-white">{answeredCount}</strong> / {questions.length} câu
+                      Đã chọn <strong className="text-slate-900 dark:text-white">{answeredCount}</strong> / {questions.length} câu{' '}
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">
+                        (còn {remainingCount} câu chưa làm)
+                      </span>
                     </span>
                   )}
                 </div>
                 <button
                   type="button"
-                  disabled={answeredCount === 0}
+                  disabled={!isAllAnswered}
                   onClick={handleEvaluate}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50 disabled:pointer-events-none"
+                  title={
+                    !isAllAnswered
+                      ? `Em cần trả lời tất cả ${questions.length} câu trước khi chấm điểm (còn ${remainingCount} câu)`
+                      : 'Bấm để chấm điểm và xem giải thích chi tiết'
+                  }
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   Chấm điểm & Xem kết quả
