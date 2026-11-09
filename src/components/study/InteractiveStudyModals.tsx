@@ -13,7 +13,12 @@ import {
   XCircle,
 } from 'lucide-react';
 import { ModalPortal } from '@/components/ui/ModalPortal';
-import { triggerGrandConfetti, triggerMiniConfetti } from '@/lib/confetti';
+import {
+  triggerEncouragingFeedbackBurst,
+  triggerGoodFeedbackBurst,
+  triggerGrandConfetti,
+  triggerMiniConfetti,
+} from '@/lib/confetti';
 import type {
   Lesson,
   LessonKeyword,
@@ -122,6 +127,11 @@ export function FlashcardStudyModal({
   const [clickedRating, setClickedRating] = useState<SrsReviewRating | null>(
     null
   );
+  const [cheerFeedback, setCheerFeedback] = useState<{
+    text: string;
+    pillClass: string;
+    emoji: string;
+  } | null>(null);
   const [slideDirection, setSlideDirection] = useState<'next' | 'prev' | null>(
     null
   );
@@ -192,12 +202,32 @@ export function FlashcardStudyModal({
   ) => {
     setClickedRating(rating);
 
-    // Bắn pháo giấy mini nếu đã nhớ kỹ để khích lệ trẻ em học tập
+    const origin = event
+      ? { x: event.clientX, y: event.clientY }
+      : undefined;
+
+    // Kích hoạt hiệu ứng Chibi Reaction Emoji bay lên cho từng trường hợp (Bộ Ý Tưởng 4)
     if (rating === 'easy') {
-      const origin = event
-        ? { x: event.clientX, y: event.clientY }
-        : undefined;
       triggerMiniConfetti(origin);
+      setCheerFeedback({
+        text: 'Xuất sắc! Thuộc làu làu rồi!',
+        pillClass: 'bg-emerald-600 text-white shadow-emerald-500/30',
+        emoji: '🏆',
+      });
+    } else if (rating === 'good') {
+      triggerGoodFeedbackBurst(origin);
+      setCheerFeedback({
+        text: 'Giỏi lắm nè! Sắp thuộc làu rồi!',
+        pillClass: 'bg-amber-500 text-white shadow-amber-500/30',
+        emoji: '⭐',
+      });
+    } else if (rating === 'forgot') {
+      triggerEncouragingFeedbackBurst(origin);
+      setCheerFeedback({
+        text: 'Không sao cả, ngày mai nhớ ngay nha!',
+        pillClass: 'bg-rose-500 text-white shadow-rose-500/30',
+        emoji: '🌱',
+      });
     }
 
     const nextState = computeNextSrsState({
@@ -222,9 +252,10 @@ export function FlashcardStudyModal({
     setLocalPatch(nextPatch);
     setRatingsByKey(nextRatings);
 
-    // Chờ 300ms để hiệu ứng nút bấm và pháo giấy hiển thị rồi chuyển thẻ
+    // Chờ 550ms để các emoji chibi nảy lên và học sinh đọc lời khen rồi chuyển thẻ
     setTimeout(() => {
       setClickedRating(null);
+      setCheerFeedback(null);
       setFlipped(false);
 
       if (currentIndex + 1 < cards.length) {
@@ -233,7 +264,7 @@ export function FlashcardStudyModal({
       } else {
         setFinished(true);
       }
-    }, 300);
+    }, 550);
   };
 
   const handleClose = () => {
@@ -605,7 +636,17 @@ export function FlashcardStudyModal({
             </div>
 
             {/* 3 Nút tự đánh giá theo Đường cong quên lãng */}
-            <div className="space-y-2">
+            <div className="relative space-y-2">
+              {cheerFeedback && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200 animate-bounce">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold shadow-lg ${cheerFeedback.pillClass}`}
+                  >
+                    <span>{cheerFeedback.emoji}</span>
+                    <span>{cheerFeedback.text}</span>
+                  </span>
+                </div>
+              )}
               <div className="text-center text-xs font-bold text-slate-500">
                 Đánh giá mức độ nhớ của em để hẹn ngày ôn lại (Đường cong quên lãng):
               </div>

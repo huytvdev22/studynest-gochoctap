@@ -14,7 +14,8 @@ interface ConfettiParticle {
   tiltSpeed: number;
   opacity: number;
   decay: number;
-  shape: 'rect' | 'circle';
+  shape: 'rect' | 'circle' | 'emoji';
+  emoji?: string;
   gravity: number;
   drag: number;
 }
@@ -117,7 +118,12 @@ function renderFrame() {
     context.globalAlpha = Math.max(0, p.opacity);
     context.fillStyle = p.color;
 
-    if (p.shape === 'rect') {
+    if (p.shape === 'emoji' && p.emoji) {
+      context.font = `${Math.round(p.w)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(p.emoji, 0, 0);
+    } else if (p.shape === 'rect') {
       context.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
     } else {
       context.beginPath();
@@ -238,3 +244,142 @@ export function triggerGrandConfetti() {
     animFrameId = requestAnimationFrame(renderFrame);
   }
 }
+
+/**
+ * Hiệu ứng Mặt cảm xúc Chibi / Emoji reaction nảy lên khi bấm "Tạm nhớ" (Bộ Ý Tưởng 4)
+ */
+export function triggerGoodFeedbackBurst(origin?: { x: number; y: number }) {
+  const x = origin?.x ?? window.innerWidth / 2;
+  const y = origin?.y ?? window.innerHeight * 0.75;
+
+  // Biểu cảm Chibi ngầu, tươi cười, nỗ lực
+  const CHIBI_EMOJIS = ['🥰', '😎', '💪', '⭐', '✨', '🌟', '🥳'];
+  const AMBER_COLORS = ['#f59e0b', '#fbbf24', '#fcd34d', '#fef08a', '#d97706'];
+
+  // 14 hạt biểu cảm Chibi bay nảy lên theo quỹ đạo cung vui nhộn
+  for (let i = 0; i < 14; i++) {
+    const angle = ((Math.random() * 80 - 130) * Math.PI) / 180;
+    const speed = Math.random() * 6.5 + 4.5;
+    activeParticles.push({
+      x: x + (Math.random() * 24 - 12),
+      y: y + (Math.random() * 12 - 6),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      w: Math.random() * 8 + 24, // Kích thước font emoji 24-32px
+      h: Math.random() * 8 + 24,
+      color: '#fbbf24',
+      rotation: Math.random() * 30 - 15,
+      rotationSpeed: Math.random() * 3 - 1.5,
+      tilt: 0,
+      tiltSpeed: 0,
+      opacity: 1,
+      decay: Math.random() * 0.015 + 0.012,
+      shape: 'emoji',
+      emoji: CHIBI_EMOJIS[Math.floor(Math.random() * CHIBI_EMOJIS.length)],
+      gravity: 0.18,
+      drag: 0.965,
+    });
+  }
+
+  // 16 hạt đốm sáng vàng óng nổ lấp lánh xung quanh
+  for (let i = 0; i < 16; i++) {
+    const angle = ((Math.random() * 90 - 135) * Math.PI) / 180;
+    const speed = Math.random() * 7 + 4;
+    activeParticles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      w: Math.random() * 6 + 4,
+      h: Math.random() * 6 + 4,
+      color: AMBER_COLORS[Math.floor(Math.random() * AMBER_COLORS.length)],
+      rotation: Math.random() * 360,
+      rotationSpeed: Math.random() * 8 - 4,
+      tilt: Math.random() * 10,
+      tiltSpeed: 0.1,
+      opacity: 1,
+      decay: Math.random() * 0.02 + 0.015,
+      shape: 'circle',
+      gravity: 0.22,
+      drag: 0.96,
+    });
+  }
+
+  if (!animFrameId) {
+    animFrameId = requestAnimationFrame(renderFrame);
+  }
+}
+
+/**
+ * Hiệu ứng Mặt cảm xúc Chibi ôm ấp, cổ vũ dịu dàng khi bấm "Chưa thuộc / Hay quên" (Bộ Ý Tưởng 4)
+ */
+export function triggerEncouragingFeedbackBurst(origin?: { x: number; y: number }) {
+  const x = origin?.x ?? window.innerWidth / 2;
+  const y = origin?.y ?? window.innerHeight * 0.75;
+
+  // Biểu cảm Chibi ấm áp, vỗ về, khích lệ
+  const CHIBI_EMOJIS = ['🤗', '💖', '🌱', '🌸', '✨', '🧸', '✌️'];
+  const PASTEL_COLORS = [
+    '#fb7185',
+    '#fda4af',
+    '#f43f5e',
+    '#a78bfa',
+    '#34d399',
+    '#6ee7b7',
+  ];
+
+  // 14 hạt emoji chibi dịu dàng bay bồng bềnh lượn sóng
+  for (let i = 0; i < 14; i++) {
+    const angle = ((Math.random() * 120 - 150) * Math.PI) / 180;
+    const speed = Math.random() * 4.5 + 2.5;
+    activeParticles.push({
+      x: x + (Math.random() * 24 - 12),
+      y: y + (Math.random() * 12 - 6),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      w: Math.random() * 8 + 24,
+      h: Math.random() * 8 + 24,
+      color: '#fb7185',
+      rotation: Math.random() * 24 - 12,
+      rotationSpeed: Math.random() * 2 - 1,
+      tilt: 0,
+      tiltSpeed: 0,
+      opacity: 1,
+      decay: Math.random() * 0.014 + 0.01,
+      shape: 'emoji',
+      emoji: CHIBI_EMOJIS[Math.floor(Math.random() * CHIBI_EMOJIS.length)],
+      gravity: 0.12, // Rất nhẹ để bồng bềnh
+      drag: 0.97,
+    });
+  }
+
+  // 16 hạt đốm sáng pastel dịu dàng
+  for (let i = 0; i < 16; i++) {
+    const angle = ((Math.random() * 120 - 150) * Math.PI) / 180;
+    const speed = Math.random() * 5 + 2;
+    activeParticles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      w: Math.random() * 6 + 4,
+      h: Math.random() * 6 + 4,
+      color: PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)],
+      rotation: Math.random() * 360,
+      rotationSpeed: Math.random() * 6 - 3,
+      tilt: Math.random() * 10,
+      tiltSpeed: 0.08,
+      opacity: 1,
+      decay: Math.random() * 0.018 + 0.012,
+      shape: 'circle',
+      gravity: 0.15,
+      drag: 0.965,
+    });
+  }
+
+  if (!animFrameId) {
+    animFrameId = requestAnimationFrame(renderFrame);
+  }
+}
+
+
