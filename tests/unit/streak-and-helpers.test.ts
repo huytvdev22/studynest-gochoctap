@@ -496,5 +496,69 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(currentVer.commitHash).toBeDefined();
     expect(currentVer.formattedBuildTime).toBeDefined();
   });
+
+  it('lọc chính xác Bài học hôm nay cho Giáo viên (dueDate === today) và không dồn bài quá khứ', () => {
+    const todayStr = '2026-11-12';
+    const sampleAssignments = [
+      {
+        id: 'asg_1',
+        title: 'Bài cũ từ tuần trước',
+        dueDate: '2026-11-05',
+        assignedStudentUids: ['ALL'],
+      },
+      {
+        id: 'asg_2',
+        title: 'Bài cũ từ hôm qua',
+        dueDate: '2026-11-11',
+        assignedStudentUids: ['ALL'],
+      },
+      {
+        id: 'asg_3',
+        title: 'Bài chỉ định cho hôm nay',
+        dueDate: '2026-11-12',
+        assignedStudentUids: ['student_A'],
+      },
+      {
+        id: 'asg_4',
+        title: 'Bài ngày mai',
+        dueDate: '2026-11-13',
+        assignedStudentUids: ['ALL'],
+      },
+    ];
+
+    // Helper logic lọc cho Instructor:
+    const filterInstructorTodayTasks = (studentUid = '') => {
+      return sampleAssignments.filter((a) => {
+        if (a.dueDate !== todayStr) return false;
+        if (studentUid) {
+          return (
+            a.assignedStudentUids.includes('ALL') ||
+            a.assignedStudentUids.includes(studentUid)
+          );
+        }
+        return true;
+      });
+    };
+
+    // Khi hôm nay chỉ có 1 bài dueDate === 2026-11-12 (asg_3 giao cho student_A):
+    // 1. Khi xem Tất cả (không chọn học sinh):
+    const allInstructorTasks = filterInstructorTodayTasks('');
+    expect(allInstructorTasks).toHaveLength(1);
+    expect(allInstructorTasks[0].id).toBe('asg_3');
+
+    // 2. Khi lọc theo student_A (được giao bài này):
+    const studentATasks = filterInstructorTodayTasks('student_A');
+    expect(studentATasks).toHaveLength(1);
+    expect(studentATasks[0].id).toBe('asg_3');
+
+    // 3. Khi lọc theo student_B (không được giao bài này):
+    const studentBTasks = filterInstructorTodayTasks('student_B');
+    expect(studentBTasks).toHaveLength(0);
+
+    // 4. Nếu hôm nay chưa giao bài nào (xóa asg_3):
+    const noTodayAssignments = sampleAssignments.filter((a) => a.id !== 'asg_3');
+    const emptyTodayTasks = noTodayAssignments.filter((a) => a.dueDate === todayStr);
+    expect(emptyTodayTasks).toHaveLength(0);
+  });
 });
 

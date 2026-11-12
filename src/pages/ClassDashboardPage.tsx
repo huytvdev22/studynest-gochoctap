@@ -51,6 +51,7 @@ import {
 } from '@/services/studyNestService';
 import {
   DAY_OF_WEEK_LABELS,
+  addDaysToDateStr,
   formatVietnameseDate,
   getTodayAndTomorrow,
 } from '@/lib/date';
@@ -144,9 +145,9 @@ export function ClassDashboardPage() {
     getTodayAndTomorrow(new Date(), studyClass.timezone);
 
   // Hàm tìm bản ghi học tập của học sinh cho 1 bài học / nhiệm vụ
-  const findTaskRecord = (task: Assignment) => {
+  const findTaskRecord = (task: Assignment, studentUid = user.uid) => {
     return records.find((r) => {
-      if (r.studentUid !== user.uid) return false;
+      if (r.studentUid !== studentUid) return false;
       if (r.assignmentId && r.assignmentId === task.id) return true;
       if (task.lessonId && r.assignmentId === task.lessonId) return true;
       if (task.title && r.title) {
@@ -165,40 +166,65 @@ export function ClassDashboardPage() {
   };
 
   // Kiểm tra bài đã được hoàn thành trước ngày hôm nay chưa (để cất khỏi Hôm nay học gì)
-  const isTaskCompletedBeforeToday = (task: Assignment) => {
-    const r = findTaskRecord(task);
+  const isTaskCompletedBeforeToday = (task: Assignment, studentUid = user.uid) => {
+    const r = findTaskRecord(task, studentUid);
     if (!r || r.instructorStatus !== 'confirmed') return false;
     return Boolean(r.date && r.date < today);
   };
 
-  // Hướng A (Tự động chuyển tiếp - Rollover nhiệm vụ chưa hoàn thành):
-  // 1. Bài có hạn hôm nay (dueDate === today) -> Luôn nằm trong Hôm nay.
-  // 2. Bài có hạn quá khứ (dueDate < today):
-  //    - Nếu hoàn thành trong hôm nay (r.date === today) -> Vẫn hiển thị ở tab Đã hoàn thành của hôm nay.
-  //    - Nếu chưa hoàn thành -> Tự động chuyển tiếp vào Hôm nay để học sinh tiếp tục làm cho xong.
-  //    - Nếu đã hoàn thành từ ngày cũ trước hôm nay (r.date < today) -> Ẩn khỏi Hôm nay để không chiếm chỗ (lưu trong Lịch sử).
-  const todayTasks = assignments.filter((a) => {
+  // -------------------------------------------------------------------------
+  // 1. DÀNH CHO HỌC SINH (Student Dashboard):
+  // - Bài có hạn hôm nay (dueDate === today) -> Luôn nằm trong Hôm nay.
+  // - Bài có hạn quá khứ gần đây (trong 7 ngày gần nhất) mà chưa hoàn thành:
+  //   Tự động chuyển tiếp (rollover) sang hôm nay để học sinh tiếp tục làm cho xong.
+  // - Bài đã hoàn thành trước hôm nay -> Ẩn khỏi Hôm nay để không chiếm chỗ.
+  // -------------------------------------------------------------------------
+  const sevenDaysAgo = addDaysToDateStr(today, -7);
+  const studentTodayTasks = assignments.filter((a) => {
+    const isForStudent =
+      a.assignedStudentUids.includes('ALL') ||
+      a.assignedStudentUids.includes(user.uid);
+    if (!isForStudent) return false;
+
     if (a.dueDate === today) return true;
-    if (a.dueDate && a.dueDate < today) {
-      if (role === 'student') {
-        return !isTaskCompletedBeforeToday(a);
-      }
-      if (selectedStudentUid) {
-        const studentRec = records.find(
-          (r) =>
-            r.studentUid === selectedStudentUid &&
-            (r.assignmentId === a.id || (a.lessonId && r.assignmentId === a.lessonId)) &&
-            r.instructorStatus === 'confirmed'
-        );
-        if (studentRec && studentRec.date && studentRec.date < today) {
-          return false;
-        }
-        return true;
-      }
-      return true;
+    if (a.dueDate && a.dueDate < today && a.dueDate >= sevenDaysAgo) {
+      return !isTaskCompletedBeforeToday(a, user.uid);
     }
     return false;
   });
+
+  // -------------------------------------------------------------------------
+  // 2. DÀNH CHO GIÁO VIÊN / CHỦ LỚP (Instructor / Owner Dashboard):
+  // - "Bài học hôm nay": CHỈ LÀ các bài học / nhiệm vụ được chỉ định cho HÔM NAY (dueDate === today).
+  // - Khi không lọc học sinh (Tất cả): Đếm tất cả bài hôm nay của lớp.
+  // - Khi lọc theo 1 học sinh cụ thể: Đếm các bài hôm nay được giao cho học sinh đó (ALL hoặc chứa selectedStudentUid).
+  // Tuyệt đối không dồn bài trong quá khứ vào số liệu bài học hôm nay của giáo viên!
+  // -------------------------------------------------------------------------
+  const instructorTodayTasks = assignments.filter((a) => {
+    if (a.dueDate !== today) return false;
+    if (selectedStudentUid) {
+      return (
+        a.assignedStudentUids.includes('ALL') ||
+        a.assignedStudentUids.includes(selectedStudentUid)
+      );
+    }
+    return true;
+  });
+
+  // Danh sách nhiệm vụ tồn đọng từ các ngày trước của học sinh được chọn (nếu có)
+  const studentOverdueTasks = selectedStudentUid
+    ? assignments.filter((a) => {
+        if (!a.dueDate || a.dueDate >= today) return false;
+        const isAssigned =
+          a.assignedStudentUids.includes('ALL') ||
+          a.assignedStudentUids.includes(selectedStudentUid);
+        if (!isAssigned) return false;
+        return !isTaskCompletedBeforeToday(a, selectedStudentUid);
+      })
+    : [];
+
+  // Để tương thích với code hiện tại:
+  const todayTasks = isInstructorOrOwner ? instructorTodayTasks : studentTodayTasks;
 
   // Nhiệm vụ sắp tới (có hạn trong tương lai sau ngày hôm nay)
   const otherTasks = assignments.filter((a) => a.dueDate && a.dueDate > today);
@@ -1286,7 +1312,12 @@ export function ClassDashboardPage() {
             Bài học hôm nay ({formatVietnameseDate(today, false)})
           </div>
           <div className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white">
-            {todayTasks.length} bài đã giao
+            {instructorTodayTasks.length} bài đã giao
+          </div>
+          <div className="mt-1 text-xs text-slate-500">
+            {activeSelectedStudent
+              ? `Giao cho ${activeSelectedStudent.displayName}`
+              : 'Tính theo hạn nộp hôm nay'}
           </div>
           <div className="mt-2">
             <Link
@@ -1788,9 +1819,16 @@ export function ClassDashboardPage() {
         <div className="space-y-6 lg:col-span-5">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                Bài học & Nhiệm vụ hôm nay ({todayTasks.length})
-              </h2>
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                  Bài học & Nhiệm vụ hôm nay ({instructorTodayTasks.length})
+                </h2>
+                {activeSelectedStudent && (
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                    Đang xem bài của {activeSelectedStudent.displayName}
+                  </p>
+                )}
+              </div>
               <Link
                 to={`/app/classes/${studyClass.id}/lessons`}
                 className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
@@ -1799,31 +1837,63 @@ export function ClassDashboardPage() {
               </Link>
             </div>
 
-            {todayTasks.length > 0 ? (
+            {instructorTodayTasks.length > 0 ? (
               <div className="mt-4 space-y-3">
-                {todayTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        {task.subject || 'Tổng hợp'}
-                      </span>
-                      <span className="text-xs font-bold text-amber-600">
-                        +{task.starsReward} sao
-                      </span>
+                {instructorTodayTasks.map((task) => {
+                  const studentRec = activeSelectedStudent
+                    ? findTaskRecord(task, activeSelectedStudent.uid)
+                    : null;
+                  const isConfirmed = studentRec?.instructorStatus === 'confirmed';
+                  const isSubmitted = studentRec?.studentStatus === 'submitted';
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          {task.subject || 'Tổng hợp'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {activeSelectedStudent && (
+                            isConfirmed ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                Đã hoàn thành
+                              </span>
+                            ) : isSubmitted ? (
+                              <button
+                                type="button"
+                                onClick={() => studentRec && setViewingRecord(studentRec)}
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 hover:bg-amber-200 dark:bg-amber-950 dark:text-amber-200 transition"
+                                title="Bấm để chấm & xác nhận bài làm"
+                              >
+                                <Clock className="h-2.5 w-2.5" />
+                                Đã nộp • Chờ duyệt
+                              </button>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                Chưa làm
+                              </span>
+                            )
+                          )}
+                          <span className="text-xs font-bold text-amber-600">
+                            +{task.starsReward} sao
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">
+                        {task.title}
+                      </div>
+                      {task.description && (
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
                     </div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-white">
-                      {task.title}
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-slate-500 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 <Link
                   to={`/app/classes/${studyClass.id}/sessions`}
                   className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200"
@@ -1834,7 +1904,11 @@ export function ClassDashboardPage() {
               </div>
             ) : (
               <div className="mt-4 text-sm text-slate-500 space-y-3">
-                <p>Chưa giao bài học hoặc nhiệm vụ nào cho ngày hôm nay.</p>
+                <p>
+                  {activeSelectedStudent
+                    ? `${activeSelectedStudent.displayName} chưa có bài học hoặc nhiệm vụ nào được giao cho ngày hôm nay.`
+                    : 'Chưa giao bài học hoặc nhiệm vụ nào cho ngày hôm nay.'}
+                </p>
                 <div className="flex flex-col gap-2">
                   <Link
                     to={`/app/classes/${studyClass.id}/lessons`}
@@ -1854,6 +1928,52 @@ export function ClassDashboardPage() {
               </div>
             )}
           </section>
+
+          {/* Nếu lọc theo học sinh & học sinh có bài tập tồn đọng từ các ngày trước */}
+          {activeSelectedStudent && studentOverdueTasks.length > 0 && (
+            <section className="rounded-3xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Nhiệm vụ tồn đọng các ngày trước ({studentOverdueTasks.length})</span>
+                </div>
+                <Link
+                  to={`/app/classes/${studyClass.id}/sessions`}
+                  className="text-xs font-bold text-amber-800 hover:underline dark:text-amber-300"
+                >
+                  Xem tất cả
+                </Link>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {activeSelectedStudent.displayName} còn {studentOverdueTasks.length} bài tập từ các ngày trước chưa hoàn thành:
+              </p>
+              <div className="space-y-2">
+                {studentOverdueTasks.slice(0, 4).map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-amber-200/60 bg-white/80 p-2.5 text-xs dark:border-slate-800 dark:bg-slate-900/80"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-slate-900 truncate dark:text-white">
+                        {t.title}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {t.subject || 'Tổng hợp'} • Hạn: {formatVietnameseDate(t.dueDate, false)}
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[10px] font-bold text-amber-600">
+                      +{t.starsReward} sao
+                    </span>
+                  </div>
+                ))}
+                {studentOverdueTasks.length > 4 && (
+                  <div className="text-center text-[11px] font-semibold text-amber-700 dark:text-amber-400 pt-1">
+                    và {studentOverdueTasks.length - 4} bài khác...
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Thời khóa biểu hôm nay & ngày mai của lớp */}
           {sortedTodaySchedules.length > 0 && (
