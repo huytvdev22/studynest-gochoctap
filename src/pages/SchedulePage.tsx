@@ -30,7 +30,7 @@ import type {
 } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClassContext } from '@/contexts/ClassContext';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import {
   deleteScheduleException,
   deleteScheduleItem,
@@ -573,6 +573,7 @@ export function SchedulePage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="visually-hidden">Thời khóa biểu tuần</h1>
       {/* Thanh công cụ Nhập từ Ảnh bằng AI + Bộ lọc theo môn học */}
       <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         {isInstructorOrOwner && (
@@ -644,7 +645,7 @@ export function SchedulePage() {
                 onChange={(e) =>
                   setFilterType(e.target.value as 'all' | ScheduleType)
                 }
-                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
               >
                 <option value="all">Tất cả lịch ({schedules.length})</option>
                 <option value="regular">
@@ -672,7 +673,7 @@ export function SchedulePage() {
                     e.target.value === 'ALL' ? null : e.target.value
                   )
                 }
-                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
               >
                 <option value="ALL">
                   Tất cả môn ({subjectBrushes.length} môn)
@@ -720,9 +721,15 @@ export function SchedulePage() {
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full min-w-[920px] border-collapse text-left">
+            <caption className="visually-hidden">
+              Thời khóa biểu theo tuần từ Thứ Hai đến Chủ Nhật
+            </caption>
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-800/60">
-                <th className="w-36 border-r border-slate-200 px-3 py-3.5 text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th
+                  scope="col"
+                  className="w-36 border-r border-slate-200 px-3 py-3.5 text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400"
+                >
                   Buổi / Tiết
                 </th>
                 {ORDERED_DAYS_OF_WEEK.map((dow) => {
@@ -731,6 +738,7 @@ export function SchedulePage() {
                   return (
                     <th
                       key={dow}
+                      scope="col"
                       className={`border-r border-slate-200 px-3 py-3 text-center last:border-r-0 dark:border-slate-800 ${
                         isToday
                           ? 'bg-emerald-50/90 dark:bg-emerald-950/40'
@@ -800,11 +808,14 @@ export function SchedulePage() {
                     )}
 
                     <tr className="group/row hover:bg-slate-50/40 dark:hover:bg-slate-800/20">
-                      <td className="border-r border-slate-200 bg-slate-50/40 px-3 py-3 align-middle dark:border-slate-800 dark:bg-slate-900/50">
+                      <th
+                        scope="row"
+                        className="border-r border-slate-200 bg-slate-50/40 px-3 py-3 text-left align-middle dark:border-slate-800 dark:bg-slate-900/50"
+                      >
                         <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
                           {slot.label}
                         </div>
-                      </td>
+                      </th>
 
                       {ORDERED_DAYS_OF_WEEK.map((dow) => {
                         const cellItems = filteredSchedules.filter(
@@ -909,24 +920,29 @@ export function SchedulePage() {
 
       {/* MODAL 1: Hộp thoại nhỏ khi click trực tiếp vào 1 ô trên lịch tuần */}
       {isInstructorOrOwner && activeCell && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <ModalDialog
+          open={true}
+          onClose={() => setActiveCell(null)}
+          closedBy="any"
+          ariaLabel={
+            activeCell.existingItem
+              ? 'Chỉnh sửa tiết học'
+              : 'Chọn nhanh hoặc nhập môn học'
+          }
+          className="max-w-md"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <div>
                 <span className="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                   {DAY_OF_WEEK_LABELS[activeCell.dayOfWeek]} •{' '}
                   {activeCell.slot.label}
                 </span>
-                <h3 className="mt-1.5 text-base font-extrabold text-slate-900 dark:text-white">
+                <h2 className="mt-1.5 text-base font-extrabold text-slate-900 dark:text-white">
                   {activeCell.existingItem
                     ? 'Chỉnh sửa tiết học'
                     : 'Chọn nhanh hoặc nhập môn học'}
-                </h3>
+                </h2>
               </div>
 
               <button
@@ -1057,20 +1073,19 @@ export function SchedulePage() {
               </div>
             </form>
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
 
       {/* MODAL 2: Nhập Thời khóa biểu từ Ảnh chụp thông qua AI (Copy Prompt -> Dán JSON -> Preview & Edit -> Lưu) */}
       {isInstructorOrOwner && showAiImportModal && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-ai-import-title"
-          >
-            <div className="my-8 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto space-y-5">
+        <ModalDialog
+          open={showAiImportModal}
+          onClose={() => setShowAiImportModal(false)}
+          closedBy="closerequest"
+          ariaLabelledBy="modal-ai-import-title"
+          className="max-w-4xl"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90dvh] overflow-y-auto space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-sm">
@@ -1222,15 +1237,20 @@ export function SchedulePage() {
 
                 <div className="max-h-72 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800">
                   <table className="w-full border-collapse text-left text-xs">
+                    <caption className="visually-hidden">
+                      Danh sách tiết học xem trước từ AI trước khi lưu
+                    </caption>
                     <thead className="sticky top-0 bg-slate-100 text-[11px] font-extrabold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                       <tr>
-                        <th className="p-2.5">Thứ</th>
-                        <th className="p-2.5">Buổi</th>
-                        <th className="p-2.5 w-16">Tiết</th>
-                        <th className="p-2.5">Môn học *</th>
-                        <th className="p-2.5">Sách vở chuẩn bị</th>
-                        <th className="p-2.5 w-28">Phân loại</th>
-                        <th className="p-2.5 w-10"></th>
+                        <th scope="col" className="p-2.5">Thứ</th>
+                        <th scope="col" className="p-2.5">Buổi</th>
+                        <th scope="col" className="p-2.5 w-16">Tiết</th>
+                        <th scope="col" className="p-2.5">Môn học *</th>
+                        <th scope="col" className="p-2.5">Sách vở chuẩn bị</th>
+                        <th scope="col" className="p-2.5 w-28">Phân loại</th>
+                        <th scope="col" className="p-2.5 w-10">
+                          <span className="visually-hidden">Xóa dòng</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1282,6 +1302,7 @@ export function SchedulePage() {
                           <td className="p-2">
                             <input
                               type="number"
+                              inputMode="numeric"
                               aria-label="Tiết"
                               min={1}
                               max={10}
@@ -1402,8 +1423,7 @@ export function SchedulePage() {
               </div>
             )}
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
 
       {/* Checklist Ngày mai học gì & Chuẩn bị sách vở */}

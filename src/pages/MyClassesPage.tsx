@@ -34,7 +34,7 @@ import {
   RoleBadge,
   THEME_COLOR_STYLES,
 } from '@/components/ui/ThemeBadges';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 
 export function MyClassesPage() {
   const { user } = useAuth();
@@ -204,9 +204,9 @@ export function MyClassesPage() {
             <RoleBadge role={membership.role} />
           </div>
 
-          <h3 className="mt-4 text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400">
+          <h2 className="mt-4 text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400">
             {studyClass.name}
-          </h3>
+          </h2>
           <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
             {studyClass.description || 'Bấm vào để xem lịch học và bài tập hôm nay.'}
           </p>
@@ -286,7 +286,15 @@ export function MyClassesPage() {
             <div className="flex items-center gap-2">
               <input
                 id="quick-join-input"
-                type="text"
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                enterKeyHint="go"
+                aria-invalid={Boolean(joinInputError)}
+                aria-describedby={joinInputError ? 'quick-join-error' : undefined}
                 value={joinInput}
                 onChange={(e) => {
                   setJoinInput(e.target.value);
@@ -306,6 +314,7 @@ export function MyClassesPage() {
 
           {joinInputError && (
             <div
+              id="quick-join-error"
               role="alert"
               className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200"
             >
@@ -359,14 +368,14 @@ export function MyClassesPage() {
 
       {/* Modal tạo lớp mới */}
       {showCreateModal && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-create-class-title"
-          >
-            <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <ModalDialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          closedBy="closerequest"
+          ariaLabelledBy="modal-create-class-title"
+          className="max-w-lg"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <h2
                 id="modal-create-class-title"
@@ -387,6 +396,7 @@ export function MyClassesPage() {
             <form onSubmit={(e) => void handleCreateClass(e)} className="mt-4 space-y-4">
               {formError && (
                 <div
+                  id="create-class-form-error"
                   role="alert"
                   className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-200"
                 >
@@ -405,6 +415,10 @@ export function MyClassesPage() {
                   id="class-name-input"
                   type="text"
                   required
+                  autoComplete="off"
+                  enterKeyHint="next"
+                  aria-invalid={Boolean(formError)}
+                  aria-describedby={formError ? 'create-class-form-error' : undefined}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ví dụ: Góc học tập Lớp 3 – Bé An"
@@ -524,8 +538,7 @@ export function MyClassesPage() {
               </div>
             </form>
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
     </div>
   );

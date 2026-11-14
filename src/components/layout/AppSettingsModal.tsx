@@ -9,7 +9,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import {
   checkForUpdates,
   forceClearCacheAndReload,
@@ -67,14 +67,14 @@ export function AppSettingsModal({
   };
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Cài đặt & Cập nhật ứng dụng"
-      >
-        <div className="my-6 w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-in fade-in zoom-in-95 duration-150">
+    <ModalDialog
+      open={isOpen}
+      onClose={onClose}
+      closedBy="any"
+      ariaLabel="Cài đặt & Cập nhật ứng dụng"
+      className="max-w-lg"
+    >
+      <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
           {/* Header Modal */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
@@ -216,8 +216,7 @@ export function AppSettingsModal({
             </p>
           </div>
         </div>
-      </div>
-    </ModalPortal>
+    </ModalDialog>
   );
 }
 

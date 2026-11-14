@@ -143,9 +143,21 @@ function renderFrame() {
 }
 
 /**
+ * Kiểm tra người dùng có bật tùy chọn giảm chuyển động trên hệ thống hay không
+ */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/**
  * Bắn pháo giấy mini từ vị trí nhấn nút "Đã nhớ kỹ"
  */
 export function triggerMiniConfetti(origin?: { x: number; y: number }) {
+  if (prefersReducedMotion()) return;
   const x = origin?.x ?? window.innerWidth / 2;
   const y = origin?.y ?? window.innerHeight * 0.75;
 
@@ -184,6 +196,7 @@ export function triggerMiniConfetti(origin?: { x: number; y: number }) {
  * Đại tiệc pháo giấy bắn rực rỡ từ 2 bên màn hình khi hoàn thành phiên học
  */
 export function triggerGrandConfetti() {
+  if (prefersReducedMotion()) return;
   const leftX = window.innerWidth * 0.15;
   const rightX = window.innerWidth * 0.85;
   const bottomY = window.innerHeight * 0.85;
@@ -249,6 +262,7 @@ export function triggerGrandConfetti() {
  * Hiệu ứng Mặt cảm xúc Chibi / Emoji reaction nảy lên khi bấm "Tạm nhớ" (Bộ Ý Tưởng 4)
  */
 export function triggerGoodFeedbackBurst(origin?: { x: number; y: number }) {
+  if (prefersReducedMotion()) return;
   const x = origin?.x ?? window.innerWidth / 2;
   const y = origin?.y ?? window.innerHeight * 0.75;
 
@@ -314,6 +328,7 @@ export function triggerGoodFeedbackBurst(origin?: { x: number; y: number }) {
  * Hiệu ứng Mặt cảm xúc Chibi ôm ấp, cổ vũ dịu dàng khi bấm "Chưa thuộc / Hay quên" (Bộ Ý Tưởng 4)
  */
 export function triggerEncouragingFeedbackBurst(origin?: { x: number; y: number }) {
+  if (prefersReducedMotion()) return;
   const x = origin?.x ?? window.innerWidth / 2;
   const y = origin?.y ?? window.innerHeight * 0.75;
 

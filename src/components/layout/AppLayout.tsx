@@ -75,32 +75,78 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
     }
   };
 
-  const [dark, setDark] = useState<boolean>(() => {
+  const [themeOverride, setThemeOverride] = useState<'light' | 'dark' | null>(() => {
     try {
-      return localStorage.getItem('studynest_theme') === 'dark';
+      const saved = localStorage.getItem('studynest_theme');
+      return saved === 'light' || saved === 'dark' ? saved : null;
     } catch {
-      return false;
+      return null;
     }
   });
 
+  const [systemDark, setSystemDark] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const dark = themeOverride ? themeOverride === 'dark' : systemDark;
+
   useEffect(() => {
     const root = document.documentElement;
-    if (dark) {
-      root.classList.add('dark');
+    root.classList.toggle('dark', dark);
+    document.head
+      .querySelector('meta[name="color-scheme"]')
+      ?.setAttribute('content', themeOverride ?? 'light dark');
+    document.head
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', dark ? '#020617' : '#059669');
+  }, [dark, themeOverride]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (event: MediaQueryListEvent) => {
+      setSystemDark(event.matches);
+    };
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== 'studynest_theme') return;
+      const next = event.newValue === 'light' || event.newValue === 'dark' ? event.newValue : null;
+      setThemeOverride(next);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  const handleToggleTheme = () => {
+    const nextDark = !dark;
+    if (nextDark === systemDark) {
+      setThemeOverride(null);
       try {
-        localStorage.setItem('studynest_theme', 'dark');
+        localStorage.removeItem('studynest_theme');
       } catch {
-        // Ignore
+        // Bỏ qua
       }
-    } else {
-      root.classList.remove('dark');
-      try {
-        localStorage.setItem('studynest_theme', 'light');
-      } catch {
-        // Ignore
-      }
+      return;
     }
-  }, [dark]);
+    const nextOverride = nextDark ? 'dark' : 'light';
+    setThemeOverride(nextOverride);
+    try {
+      localStorage.setItem('studynest_theme', nextOverride);
+    } catch {
+      // Bỏ qua
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -109,6 +155,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <a
+        href="#main-content"
+        className="visually-hidden visually-hidden-focusable rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg"
+      >
+        Bỏ qua đến nội dung chính
+      </a>
       {/* Banner thông báo chế độ môi trường */}
       {isDemoMode && (
         <div className="border-b border-amber-200 bg-amber-50/90 px-4 py-2 text-xs text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/50 dark:text-amber-200">
@@ -224,8 +276,9 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
             <button
               type="button"
-              onClick={() => setDark((d) => !d)}
+              onClick={handleToggleTheme}
               aria-label={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+              aria-pressed={dark}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
@@ -260,7 +313,9 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
       <PullToRefresh onRefresh={handlePageRefresh}>
         <main
-          className={`mx-auto w-full flex-1 ${
+          id="main-content"
+          tabIndex={-1}
+          className={`mx-auto w-full flex-1 focus:outline-none ${
             isWorkspaceRoute
               ? 'max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6'
               : 'max-w-6xl px-4 py-6 sm:px-6 sm:py-8'

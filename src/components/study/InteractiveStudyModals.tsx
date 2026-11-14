@@ -12,7 +12,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import {
   triggerEncouragingFeedbackBurst,
   triggerGoodFeedbackBurst,
@@ -393,14 +393,14 @@ export function FlashcardStudyModal({
   };
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <div className="my-6 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+    <ModalDialog
+      open={true}
+      onClose={onClose}
+      closedBy="closerequest"
+      ariaLabel={title}
+      className="max-w-2xl"
+    >
+      <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
@@ -593,7 +593,10 @@ export function FlashcardStudyModal({
                     </span>
 
                     <div className="mt-4 max-w-lg space-y-3 w-full">
-                      <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                      <div
+                        lang={activeTtsLang || undefined}
+                        className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight"
+                      >
                         {currentCard.keyword.term}
                       </div>
 
@@ -666,7 +669,10 @@ export function FlashcardStudyModal({
                     </span>
 
                     <div className="mt-4 max-w-lg space-y-3 w-full">
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div
+                        lang={activeTtsLang || undefined}
+                        className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                      >
                         {currentCard.keyword.term}
                       </div>
 
@@ -845,8 +851,7 @@ export function FlashcardStudyModal({
           </div>
         )}
       </div>
-    </div>
-    </ModalPortal>
+    </ModalDialog>
   );
 }
 
@@ -988,19 +993,14 @@ export function QuizTakeModal({
   };
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-3 sm:p-5 backdrop-blur-xs animate-in fade-in duration-150"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(e) => {
-          if (e.target === e.currentTarget && !submitting) onClose();
-        }}
-      >
-        <div
-          className="relative flex flex-col w-full max-w-3xl max-h-[92vh] rounded-3xl bg-white shadow-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden"
-        >
+    <ModalDialog
+      open={true}
+      onClose={onClose}
+      closedBy={submitting ? 'none' : 'any'}
+      ariaLabel={title}
+      className="max-w-3xl"
+    >
+      <div className="relative flex flex-col w-full max-h-[90dvh] rounded-3xl bg-white shadow-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
           {/* Header Modal - Cố định ở đỉnh (Sticky Header) */}
           <div className="relative shrink-0 flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 sm:px-6 py-4 dark:border-slate-800 dark:bg-slate-900/90 z-10">
             <div className="space-y-0.5 pr-2">
@@ -1275,8 +1275,7 @@ export function QuizTakeModal({
             )}
           </div>
         </div>
-      </div>
-    </ModalPortal>
+    </ModalDialog>
   );
 }
 

@@ -253,6 +253,7 @@ export function JoinClassPage() {
       <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 space-y-4">
         {submitError && (
           <div
+            id="join-submit-error"
             role="alert"
             className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-200"
           >
@@ -272,6 +273,13 @@ export function JoinClassPage() {
             type="text"
             required
             maxLength={16}
+            autoComplete="one-time-code"
+            autoCorrect="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            enterKeyHint="next"
+            aria-invalid={Boolean(submitError)}
+            aria-describedby={submitError ? 'join-submit-error' : undefined}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="VD: 3A2026"

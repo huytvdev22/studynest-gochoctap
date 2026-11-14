@@ -159,6 +159,7 @@ export function ProgressPage() {
 
   return (
     <div className="space-y-8">
+      <h1 className="visually-hidden">Sao &amp; Chuỗi ngày học</h1>
       {/* Thanh chọn học sinh (Nếu là Instructor / Owner) */}
       {isInstructorOrOwner && (
         <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
@@ -298,9 +299,9 @@ export function ProgressPage() {
               }
               size="sm"
             />
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
               Xác nhận buổi học & Tưởng thưởng sao cho {activeStudent.displayName}
-            </h3>
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -385,9 +386,9 @@ export function ProgressPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-5 w-5 text-emerald-600" />
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
               Nhật ký học tập gần đây ({studentRecords.length})
-            </h3>
+            </h2>
           </div>
           <span className="text-xs text-slate-400">
             Giới hạn tải {maxRecords} bản ghi mới nhất

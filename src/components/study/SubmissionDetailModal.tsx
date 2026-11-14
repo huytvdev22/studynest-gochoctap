@@ -12,7 +12,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import { UserAvatar } from '@/components/ui/ThemeBadges';
 import type {
   Assignment,
@@ -133,16 +133,14 @@ export function SubmissionDetailModal({
       : null;
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
-        <div className="relative flex flex-col w-full max-w-3xl max-h-[92vh] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <ModalDialog
+      open={true}
+      onClose={onClose}
+      closedBy="any"
+      ariaLabel={`Chi tiết bài nộp: ${record.studentName}`}
+      className="max-w-3xl"
+    >
+      <div className="relative flex flex-col w-full max-h-[90dvh] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           {/* Header Modal */}
           <div className="flex items-start justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-850/80">
             <div className="flex items-center gap-3">
@@ -153,9 +151,9 @@ export function SubmissionDetailModal({
               />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
                     {record.studentName}
-                  </h3>
+                  </h2>
                   {isFlashcard ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                       <Layers className="h-3 w-3" />
@@ -262,9 +260,9 @@ export function SubmissionDetailModal({
 
                 {/* Danh sách các câu hỏi trong đề */}
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
                     Đề bài & Đáp án chi tiết ({quizQuestions.length} câu)
-                  </h4>
+                  </h3>
 
                   {quizQuestions.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 dark:border-slate-800">
@@ -347,9 +345,9 @@ export function SubmissionDetailModal({
             {isFlashcard && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     Danh sách thẻ trong bài ({flashcardList.length} thẻ)
-                  </h4>
+                  </h3>
                   {loadingSrs && (
                     <span className="text-xs text-slate-400">Đang tải lịch sử nhớ SRS...</span>
                   )}
@@ -562,7 +560,6 @@ export function SubmissionDetailModal({
             </button>
           </div>
         </div>
-      </div>
-    </ModalPortal>
+    </ModalDialog>
   );
 }

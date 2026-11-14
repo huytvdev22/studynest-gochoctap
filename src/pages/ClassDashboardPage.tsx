@@ -62,6 +62,7 @@ import {
   FlashcardStudyModal,
   QuizTakeModal,
 } from '@/components/study/InteractiveStudyModals';
+import { showAlertDialog } from '@/lib/alertDialog';
 import { SubmissionDetailModal } from '@/components/study/SubmissionDetailModal';
 
 export function ClassDashboardPage() {
@@ -353,7 +354,7 @@ export function ClassDashboardPage() {
       await loadDashboardData();
     } catch (err) {
       console.error('Lỗi khi nộp bài:', err);
-      alert('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
+      showAlertDialog('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
     } finally {
       setSubmittingTaskId(null);
     }
@@ -389,7 +390,7 @@ export function ClassDashboardPage() {
       await loadDashboardData();
     } catch (err) {
       console.error('Lỗi khi duyệt bài:', err);
-      alert('Không thể xác nhận bài nộp. Vui lòng thử lại!');
+      showAlertDialog('Không thể xác nhận bài nộp. Vui lòng thử lại!');
     } finally {
       setConfirmingRecordId(null);
     }
@@ -415,6 +416,7 @@ export function ClassDashboardPage() {
   if (!isInstructorOrOwner) {
     return (
       <div className="space-y-4 sm:space-y-5">
+        <h1 className="visually-hidden">Góc học hôm nay – {studyClass.name}</h1>
         {/* Hàng thẻ chỉ số Sao & Streak cho học sinh (Compact) */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div className="flex items-center gap-3.5 rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 sm:p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
@@ -583,7 +585,7 @@ export function ClassDashboardPage() {
 
               {displayedTodayTasks.length > 0 ? (
                 /* Khung cuộn nội bộ có chiều cao tối đa (Cách 2) để trang không bị kéo dài vô tận */
-                <div className="max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 sm:pr-1.5 space-y-2 focus:outline-none">
+                <div className="max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 sm:pr-1.5 space-y-2">
                   {displayedTodayTasks.map((task) => {
                     const rec = findTaskRecord(task);
                     const isConfirmed = rec?.instructorStatus === 'confirmed';
@@ -1013,7 +1015,7 @@ export function ClassDashboardPage() {
                 </p>
               ) : (
                 /* Khung cuộn nội bộ đồng bộ chiều cao với khối bài học bên trái */
-                <div className="mt-2.5 max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 space-y-2.5 focus:outline-none">
+                <div className="mt-2.5 max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1 space-y-2.5">
                   {(tomorrowSessionTab === 'all' ||
                     tomorrowSessionTab === 'morning') &&
                     tomorrowMorningSchedules.length > 0 && (
@@ -1305,6 +1307,7 @@ export function ClassDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="visually-hidden">Quản lý lớp học – {studyClass.name}</h1>
       {/* Thống kê nhanh cho người hướng dẫn */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">

@@ -11,9 +11,15 @@ const PULL_THRESHOLD = 65; // Khoảng cách kéo (px) để kích hoạt làm m
 export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const pullDistanceRef = useRef<number>(0);
+  const isRefreshingRef = useRef<boolean>(false);
+  const onRefreshRef = useRef(onRefresh);
   const startYRef = useRef<number>(0);
   const startXRef = useRef<number>(0);
   const isPullingRef = useRef<boolean>(false);
+
+  onRefreshRef.current = onRefresh;
+  isRefreshingRef.current = isRefreshing;
 
   useEffect(() => {
     const getScrollTop = () =>
@@ -23,14 +29,19 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
       if (!target || !(target instanceof HTMLElement)) return false;
       return Boolean(
         target.closest(
-          '[role="dialog"], [data-modal], .modal-scroll-area, [data-prevent-pull-to-refresh="true"]'
+          'dialog, [role="dialog"], [data-modal], .modal-scroll-area, [data-prevent-pull-to-refresh="true"]'
         )
       );
     };
 
+    const updatePullDistance = (next: number) => {
+      pullDistanceRef.current = next;
+      setPullDistance(next);
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
       // Chỉ bắt đầu kéo nếu đang ở đỉnh trang, không ở trong modal và không đang làm mới
-      if (getScrollTop() <= 2 && !isRefreshing && !isInsideScrollableModal(e.target)) {
+      if (getScrollTop() <= 2 && !isRefreshingRef.current && !isInsideScrollableModal(e.target)) {
         startYRef.current = e.touches[0].clientY;
         startXRef.current = e.touches[0].clientX;
         isPullingRef.current = true;
@@ -40,7 +51,7 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPullingRef.current || isRefreshing) return;
+      if (!isPullingRef.current || isRefreshingRef.current) return;
 
       const currentY = e.touches[0].clientY;
       const currentX = e.touches[0].clientX;
@@ -50,7 +61,7 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
       // Nếu người dùng đang vuốt ngang (ví dụ lật Flashcard, đổi tab), không kích hoạt pull-to-refresh
       if (deltaX > Math.abs(deltaY) && deltaX > 10) {
         isPullingRef.current = false;
-        setPullDistance(0);
+        updatePullDistance(0);
         return;
       }
 
@@ -58,39 +69,41 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
       if (deltaY > 0 && getScrollTop() <= 2) {
         // Áp dụng hệ số giảm tốc (damping) để tạo lực cản tự nhiên như iOS
         const distance = Math.min(deltaY * 0.45, 100);
-        setPullDistance(distance);
+        updatePullDistance(distance);
 
         // Ngăn chặn hành vi cuộn mặc định nếu đang kéo đủ rõ
         if (distance > 10 && e.cancelable) {
           e.preventDefault();
         }
       } else {
-        setPullDistance(0);
+        updatePullDistance(0);
       }
     };
 
     const handleTouchEnd = async () => {
-      if (!isPullingRef.current || isRefreshing) return;
+      if (!isPullingRef.current || isRefreshingRef.current) return;
       isPullingRef.current = false;
 
-      if (pullDistance >= PULL_THRESHOLD) {
+      if (pullDistanceRef.current >= PULL_THRESHOLD) {
+        isRefreshingRef.current = true;
         setIsRefreshing(true);
-        setPullDistance(PULL_THRESHOLD);
+        updatePullDistance(PULL_THRESHOLD);
 
         try {
-          if (onRefresh) {
-            await onRefresh();
+          if (onRefreshRef.current) {
+            await onRefreshRef.current();
           } else {
             // Mặc định reload lại trang nếu không truyền onRefresh cụ thể
             await new Promise((res) => setTimeout(res, 400));
             window.location.reload();
           }
         } finally {
+          isRefreshingRef.current = false;
           setIsRefreshing(false);
-          setPullDistance(0);
+          updatePullDistance(0);
         }
       } else {
-        setPullDistance(0);
+        updatePullDistance(0);
       }
     };
 
@@ -103,7 +116,7 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [pullDistance, isRefreshing, onRefresh]);
+  }, []);
 
   const showIndicator = pullDistance > 0 || isRefreshing;
 
