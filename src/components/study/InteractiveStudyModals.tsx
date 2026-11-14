@@ -593,7 +593,10 @@ export function FlashcardStudyModal({
                     </span>
 
                     <div className="mt-4 max-w-lg space-y-3 w-full">
-                      <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                      <div
+                        lang={activeTtsLang || undefined}
+                        className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight"
+                      >
                         {currentCard.keyword.term}
                       </div>
 
@@ -666,7 +669,10 @@ export function FlashcardStudyModal({
                     </span>
 
                     <div className="mt-4 max-w-lg space-y-3 w-full">
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div
+                        lang={activeTtsLang || undefined}
+                        className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                      >
                         {currentCard.keyword.term}
                       </div>
 

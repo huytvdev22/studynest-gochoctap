@@ -256,9 +256,9 @@ export function SessionsAndTasksPage() {
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
               Nhiệm vụ & Bài tập ({assignments.length})
-            </h2>
+            </h1>
             <p className="text-xs text-slate-500">
               Giao bài học, bài tập về nhà hoặc đề kiểm tra. Học sinh hoàn thành và gửi báo cáo để cộng sao & chuỗi ngày học.
             </p>
@@ -583,9 +583,9 @@ export function SessionsAndTasksPage() {
         >
           <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
                 Giao nhiệm vụ mới
-              </h3>
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowTaskModal(false)}
@@ -701,6 +701,7 @@ export function SessionsAndTasksPage() {
                   <input
                     id="tsk-stars"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={10}
                     value={taskStars}

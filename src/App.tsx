@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import {
   BrowserRouter,
   Navigate,
@@ -98,10 +98,45 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RouteTitleUpdater() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    let pageTitle = 'StudyNest – Góc học tập gia đình & lớp kèm';
+    if (pathname === '/login') {
+      pageTitle = 'Đăng nhập – StudyNest';
+    } else if (pathname.startsWith('/join/')) {
+      pageTitle = 'Tham gia lớp học – StudyNest';
+    } else if (pathname === '/app/classes') {
+      pageTitle = 'Danh sách lớp học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/schedule/.test(pathname)) {
+      pageTitle = 'Thời khóa biểu – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/lessons\/.+/.test(pathname)) {
+      pageTitle = 'Chi tiết bài học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/lessons/.test(pathname)) {
+      pageTitle = 'Thư viện bài học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/sessions\/.+/.test(pathname)) {
+      pageTitle = 'Chi tiết buổi học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/sessions/.test(pathname)) {
+      pageTitle = 'Nhiệm vụ & Bài tập – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/progress/.test(pathname)) {
+      pageTitle = 'Sao & Chuỗi ngày học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/members/.test(pathname)) {
+      pageTitle = 'Thành viên & Cài đặt – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+/.test(pathname)) {
+      pageTitle = 'Góc học hôm nay – StudyNest';
+    }
+    document.title = pageTitle;
+  }, [pathname]);
+
+  return null;
+}
+
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <RouteTitleUpdater />
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />

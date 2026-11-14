@@ -805,13 +805,18 @@ export function LessonsPage() {
         </div>
 
         {/* Thanh công cụ lọc & tìm kiếm gọn gàng 1 hàng */}
-        <div className="flex flex-wrap items-center gap-2.5 border-t border-slate-100 pt-3.5 dark:border-slate-800">
+        <search
+          aria-label="Tìm kiếm và lọc thư viện bài học"
+          className="flex flex-wrap items-center gap-2.5 border-t border-slate-100 pt-3.5 dark:border-slate-800"
+        >
           {/* Ô tìm kiếm */}
           <div className="relative flex-1 min-w-[200px]">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="search"
               aria-label="Tìm bài học hoặc từ vựng"
+              enterKeyHint="search"
+              autoComplete="off"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={
@@ -933,7 +938,7 @@ export function LessonsPage() {
               <RotateCcw className="h-4 w-4" />
             </button>
           )}
-        </div>
+        </search>
       </div>
 
       {/* 2. Nội dung chính: Cấp 1 (Danh sách Giáo trình) hoặc Cấp 2 (Danh sách Unit) */}
@@ -2200,10 +2205,14 @@ export function LessonsPage() {
             <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4 space-y-3 dark:border-violet-900/50 dark:bg-violet-950/20">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label
+                    htmlFor="quiz-ai-subject"
+                    className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                  >
                     Giáo trình / Môn học
                   </label>
                   <select
+                    id="quiz-ai-subject"
                     value={quizSubject}
                     onChange={(e) => {
                       setQuizSubject(e.target.value);
@@ -2221,10 +2230,14 @@ export function LessonsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label
+                    htmlFor="quiz-ai-source-mode"
+                    className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                  >
                     Nguồn kiến thức kiểm tra
                   </label>
                   <select
+                    id="quiz-ai-source-mode"
                     value={quizSourceMode}
                     onChange={(e) =>
                       setQuizSourceMode(e.target.value as 'unit' | 'srs_due')
@@ -2240,10 +2253,14 @@ export function LessonsPage() {
 
                 {quizSourceMode === 'unit' && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label
+                      htmlFor="quiz-ai-unit"
+                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                    >
                       Chọn Unit
                     </label>
                     <select
+                      id="quiz-ai-unit"
                       value={quizUnitTitle}
                       onChange={(e) => setQuizUnitTitle(e.target.value)}
                       className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800"
@@ -2269,10 +2286,14 @@ export function LessonsPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label
+                    htmlFor="quiz-ai-count"
+                    className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                  >
                     Số lượng câu hỏi
                   </label>
                   <select
+                    id="quiz-ai-count"
                     value={quizQuestionCount}
                     onChange={(e) =>
                       setQuizQuestionCount(Number(e.target.value))

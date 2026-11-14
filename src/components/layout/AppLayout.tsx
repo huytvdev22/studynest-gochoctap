@@ -155,6 +155,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <a
+        href="#main-content"
+        className="visually-hidden visually-hidden-focusable rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg"
+      >
+        Bỏ qua đến nội dung chính
+      </a>
       {/* Banner thông báo chế độ môi trường */}
       {isDemoMode && (
         <div className="border-b border-amber-200 bg-amber-50/90 px-4 py-2 text-xs text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/50 dark:text-amber-200">
@@ -307,7 +313,9 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
       <PullToRefresh onRefresh={handlePageRefresh}>
         <main
-          className={`mx-auto w-full flex-1 ${
+          id="main-content"
+          tabIndex={-1}
+          className={`mx-auto w-full flex-1 focus:outline-none ${
             isWorkspaceRoute
               ? 'max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6'
               : 'max-w-6xl px-4 py-6 sm:px-6 sm:py-8'

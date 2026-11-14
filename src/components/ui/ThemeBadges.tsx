@@ -184,9 +184,9 @@ export function EmptyState({
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
         {icon}
       </div>
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+      <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
         {title}
-      </h3>
+      </h2>
       <p className="mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">
         {description}
       </p>

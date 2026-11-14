@@ -151,9 +151,9 @@ export function SubmissionDetailModal({
               />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
                     {record.studentName}
-                  </h3>
+                  </h2>
                   {isFlashcard ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                       <Layers className="h-3 w-3" />
@@ -260,9 +260,9 @@ export function SubmissionDetailModal({
 
                 {/* Danh sách các câu hỏi trong đề */}
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
                     Đề bài & Đáp án chi tiết ({quizQuestions.length} câu)
-                  </h4>
+                  </h3>
 
                   {quizQuestions.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 dark:border-slate-800">
@@ -345,9 +345,9 @@ export function SubmissionDetailModal({
             {isFlashcard && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     Danh sách thẻ trong bài ({flashcardList.length} thẻ)
-                  </h4>
+                  </h3>
                   {loadingSrs && (
                     <span className="text-xs text-slate-400">Đang tải lịch sử nhớ SRS...</span>
                   )}

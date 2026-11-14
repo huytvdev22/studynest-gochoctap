@@ -1070,7 +1070,10 @@ export function LessonDetailPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
+                        <div
+                          lang={cardLang || undefined}
+                          className="text-base font-extrabold text-emerald-700 dark:text-emerald-400"
+                        >
                           {kw.term}
                         </div>
                         {kw.pronunciation && (
@@ -1283,9 +1286,9 @@ export function LessonDetailPage() {
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                  <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
                     Xác nhận xóa bài học?
-                  </h3>
+                  </h2>
                   <p className="text-xs text-slate-500">
                     Hành động này không thể hoàn tác sau khi thực hiện.
                   </p>
