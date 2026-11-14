@@ -118,6 +118,13 @@ const AVATAR_SIZE_CLASSES = {
   lg: 'h-10 w-10 text-sm',
 } as const;
 
+const AVATAR_SIZE_PX = {
+  xs: 24,
+  sm: 28,
+  md: 36,
+  lg: 40,
+} as const;
+
 export function UserAvatar({
   name,
   avatarUrl,
@@ -136,10 +143,14 @@ export function UserAvatar({
   const initial = (name?.trim().charAt(0) || 'U').toUpperCase();
 
   if (showImage) {
+    const sizePx = AVATAR_SIZE_PX[size];
     return (
       <img
         src={trimmedUrl}
         alt={name}
+        width={sizePx}
+        height={sizePx}
+        loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setFailedUrl(trimmedUrl)}
         className={`${sizeClass} shrink-0 rounded-full object-cover ring-1 ring-slate-200/80 dark:ring-slate-700 ${className}`}

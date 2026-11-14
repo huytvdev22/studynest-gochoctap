@@ -17,7 +17,12 @@
 
   html {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -84,20 +89,22 @@
   75% { transform: translateX(4px); }
 }
 
-.animate-card-next {
-  animation: flashcardSlideInNext 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-}
+@media (prefers-reduced-motion: no-preference) {
+  .animate-card-next {
+    animation: flashcardSlideInNext 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 
-.animate-card-prev {
-  animation: flashcardSlideInPrev 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-}
+  .animate-card-prev {
+    animation: flashcardSlideInPrev 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 
-.animate-btn-pop {
-  animation: buttonPop 0.28s ease-out;
-}
+  .animate-btn-pop {
+    animation: buttonPop 0.28s ease-out;
+  }
 
-.animate-btn-shake {
-  animation: buttonShake 0.24s ease-in-out;
+  .animate-btn-shake {
+    animation: buttonShake 0.24s ease-in-out;
+  }
 }
 
 
