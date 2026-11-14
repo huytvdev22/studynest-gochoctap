@@ -30,7 +30,7 @@ import type {
 } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClassContext } from '@/contexts/ClassContext';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import {
   deleteScheduleException,
   deleteScheduleItem,
@@ -909,13 +909,18 @@ export function SchedulePage() {
 
       {/* MODAL 1: Hộp thoại nhỏ khi click trực tiếp vào 1 ô trên lịch tuần */}
       {isInstructorOrOwner && activeCell && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <ModalDialog
+          open={true}
+          onClose={() => setActiveCell(null)}
+          closedBy="any"
+          ariaLabel={
+            activeCell.existingItem
+              ? 'Chỉnh sửa tiết học'
+              : 'Chọn nhanh hoặc nhập môn học'
+          }
+          className="max-w-md"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <div>
                 <span className="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
@@ -1057,20 +1062,19 @@ export function SchedulePage() {
               </div>
             </form>
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
 
       {/* MODAL 2: Nhập Thời khóa biểu từ Ảnh chụp thông qua AI (Copy Prompt -> Dán JSON -> Preview & Edit -> Lưu) */}
       {isInstructorOrOwner && showAiImportModal && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-ai-import-title"
-          >
-            <div className="my-8 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[92vh] overflow-y-auto space-y-5">
+        <ModalDialog
+          open={showAiImportModal}
+          onClose={() => setShowAiImportModal(false)}
+          closedBy="closerequest"
+          ariaLabelledBy="modal-ai-import-title"
+          className="max-w-4xl"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90dvh] overflow-y-auto space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-sm">
@@ -1402,8 +1406,7 @@ export function SchedulePage() {
               </div>
             )}
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
 
       {/* Checklist Ngày mai học gì & Chuẩn bị sách vở */}

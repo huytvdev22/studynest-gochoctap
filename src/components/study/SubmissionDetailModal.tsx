@@ -12,7 +12,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 import { UserAvatar } from '@/components/ui/ThemeBadges';
 import type {
   Assignment,
@@ -133,16 +133,14 @@ export function SubmissionDetailModal({
       : null;
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
-        <div className="relative flex flex-col w-full max-w-3xl max-h-[92vh] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <ModalDialog
+      open={true}
+      onClose={onClose}
+      closedBy="any"
+      ariaLabel={`Chi tiết bài nộp: ${record.studentName}`}
+      className="max-w-3xl"
+    >
+      <div className="relative flex flex-col w-full max-h-[90dvh] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           {/* Header Modal */}
           <div className="flex items-start justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-850/80">
             <div className="flex items-center gap-3">
@@ -562,7 +560,6 @@ export function SubmissionDetailModal({
             </button>
           </div>
         </div>
-      </div>
-    </ModalPortal>
+    </ModalDialog>
   );
 }

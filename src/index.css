@@ -34,6 +34,17 @@
   }
 }
 
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgb(2 6 23 / 0.62);
+  backdrop-filter: blur(2px);
+}
+
 /* Flashcard 3D flip & animation effects */
 .perspective-1000 {
   perspective: 1000px;

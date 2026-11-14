@@ -48,7 +48,8 @@ import {
   submitStudentCompletion,
 } from '@/services/studyNestService';
 import { formatDateInTimezone } from '@/lib/date';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
+import { showAlertDialog } from '@/lib/alertDialog';
 import {
   TTS_LANGUAGE_OPTIONS,
   buildFlashcardAiPrompt,
@@ -1258,7 +1259,7 @@ export function LessonDetailPage() {
               }
             } catch (err) {
               console.error('Lỗi khi lưu kết quả ôn tập:', err);
-              alert(
+              showAlertDialog(
                 'Không thể lưu kết quả học tập. Vui lòng kiểm tra lại kết nối mạng!'
               );
             }
@@ -1267,14 +1268,16 @@ export function LessonDetailPage() {
       )}
 
       {showDeleteConfirm && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Xác nhận xóa bài học"
-          >
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <ModalDialog
+          open={showDeleteConfirm}
+          onClose={() => {
+            if (!deleting) setShowDeleteConfirm(false);
+          }}
+          closedBy={deleting ? 'none' : 'any'}
+          ariaLabel="Xác nhận xóa bài học"
+          className="max-w-md"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
                   <AlertTriangle className="h-6 w-6" />
@@ -1320,8 +1323,7 @@ export function LessonDetailPage() {
                 </button>
               </div>
             </div>
-          </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
     </div>
   );

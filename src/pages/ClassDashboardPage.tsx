@@ -62,6 +62,7 @@ import {
   FlashcardStudyModal,
   QuizTakeModal,
 } from '@/components/study/InteractiveStudyModals';
+import { showAlertDialog } from '@/lib/alertDialog';
 import { SubmissionDetailModal } from '@/components/study/SubmissionDetailModal';
 
 export function ClassDashboardPage() {
@@ -353,7 +354,7 @@ export function ClassDashboardPage() {
       await loadDashboardData();
     } catch (err) {
       console.error('Lỗi khi nộp bài:', err);
-      alert('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
+      showAlertDialog('Không thể gửi báo cáo hoàn thành. Vui lòng kiểm tra lại kết nối mạng!');
     } finally {
       setSubmittingTaskId(null);
     }
@@ -389,7 +390,7 @@ export function ClassDashboardPage() {
       await loadDashboardData();
     } catch (err) {
       console.error('Lỗi khi duyệt bài:', err);
-      alert('Không thể xác nhận bài nộp. Vui lòng thử lại!');
+      showAlertDialog('Không thể xác nhận bài nộp. Vui lòng thử lại!');
     } finally {
       setConfirmingRecordId(null);
     }

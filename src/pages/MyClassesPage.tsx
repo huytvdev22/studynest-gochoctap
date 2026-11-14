@@ -34,7 +34,7 @@ import {
   RoleBadge,
   THEME_COLOR_STYLES,
 } from '@/components/ui/ThemeBadges';
-import { ModalPortal } from '@/components/ui/ModalPortal';
+import { ModalDialog } from '@/components/ui/ModalPortal';
 
 export function MyClassesPage() {
   const { user } = useAuth();
@@ -359,14 +359,14 @@ export function MyClassesPage() {
 
       {/* Modal tạo lớp mới */}
       {showCreateModal && (
-        <ModalPortal>
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-xs"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-create-class-title"
-          >
-            <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <ModalDialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          closedBy="closerequest"
+          ariaLabelledBy="modal-create-class-title"
+          className="max-w-lg"
+        >
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <h2
                 id="modal-create-class-title"
@@ -524,8 +524,7 @@ export function MyClassesPage() {
               </div>
             </form>
           </div>
-        </div>
-        </ModalPortal>
+        </ModalDialog>
       )}
     </div>
   );

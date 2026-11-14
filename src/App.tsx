@@ -9,6 +9,7 @@ import {
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ClassLayout } from '@/components/layout/ClassLayout';
+import { GlobalAlertDialogHost } from '@/components/ui/ModalPortal';
 
 const LoginPage = lazy(() =>
   import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
@@ -148,6 +149,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/app/classes" replace />} />
           </Routes>
         </Suspense>
+        <GlobalAlertDialogHost />
       </BrowserRouter>
     </AuthProvider>
   );
