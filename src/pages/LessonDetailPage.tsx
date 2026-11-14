@@ -417,11 +417,13 @@ export function LessonDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          to={`/app/classes/${studyClass.id}/lessons`}
+          to={`/app/classes/${studyClass.id}/lessons?curriculum=${encodeURIComponent(
+            (lesson.subject || '').trim() || 'Giáo trình chung'
+          )}`}
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Quay lại Giáo trình & Bài học
+          Quay lại giáo trình {lesson.subject}
         </Link>
 
         <div className="flex flex-wrap items-center gap-2">

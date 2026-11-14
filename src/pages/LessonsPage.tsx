@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
   Bot,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
   Eye,
   FileEdit,
+  FolderOpen,
   Layers,
   PlayCircle,
   Plus,
@@ -51,8 +53,11 @@ import { ModalPortal } from '@/components/ui/ModalPortal';
 import { addDaysToDateStr, formatDateInTimezone } from '@/lib/date';
 import {
   buildCurriculumSrsOverview,
+  buildCurriculumSummaries,
   buildFlashcardAiPrompt,
   buildQuizAiPrompt,
+  doesLessonMatchSearch,
+  getLessonStudyStats,
   inferDefaultTtsLang,
   makeSrsCardKey,
   parseFlashcardAiResponse,
@@ -67,66 +72,12 @@ import {
 } from '@/components/study/InteractiveStudyModals';
 import { EmptyState } from '@/components/ui/ThemeBadges';
 
-function getLessonStudyStats(
-  lesson: Lesson,
-  srsStates: Record<string, SrsCardProgress>
-) {
-  const validKeywords = lesson.keywords.filter((kw) => kw.term.trim());
-  const totalCards = validKeywords.length;
-  if (totalCards === 0) {
-    return {
-      totalCards: 0,
-      studiedCardsCount: 0,
-      masteredCardsCount: 0,
-      status: 'no_cards' as const,
-    };
-  }
-
-  let studiedCardsCount = 0;
-  let masteredCardsCount = 0;
-
-  for (const kw of validKeywords) {
-    const cardKey = makeSrsCardKey(lesson.id, kw.term);
-    const srs = srsStates[cardKey];
-    if (srs && (srs.level > 0 || Boolean(srs.lastReviewedDate))) {
-      studiedCardsCount++;
-      if (srs.level >= 3) {
-        masteredCardsCount++;
-      }
-    }
-  }
-
-  if (studiedCardsCount === totalCards) {
-    return {
-      totalCards,
-      studiedCardsCount,
-      masteredCardsCount,
-      status: 'completed' as const,
-    };
-  }
-
-  if (studiedCardsCount > 0) {
-    return {
-      totalCards,
-      studiedCardsCount,
-      masteredCardsCount,
-      status: 'in_progress' as const,
-    };
-  }
-
-  return {
-    totalCards,
-    studiedCardsCount: 0,
-    masteredCardsCount: 0,
-    status: 'unstudied' as const,
-  };
-}
-
 export function LessonsPage() {
   const { user } = useAuth();
   const { studyClass, role, isInstructorOrOwner, isStudent } =
     useClassContext();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [students, setStudents] = useState<ClassMember[]>([]);
@@ -139,9 +90,12 @@ export function LessonsPage() {
   const [addingLessonId, setAddingLessonId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Bộ lọc Giáo trình (subject) & Unit
+  // Điều hướng 2 cấp: Danh sách Giáo trình -> Danh sách Unit của giáo trình đang chọn
+  const selectedCurriculum = searchParams.get('curriculum') || null;
+  const subjectFilter = selectedCurriculum || 'ALL';
+
+  // Bộ lọc Unit & Bài học bên trong giáo trình
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [subjectFilter, setSubjectFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | LessonStatus>('ALL');
   const [studyFilter, setStudyFilter] = useState<
@@ -254,15 +208,48 @@ export function LessonsPage() {
 
   // Danh sách các Giáo trình độc lập (subjects) và các Unit trong giáo trình đang chọn
   const curriculums = useMemo(
-    () => Array.from(new Set(lessons.map((l) => l.subject))).sort(),
+    () =>
+      Array.from(
+        new Set(lessons.map((l) => (l.subject || '').trim() || 'Giáo trình chung'))
+      ).sort((a, b) => a.localeCompare(b, 'vi')),
     [lessons]
+  );
+
+  const curriculumSummaries = useMemo(
+    () =>
+      buildCurriculumSummaries({
+        lessons,
+        srsStates,
+        assignments,
+        searchTerm,
+      }),
+    [lessons, srsStates, assignments, searchTerm]
+  );
+
+  const handleSelectCurriculum = useCallback(
+    (cur: string | null) => {
+      const nextParams = new URLSearchParams(searchParams);
+      if (cur) {
+        nextParams.set('curriculum', cur);
+      } else {
+        nextParams.delete('curriculum');
+        setSearchTerm('');
+      }
+      setSearchParams(nextParams);
+      setUnitFilter('ALL');
+      setStatusFilter('ALL');
+      setStudyFilter('ALL');
+    },
+    [searchParams, setSearchParams]
   );
 
   const unitsInSelectedCurriculum = useMemo(() => {
     const base =
       subjectFilter === 'ALL'
         ? lessons
-        : lessons.filter((l) => l.subject === subjectFilter);
+        : lessons.filter(
+            (l) => ((l.subject || '').trim() || 'Giáo trình chung') === subjectFilter
+          );
     return Array.from(
       new Set(base.map((l) => l.unitTitle?.trim() || 'Chưa phân Unit'))
     );
@@ -366,8 +353,21 @@ export function LessonsPage() {
 
   if (!studyClass || !user || !role) return null;
 
+  const buildDeckForLessons = (targetLessons: Lesson[]): StudyDeckCard[] =>
+    targetLessons.flatMap((les) => {
+      const lang = inferDefaultTtsLang(les.subject, les.ttsLang);
+      return les.keywords.map((kw) => ({
+        lessonId: les.id,
+        subject: les.subject,
+        unitTitle: les.unitTitle || 'Chung',
+        keyword: kw,
+        ttsLang: kw.ttsLang !== undefined ? kw.ttsLang : lang,
+      }));
+    });
+
   const filteredLessons = lessons.filter((l) => {
-    if (subjectFilter !== 'ALL' && l.subject !== subjectFilter) return false;
+    const normalizedSub = (l.subject || '').trim() || 'Giáo trình chung';
+    if (subjectFilter !== 'ALL' && normalizedSub !== subjectFilter) return false;
     const u = l.unitTitle?.trim() || 'Chưa phân Unit';
     if (unitFilter !== 'ALL' && u !== unitFilter) return false;
     if (statusFilter !== 'ALL' && l.status !== statusFilter) return false;
@@ -375,18 +375,7 @@ export function LessonsPage() {
       const stats = getLessonStudyStats(l, srsStates);
       if (stats.status !== studyFilter) return false;
     }
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      const matchTitle = l.title.toLowerCase().includes(q);
-      const matchUnit = (l.unitTitle || '').toLowerCase().includes(q);
-      const matchSubject = l.subject.toLowerCase().includes(q);
-      const matchKw = l.keywords.some(
-        (k) =>
-          k.term.toLowerCase().includes(q) ||
-          k.meaning.toLowerCase().includes(q)
-      );
-      if (!matchTitle && !matchUnit && !matchSubject && !matchKw) return false;
-    }
+    if (!doesLessonMatchSearch(l, searchTerm)) return false;
     return true;
   });
 
@@ -402,16 +391,7 @@ export function LessonsPage() {
   );
 
   // Toàn bộ Flashcard trong các bài học đang hiển thị theo bộ lọc
-  const allCardsInView: StudyDeckCard[] = filteredLessons.flatMap((les) => {
-    const lang = inferDefaultTtsLang(les.subject, les.ttsLang);
-    return les.keywords.map((kw) => ({
-      lessonId: les.id,
-      subject: les.subject,
-      unitTitle: les.unitTitle || 'Chung',
-      keyword: kw,
-      ttsLang: kw.ttsLang !== undefined ? kw.ttsLang : lang,
-    }));
-  });
+  const allCardsInView: StudyDeckCard[] = buildDeckForLessons(filteredLessons);
 
   const handleSubjectInputChange = (val: string) => {
     setSubject(val);
@@ -732,23 +712,71 @@ export function LessonsPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header Thư viện & Bộ lọc trực quan, tinh gọn */}
+      {/* 1. Header Thư viện & Bộ lọc theo cấp Giáo trình / Unit */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
+        {selectedCurriculum && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => handleSelectCurriculum(null)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Quay lại danh sách giáo trình
+            </button>
+
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <button
+                type="button"
+                onClick={() => handleSelectCurriculum(null)}
+                className="font-semibold hover:text-emerald-700 dark:hover:text-emerald-400"
+              >
+                Thư viện giáo trình
+              </button>
+              <span>/</span>
+              {curriculums.length > 1 ? (
+                <select
+                  aria-label="Chuyển nhanh giáo trình"
+                  value={selectedCurriculum}
+                  onChange={(e) => handleSelectCurriculum(e.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  {curriculums.map((cur) => (
+                    <option key={cur} value={cur}>
+                      {cur}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="font-bold text-slate-800 dark:text-white">
+                  {selectedCurriculum}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                 <BookOpen className="h-4 w-4" />
               </span>
               <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
-                Thư viện Giáo trình & Bài học
+                {selectedCurriculum
+                  ? selectedCurriculum
+                  : 'Thư viện Giáo trình & Bài học'}
               </h1>
               <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {curriculums.length} giáo trình • {filteredLessons.length} bài
+                {selectedCurriculum
+                  ? `${unitsInSelectedCurriculum.length} Unit • ${filteredLessons.length} bài`
+                  : `${curriculums.length} giáo trình • ${lessons.length} bài`}
               </span>
             </div>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Tra cứu bài học theo từng giáo trình, ôn luyện từ vựng qua bộ thẻ Flashcard.
+              {selectedCurriculum
+                ? `Danh sách Unit, bài học và bộ thẻ Flashcard thuộc giáo trình ${selectedCurriculum}.`
+                : 'Chọn một giáo trình hoặc môn học bên dưới để xem danh sách Unit và bài học chi tiết.'}
             </p>
           </div>
 
@@ -785,65 +813,54 @@ export function LessonsPage() {
               aria-label="Tìm bài học hoặc từ vựng"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm bài học, từ vựng..."
+              placeholder={
+                selectedCurriculum
+                  ? `Tìm kiếm bài học, từ vựng trong ${selectedCurriculum}...`
+                  : 'Tìm kiếm giáo trình, bài học, từ vựng...'
+              }
               className="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3.5 py-2 text-xs text-slate-900 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
 
-          {/* Droplist chọn Giáo trình */}
-          <select
-            aria-label="Chọn Giáo trình"
-            value={subjectFilter}
-            onChange={(e) => {
-              setSubjectFilter(e.target.value);
-              setUnitFilter('ALL');
-            }}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            <option value="ALL">
-              Tất cả giáo trình ({lessons.length} bài)
-            </option>
-            {curriculums.map((cur) => {
-              const count = lessons.filter((l) => l.subject === cur).length;
-              return (
-                <option key={cur} value={cur}>
-                  {cur} ({count} bài)
-                </option>
-              );
-            })}
-          </select>
+          {selectedCurriculum && (
+            <>
+              {/* Droplist chọn Unit */}
+              <select
+                aria-label="Lọc theo Unit / Chương"
+                value={unitFilter}
+                onChange={(e) => setUnitFilter(e.target.value)}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="ALL">Tất cả Unit / Chương</option>
+                {unitsInSelectedCurriculum.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
 
-          {/* Droplist chọn Unit */}
-          <select
-            aria-label="Lọc theo Unit / Chương"
-            value={unitFilter}
-            onChange={(e) => setUnitFilter(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            <option value="ALL">Tất cả Unit / Chương</option>
-            {unitsInSelectedCurriculum.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
-
-          {/* Droplist Lọc theo tiến độ học Flashcard */}
-          <select
-            aria-label="Lọc theo trạng thái học Flashcard"
-            value={studyFilter}
-            onChange={(e) =>
-              setStudyFilter(
-                e.target.value as 'ALL' | 'completed' | 'in_progress' | 'unstudied'
-              )
-            }
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            <option value="ALL">Mọi tiến độ</option>
-            <option value="completed">Đã học xong</option>
-            <option value="in_progress">Đang học dở</option>
-            <option value="unstudied">Chưa học</option>
-          </select>
+              {/* Droplist Lọc theo tiến độ học Flashcard */}
+              <select
+                aria-label="Lọc theo trạng thái học Flashcard"
+                value={studyFilter}
+                onChange={(e) =>
+                  setStudyFilter(
+                    e.target.value as
+                      | 'ALL'
+                      | 'completed'
+                      | 'in_progress'
+                      | 'unstudied'
+                  )
+                }
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="ALL">Mọi tiến độ</option>
+                <option value="completed">Đã học xong</option>
+                <option value="in_progress">Đang học dở</option>
+                <option value="unstudied">Chưa học</option>
+              </select>
+            </>
+          )}
 
           {/* Droplist chọn học sinh để theo dõi (khi giáo viên có nhiều học sinh) */}
           {isInstructorOrOwner && students.length > 1 && (
@@ -861,8 +878,8 @@ export function LessonsPage() {
             </select>
           )}
 
-          {/* Droplist Trạng thái (cho Instructor) */}
-          {isInstructorOrOwner && (
+          {/* Droplist Trạng thái (cho Instructor khi đang xem trong Giáo trình) */}
+          {selectedCurriculum && isInstructorOrOwner && (
             <select
               aria-label="Lọc theo trạng thái bài học"
               value={statusFilter}
@@ -884,9 +901,7 @@ export function LessonsPage() {
               onClick={() =>
                 setActiveStudyDeck({
                   title: `Bộ Flashcard: ${
-                    subjectFilter === 'ALL'
-                      ? 'Tất cả giáo trình'
-                      : subjectFilter
+                    selectedCurriculum || 'Tất cả giáo trình'
                   }${unitFilter !== 'ALL' ? ` • ${unitFilter}` : ''}`,
                   cards: allCardsInView,
                 })
@@ -900,7 +915,6 @@ export function LessonsPage() {
 
           {/* Nút xóa nhanh bộ lọc nếu đang lọc */}
           {(searchTerm ||
-            subjectFilter !== 'ALL' ||
             unitFilter !== 'ALL' ||
             statusFilter !== 'ALL' ||
             studyFilter !== 'ALL') && (
@@ -908,7 +922,6 @@ export function LessonsPage() {
               type="button"
               onClick={() => {
                 setSearchTerm('');
-                setSubjectFilter('ALL');
                 setUnitFilter('ALL');
                 setStatusFilter('ALL');
                 setStudyFilter('ALL');
@@ -922,7 +935,7 @@ export function LessonsPage() {
         </div>
       </div>
 
-      {/* 3. Danh sách bài học gom nhóm theo Giáo trình & Unit */}
+      {/* 2. Nội dung chính: Cấp 1 (Danh sách Giáo trình) hoặc Cấp 2 (Danh sách Unit) */}
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
@@ -932,30 +945,264 @@ export function LessonsPage() {
             />
           ))}
         </div>
+      ) : !selectedCurriculum ? (
+        lessons.length === 0 ? (
+          <EmptyState
+            icon={<BookOpen className="h-6 w-6" />}
+            title="Chưa có giáo trình hoặc bài học nào"
+            description={
+              isInstructorOrOwner
+                ? 'Bấm nút "Thêm Bài học & Flashcard (AI)" để tạo giáo trình và bộ thẻ Flashcard đầu tiên cho lớp học.'
+                : 'Người hướng dẫn chưa công bố giáo trình hoặc bài học nào.'
+            }
+          />
+        ) : curriculumSummaries.length === 0 ? (
+          <EmptyState
+            icon={<Search className="h-6 w-6" />}
+            title="Không tìm thấy giáo trình phù hợp"
+            description="Không có giáo trình, bài học hoặc từ vựng nào khớp với từ khóa bạn vừa nhập."
+            action={
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Xóa từ khóa tìm kiếm
+              </button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {curriculumSummaries.map((cur) => {
+              const progressPercent =
+                cur.totalCards > 0
+                  ? Math.round((cur.studiedCards / cur.totalCards) * 100)
+                  : 0;
+              const isCompleted =
+                cur.totalCards > 0 && cur.studiedCards === cur.totalCards;
+              const isInProgress = cur.studiedCards > 0 && !isCompleted;
+              const curriculumLessons = lessons.filter(
+                (l) =>
+                  ((l.subject || '').trim() || 'Giáo trình chung') ===
+                  cur.subject
+              );
+              const curriculumDeck = buildDeckForLessons(curriculumLessons);
+              const previewUnits = cur.unitTitles.slice(0, 3);
+              const remainingUnitsCount =
+                cur.unitTitles.length - previewUnits.length;
+
+              return (
+                <div
+                  key={cur.subject}
+                  onClick={() => handleSelectCurriculum(cur.subject)}
+                  className={`group flex cursor-pointer flex-col justify-between gap-4 rounded-3xl border p-5 shadow-2xs transition hover:shadow-md ${
+                    isCompleted
+                      ? 'border-emerald-300 bg-emerald-50/20 hover:border-emerald-500 dark:border-emerald-900/60 dark:bg-emerald-950/15'
+                      : 'border-slate-200 bg-white hover:border-emerald-400 dark:border-slate-800 dark:bg-slate-900'
+                  }`}
+                >
+                  <div className="space-y-3.5">
+                    {/* Hàng tiêu đề giáo trình + huy hiệu tiến độ */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
+                            isCompleted
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/70 dark:text-emerald-300'
+                          }`}
+                        >
+                          <BookOpen className="h-5 w-5" />
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="truncate text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400">
+                            {cur.subject}
+                          </h2>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                            {cur.ttsLang && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <Volume2 className="h-2.5 w-2.5" />
+                                {cur.ttsLang}
+                              </span>
+                            )}
+                            {searchTerm.trim() && cur.matchingLessonsCount > 0 && (
+                              <span className="inline-flex items-center rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                Khớp {cur.matchingLessonsCount} bài học
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {isCompleted ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                          Hoàn thành
+                        </span>
+                      ) : isInProgress ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          Đang học ({progressPercent}%)
+                        </span>
+                      ) : cur.totalCards > 0 ? (
+                        <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          Chưa học
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {/* Thống kê Unit / Bài học / Thẻ / Đề kiểm tra */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <FolderOpen className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        {cur.unitCount} Unit
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <BookOpen className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+                        {cur.lessonCount} bài học
+                        {isInstructorOrOwner && cur.draftCount > 0 && (
+                          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                            ({cur.draftCount} nháp)
+                          </span>
+                        )}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <Layers className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        {cur.totalCards} thẻ
+                      </span>
+                      {cur.quizCount > 0 && (
+                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-2.5 py-1 font-bold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                          {cur.quizCount} đề kiểm tra
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Thanh tiến độ học Flashcard của giáo trình */}
+                    {cur.totalCards > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          <span>
+                            Tiến độ Flashcard: {cur.studiedCards}/
+                            {cur.totalCards} thẻ
+                          </span>
+                          <span>
+                            {cur.completedLessonsCount}/{cur.lessonCount} bài
+                            xong
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              isCompleted ? 'bg-emerald-500' : 'bg-amber-400'
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Xem trước một số Unit tiêu biểu */}
+                    {previewUnits.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {previewUnits.map((unitName) => (
+                          <span
+                            key={unitName}
+                            className="max-w-[210px] truncate rounded-lg border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+                          >
+                            {unitName}
+                          </span>
+                        ))}
+                        {remainingUnitsCount > 0 && (
+                          <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                            +{remainingUnitsCount} Unit khác
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hàng nút thao tác dưới đáy thẻ giáo trình */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                    <div
+                      className="flex flex-wrap items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {curriculumDeck.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveStudyDeck({
+                              title: `Bộ Flashcard: ${cur.subject}`,
+                              cards: curriculumDeck,
+                            })
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                        >
+                          <Layers className="h-3.5 w-3.5" />
+                          Ôn nhanh ({curriculumDeck.length} thẻ)
+                        </button>
+                      )}
+                      {isInstructorOrOwner && (
+                        <button
+                          type="button"
+                          onClick={() => openCreateLessonModal(cur.subject)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Thêm bài
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectCurriculum(cur.subject);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-2xs transition hover:bg-emerald-700"
+                    >
+                      <span>Xem danh sách Unit</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : !curriculums.includes(selectedCurriculum) ? (
+        <EmptyState
+          icon={<BookOpen className="h-6 w-6" />}
+          title="Không tìm thấy giáo trình này"
+          description="Giáo trình này chưa có bài học nào hoặc đã được chuyển tên."
+          action={
+            <button
+              type="button"
+              onClick={() => handleSelectCurriculum(null)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Quay lại danh sách giáo trình
+            </button>
+          }
+        />
       ) : filteredLessons.length === 0 ? (
         <EmptyState
           icon={<BookOpen className="h-6 w-6" />}
-          title="Chưa có bài học nào trong giáo trình này"
+          title="Chưa có bài học nào khớp bộ lọc trong giáo trình này"
           description={
             isInstructorOrOwner
-              ? 'Bấm nút "Tạo Bài học & Flashcard (AI)" để nhập ghi chú buổi học hoặc ảnh chụp trang sách và tạo bộ Flashcard tự động.'
-              : 'Người hướng dẫn chưa công bố bài học nào trong mục này.'
+              ? 'Thử đặt lại bộ lọc hoặc bấm nút "Thêm Bài học & Flashcard (AI)" để bổ sung bài mới cho giáo trình.'
+              : 'Không có bài học nào khớp với bộ lọc hiện tại.'
           }
         />
       ) : (
         <div className="space-y-8">
           {Object.entries(groupedByUnit).map(([groupHeader, unitLessons]) => {
             const firstLes = unitLessons[0];
-            const unitCards: StudyDeckCard[] = unitLessons.flatMap((les) => {
-              const lang = inferDefaultTtsLang(les.subject, les.ttsLang);
-              return les.keywords.map((kw) => ({
-                lessonId: les.id,
-                subject: les.subject,
-                unitTitle: les.unitTitle || 'Chung',
-                keyword: kw,
-                ttsLang: kw.ttsLang !== undefined ? kw.ttsLang : lang,
-              }));
-            });
+            const unitCards = buildDeckForLessons(unitLessons);
 
             const unitTotalCards = unitCards.length;
             const unitStudiedCards = unitCards.filter((c) => {

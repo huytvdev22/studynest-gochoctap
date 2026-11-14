@@ -30,15 +30,20 @@ import {
   getCurrentVersionInfo,
 } from '@/services/versionService';
 import {
+  buildCurriculumSummaries,
   classifySrsCardBucket,
   computeNextSrsState,
   detectTextTtsLang,
+  doesLessonMatchSearch,
+  getLessonStudyStats,
   inferDefaultTtsLang,
   isVietnameseText,
   makeSrsCardKey,
   parseFlashcardAiResponse,
   parseQuizAiResponse,
 } from '@/lib/studyAiAndSrs';
+import { Timestamp } from 'firebase/firestore';
+import type { Lesson, SrsCardProgress } from '@/types/domain';
 
 describe('Date & Timezone Helpers (Asia/Ho_Chi_Minh)', () => {
   it('chuyển đổi chính xác UTC sang ngày theo múi giờ Asia/Ho_Chi_Minh (+07:00)', () => {
@@ -559,6 +564,136 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     const noTodayAssignments = sampleAssignments.filter((a) => a.id !== 'asg_3');
     const emptyTodayTasks = noTodayAssignments.filter((a) => a.dueDate === todayStr);
     expect(emptyTodayTasks).toHaveLength(0);
+  });
+
+  it('tổng hợp danh sách giáo trình / môn học kèm tiến độ Unit, bài học và tìm kiếm từ khóa', () => {
+    const sampleLessons: Lesson[] = [
+      {
+        id: 'les_1',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 1: First Day',
+        ttsLang: 'en-US',
+        title: 'Lesson 1: School Supplies',
+        goal: '',
+        keywords: [
+          { term: 'pen', meaning: 'cây bút mực', example: 'It is a pen.' },
+          { term: 'pencil', meaning: 'bút chì', example: 'It is a pencil.' },
+        ],
+        explanation: '',
+        resourceUrl: '',
+        status: 'published',
+        createdBy: 'teacher_1',
+        classId: 'cls_1',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+      {
+        id: 'les_2',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 2: Art Class',
+        ttsLang: 'en-US',
+        title: 'Lesson 1: Art',
+        goal: '',
+        keywords: [
+          { term: 'paint', meaning: 'màu vẽ', example: 'I have paint.' },
+        ],
+        explanation: '',
+        resourceUrl: '',
+        status: 'draft',
+        createdBy: 'teacher_1',
+        classId: 'cls_1',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+      {
+        id: 'les_3',
+        subject: 'Toán Lớp 3',
+        unitTitle: 'Chương 1: Bảng nhân',
+        ttsLang: '',
+        title: 'Bảng nhân 6',
+        goal: '',
+        keywords: [
+          { term: '6 x 4 = ?', meaning: '24', example: '' },
+        ],
+        explanation: '',
+        resourceUrl: '',
+        status: 'published',
+        createdBy: 'teacher_1',
+        classId: 'cls_1',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+    ];
+
+    const srsStates: Record<string, SrsCardProgress> = {
+      [makeSrsCardKey('les_1', 'pen')]: {
+        key: makeSrsCardKey('les_1', 'pen'),
+        lessonId: 'les_1',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 1: First Day',
+        term: 'pen',
+        meaning: 'cây bút mực',
+        example: '',
+        level: 3,
+        streakCorrect: 2,
+        lastReviewedDate: '2026-11-12',
+        nextReviewDate: '2026-11-26',
+      },
+      [makeSrsCardKey('les_1', 'pencil')]: {
+        key: makeSrsCardKey('les_1', 'pencil'),
+        lessonId: 'les_1',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 1: First Day',
+        term: 'pencil',
+        meaning: 'bút chì',
+        example: '',
+        level: 2,
+        streakCorrect: 1,
+        lastReviewedDate: '2026-11-12',
+        nextReviewDate: '2026-11-15',
+      },
+    };
+
+    const sampleAssignments = [
+      { taskType: 'quiz', subject: 'Everybody Up' },
+      { taskType: 'flashcard', subject: 'Everybody Up' },
+    ];
+
+    expect(getLessonStudyStats(sampleLessons[0], srsStates).status).toBe('completed');
+    expect(getLessonStudyStats(sampleLessons[1], srsStates).status).toBe('unstudied');
+    expect(doesLessonMatchSearch(sampleLessons[0], 'bút chì')).toBe(true);
+    expect(doesLessonMatchSearch(sampleLessons[2], 'bút chì')).toBe(false);
+
+    const summaries = buildCurriculumSummaries({
+      lessons: sampleLessons,
+      srsStates,
+      assignments: sampleAssignments,
+    });
+    expect(summaries).toHaveLength(2);
+
+    const eu = summaries.find((c) => c.subject === 'Everybody Up')!;
+    expect(eu.unitCount).toBe(2);
+    expect(eu.lessonCount).toBe(2);
+    expect(eu.publishedCount).toBe(1);
+    expect(eu.draftCount).toBe(1);
+    expect(eu.totalCards).toBe(3);
+    expect(eu.studiedCards).toBe(2);
+    expect(eu.completedLessonsCount).toBe(1);
+    expect(eu.quizCount).toBe(1);
+    expect(eu.ttsLang).toBe('en-US');
+
+    const math = summaries.find((c) => c.subject === 'Toán Lớp 3')!;
+    expect(math.unitCount).toBe(1);
+    expect(math.ttsLang).toBe('');
+
+    const filteredByWord = buildCurriculumSummaries({
+      lessons: sampleLessons,
+      srsStates,
+      searchTerm: 'bảng nhân',
+    });
+    expect(filteredByWord).toHaveLength(1);
+    expect(filteredByWord[0].subject).toBe('Toán Lớp 3');
+    expect(filteredByWord[0].matchingLessonsCount).toBe(1);
   });
 });
 

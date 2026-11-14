@@ -363,6 +363,195 @@ export function buildCurriculumSrsOverview(params: {
   };
 }
 
+export interface LessonStudyStats {
+  totalCards: number;
+  studiedCardsCount: number;
+  masteredCardsCount: number;
+  status: 'no_cards' | 'completed' | 'in_progress' | 'unstudied';
+}
+
+/**
+ * Tính toán nhanh tiến độ học thẻ Flashcard của một bài học dựa trên dữ liệu SRS.
+ */
+export function getLessonStudyStats(
+  lesson: Lesson,
+  srsStates: Record<string, SrsCardProgress>
+): LessonStudyStats {
+  const validKeywords = lesson.keywords.filter((kw) => kw.term.trim());
+  const totalCards = validKeywords.length;
+  if (totalCards === 0) {
+    return {
+      totalCards: 0,
+      studiedCardsCount: 0,
+      masteredCardsCount: 0,
+      status: 'no_cards',
+    };
+  }
+
+  let studiedCardsCount = 0;
+  let masteredCardsCount = 0;
+
+  for (const kw of validKeywords) {
+    const cardKey = makeSrsCardKey(lesson.id, kw.term);
+    const srs = srsStates[cardKey];
+    if (srs && (srs.level > 0 || Boolean(srs.lastReviewedDate))) {
+      studiedCardsCount++;
+      if (srs.level >= 3) {
+        masteredCardsCount++;
+      }
+    }
+  }
+
+  if (studiedCardsCount === totalCards) {
+    return {
+      totalCards,
+      studiedCardsCount,
+      masteredCardsCount,
+      status: 'completed',
+    };
+  }
+
+  if (studiedCardsCount > 0) {
+    return {
+      totalCards,
+      studiedCardsCount,
+      masteredCardsCount,
+      status: 'in_progress',
+    };
+  }
+
+  return {
+    totalCards,
+    studiedCardsCount: 0,
+    masteredCardsCount: 0,
+    status: 'unstudied',
+  };
+}
+
+/**
+ * Kiểm tra xem một bài học có khớp từ khóa tìm kiếm (tên bài, Unit, giáo trình hoặc từ vựng) hay không.
+ */
+export function doesLessonMatchSearch(
+  lesson: Lesson,
+  rawQuery: string
+): boolean {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return true;
+  if (lesson.title.toLowerCase().includes(q)) return true;
+  if ((lesson.unitTitle || '').toLowerCase().includes(q)) return true;
+  if (lesson.subject.toLowerCase().includes(q)) return true;
+  return lesson.keywords.some(
+    (k) =>
+      k.term.toLowerCase().includes(q) || k.meaning.toLowerCase().includes(q)
+  );
+}
+
+export interface CurriculumSummary {
+  subject: string;
+  lessonCount: number;
+  publishedCount: number;
+  draftCount: number;
+  unitTitles: string[];
+  unitCount: number;
+  totalCards: number;
+  studiedCards: number;
+  masteredCards: number;
+  completedLessonsCount: number;
+  quizCount: number;
+  ttsLang: SupportedTtsLang;
+  matchingLessonsCount: number;
+}
+
+/**
+ * Tổng hợp danh sách các Giáo trình / Môn học từ danh sách bài học để hiển thị ở màn Tổng quan Thư viện.
+ */
+export function buildCurriculumSummaries(params: {
+  lessons: Lesson[];
+  srsStates: Record<string, SrsCardProgress>;
+  assignments?: Array<{ taskType?: string; subject?: string }>;
+  searchTerm?: string;
+}): CurriculumSummary[] {
+  const { lessons, srsStates, assignments = [], searchTerm = '' } = params;
+  const q = searchTerm.trim().toLowerCase();
+
+  const bySubject = new Map<string, Lesson[]>();
+  for (const les of lessons) {
+    const sub = (les.subject || '').trim() || 'Giáo trình chung';
+    const list = bySubject.get(sub);
+    if (list) {
+      list.push(les);
+    } else {
+      bySubject.set(sub, [les]);
+    }
+  }
+
+  const summaries: CurriculumSummary[] = [];
+  const sortedSubjects = Array.from(bySubject.keys()).sort((a, b) =>
+    a.localeCompare(b, 'vi')
+  );
+
+  for (const subject of sortedSubjects) {
+    const subjectLessons = bySubject.get(subject) || [];
+    const matchingLessonsCount = q
+      ? subjectLessons.filter((l) => doesLessonMatchSearch(l, q)).length
+      : subjectLessons.length;
+
+    if (q && !subject.toLowerCase().includes(q) && matchingLessonsCount === 0) {
+      continue;
+    }
+
+    const unitSet = new Set<string>();
+    let publishedCount = 0;
+    let draftCount = 0;
+    let totalCards = 0;
+    let studiedCards = 0;
+    let masteredCards = 0;
+    let completedLessonsCount = 0;
+    let explicitLang: SupportedTtsLang | undefined;
+
+    for (const les of subjectLessons) {
+      unitSet.add(les.unitTitle?.trim() || 'Chưa phân Unit');
+      if (les.status === 'published') publishedCount++;
+      else draftCount++;
+
+      if (explicitLang === undefined && les.ttsLang !== undefined) {
+        explicitLang = les.ttsLang;
+      }
+
+      const stats = getLessonStudyStats(les, srsStates);
+      totalCards += stats.totalCards;
+      studiedCards += stats.studiedCardsCount;
+      masteredCards += stats.masteredCardsCount;
+      if (stats.status === 'completed') {
+        completedLessonsCount++;
+      }
+    }
+
+    const unitTitles = Array.from(unitSet);
+    const quizCount = assignments.filter(
+      (a) => a.taskType === 'quiz' && (a.subject || '').trim() === subject
+    ).length;
+
+    summaries.push({
+      subject,
+      lessonCount: subjectLessons.length,
+      publishedCount,
+      draftCount,
+      unitTitles,
+      unitCount: unitTitles.length,
+      totalCards,
+      studiedCards,
+      masteredCards,
+      completedLessonsCount,
+      quizCount,
+      ttsLang: inferDefaultTtsLang(subject, explicitLang),
+      matchingLessonsCount,
+    });
+  }
+
+  return summaries;
+}
+
 // ============================================================================
 // AI Prompt & JSON Parser #1: Tạo Bài học + Bộ thẻ Flashcard
 // ============================================================================
