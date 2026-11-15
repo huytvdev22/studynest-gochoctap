@@ -268,7 +268,7 @@ export function SessionsAndTasksPage() {
             <button
               type="button"
               onClick={() => setShowTaskModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-brand-700"
             >
               <Plus className="h-4 w-4" />
               Giao nhiệm vụ mới
@@ -301,7 +301,7 @@ export function SessionsAndTasksPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         {task.taskType === 'flashcard' && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-2.5 py-0.5 text-xs font-extrabold text-brand-900 dark:bg-brand-950 dark:text-brand-300">
                             <Layers className="h-3.5 w-3.5" />
                             Thẻ Flashcard ({task.flashcards?.length || 0} thẻ)
                           </span>
@@ -349,7 +349,7 @@ export function SessionsAndTasksPage() {
                             <button
                               type="button"
                               onClick={() => setActiveFlashcardTask(task)}
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-brand-700"
                             >
                               <Layers className="h-3.5 w-3.5" />
                               Vào học bộ Flashcard ({task.flashcards?.length} thẻ)
@@ -429,7 +429,7 @@ export function SessionsAndTasksPage() {
                             type="button"
                             disabled={submittingId === task.id}
                             onClick={() => void handleStudentSubmit(task)}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
                           >
                             <Send className="h-3.5 w-3.5" />
                             {myRecord?.studentStatus === 'submitted'
@@ -467,7 +467,7 @@ export function SessionsAndTasksPage() {
                                 key={st.uid}
                                 className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition ${
                                   confirmed
-                                    ? 'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                                    ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
                                     : submitted
                                     ? 'border-amber-200 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20'
                                     : 'border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-800/40'
@@ -547,7 +547,7 @@ export function SessionsAndTasksPage() {
                                       onClick={() =>
                                         void handleQuickConfirmTask(task, st, rec)
                                       }
-                                      className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 transition shadow-2xs disabled:opacity-50"
+                                      className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-700 transition shadow-2xs disabled:opacity-50"
                                       title="Xác nhận hoàn thành và tặng sao cho học sinh"
                                     >
                                       <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
@@ -721,7 +721,7 @@ export function SessionsAndTasksPage() {
                     onClick={() => toggleStudentTarget('ALL')}
                     className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
                       taskAssignedUids.includes('ALL')
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-brand-600 text-white'
                         : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -734,7 +734,7 @@ export function SessionsAndTasksPage() {
                       onClick={() => toggleStudentTarget(st.uid)}
                       className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
                         taskAssignedUids.includes(st.uid)
-                          ? 'bg-emerald-600 text-white'
+                          ? 'bg-brand-600 text-white'
                           : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
@@ -754,7 +754,7 @@ export function SessionsAndTasksPage() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                  className="rounded-xl bg-brand-600 px-5 py-2 text-xs font-bold text-white hover:bg-brand-700"
                 >
                   Giao nhiệm vụ
                 </button>

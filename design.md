@@ -6,8 +6,8 @@ Tài liệu này mô tả chi tiết kiến trúc dữ liệu, thiết kế giao
 
 ## 1. Tổng quan Kiến trúc & Công nghệ
 
-- **Frontend Framework**: React 18 + TypeScript + Vite (`src/`).
-- **Styling & Icons**: Tailwind CSS + `lucide-react` (hỗ trợ đầy đủ **Light Mode** & **Dark Mode**).
+- **Frontend Framework**: React 19 + TypeScript + Vite (`src/`).
+- **Styling & Icons**: Tailwind CSS (dùng CSS Variables `--brand-50`..`--brand-950` cho chủ đề Workspace) + `lucide-react` (hỗ trợ đầy đủ **Light Mode** & **Dark Mode**).
 - **Backend & Database**:
   - **Chế độ Production**: Firebase Authentication (Google Sign-In) + Cloud Firestore + Firebase Hosting (`studynest-gochoctap`).
   - **Chế độ Demo / Offline Fallback**: Khi không cấu hình biến môi trường Firebase, `src/services/studyNestService.ts` tự động lưu trữ toàn bộ trạng thái vào `localStorage` với dữ liệu mẫu tiếng Việt đầy đủ, giúp ứng dụng luôn chạy và kiểm thử được ngay lập tức.
@@ -95,7 +95,7 @@ src/
   - Sử dụng bo góc mềm mại (`rounded-2xl` cho thẻ con, `rounded-3xl` cho khung chính và Modal).
   - Font chữ rõ ràng, tiêu đề dùng `font-extrabold`, nút bấm có biểu tượng trực quan đi kèm.
 
-### 4.2. Bảng màu Ngữ nghĩa & Quy chuẩn Icon Hệ thống (Semantic Colors & Icons)
+### 4.2. Hệ thống Màu Đồng bộ Workspace & Bảng màu Ngữ nghĩa (Phương án 2)
 
 > [!IMPORTANT]
 > **Tuyệt đối KHÔNG sử dụng icon dạng emoji Unicode** (như 📚, ⭐, 🔴, 🟡, 🟢, ⚪, 🔊, 🐢, ✏️, 🎯, 📖, 📝, ⚡, 🎒, ☀️, 🌤️, 🌙...) trong giao diện, tiêu đề, nút bấm hay nhãn trạng thái. Việc lạm dụng emoji tạo cảm giác "đặc sệt AI", thiếu chuyên nghiệp và không đồng nhất giữa các hệ điều hành (Windows, macOS, iOS, Android hiển thị emoji khác nhau).
@@ -110,11 +110,24 @@ src/
 > - Soạn cặp / Dụng cụ: Dùng `<Backpack className="h-4 w-4" />`
 > - Buổi sáng / chiều / tối: Dùng `<Sun className="h-4 w-4" />`, `<CloudSun className="h-4 w-4" />`, `<Moon className="h-4 w-4" />`
 
-- **Xanh ngọc (`emerald-600`)**: Màu chủ đạo của thương hiệu StudyNest, biểu thị hành động chính (Học bài, Lật Flashcard, Hoàn thành, Đã nhớ kỹ).
-- **Tím (`violet-600`)**: Biểu thị các tính năng **Trợ lý AI** (Copy Prompt AI, Đọc JSON AI) và **Bài kiểm tra Trắc nghiệm**.
-- **Vàng hổ phách (`amber-500`)**: Biểu thị **Sao thưởng**, trạng thái **Bản nháp**, ghi chú riêng của giáo viên, và thẻ **Sắp quên / Cần ôn hôm nay**.
-- **Đỏ hồng (`rose-600`)**: Biểu thị cảnh báo xóa, câu trả lời sai, và thẻ **Hay quên (Cần ôn lại sau +1 ngày)**.
-- **Bảng màu Môn học trên Thời khóa biểu**: Tự động ánh xạ màu pastel dịu mắt theo tên môn học (Toán: Xanh dương `sky`, Tiếng Việt: Xanh lá `emerald`, Tiếng Anh: Tím `violet`, Tự nhiên & Xã hội: Vàng `amber`...).
+Hệ thống áp dụng **4 vai trò màu sắc tách biệt** (đồng bộ động theo màu Workspace của lớp nhưng giữ ranh giới rõ giữa **Tương tác**, **Trung tính**, **Hoàn thành** và **Ngữ nghĩa chuyên biệt**):
+
+1. **Màu Thương hiệu & Hành động theo Workspace (`brand-*` / CSS Variables)**:
+   - Token `colors.brand` (`50..950`) trong `tailwind.config.js` ánh xạ tới biến CSS `--brand-50`..`--brand-950` khai báo trong `src/index.css`.
+   - `ClassContext.tsx` tự động đồng bộ `document.documentElement.dataset.workspaceTheme` theo `studyClass.color` (`emerald` | `sky` | `amber` | `violet` | `rose`; mặc định `emerald` khi ở ngoài Workspace).
+   - Độ tương phản WCAG AA được tinh chỉnh sẵn trên `--brand-600` (`>= 4.70:1` cho chữ trắng `text-white` trên cả 5 chủ đề) và `--brand-400` cho viền focus ở Dark Mode.
+   - **Phạm vi sử dụng**: Mục đang chọn trên Sidebar, Breadcrumb đang mở, nút CTA chính (`bg-brand-600`), nút hành động viền mảnh (`Ôn cả Unit`, `+ Thêm vào hôm nay`, `Ôn lại`), tab lọc đang chọn, cột `Hôm nay` trên Thời khóa biểu, ô đang chọn trước khi chấm trong Trắc nghiệm, và vòng focus (`*:focus-visible`).
+2. **Nền thẻ & Siêu dữ liệu Trung tính (`slate-*`)**:
+   - Toàn bộ thẻ bài học (`LessonsPage`), thẻ nhiệm vụ (`ClassDashboardPage`), dòng lịch sử đã xác nhận (`ProgressPage`, `SessionsAndTasksPage`), nhãn giáo trình lặp lại ở Unit header (`Everybody Up`...), huy hiệu `Đã công bố` và nút đếm số thẻ (`X thẻ`) giữ nền trắng/xám Slate sạch sẽ, tránh tình trạng "tràn màu xanh lá" gây nhiễu thị giác.
+3. **Màu Hoàn thành & Đạt chuẩn Tiết chế (`emerald`)**:
+   - Giữ cố định màu xanh ngọc lục bảo (`emerald`) chỉ cho các dấu hiệu hoàn thành kích thước gọn: ô tích hoàn thành `bg-emerald-600`, thanh tiến độ `100%`, nhãn `Hoàn thành` / `Đã học (X/X)` / `Đã học xong Unit` / `Đã xong` / `Đã xác nhận`, mức SRS **Đã nhớ kỹ**, đáp án đúng trong Trắc nghiệm, thẻ **Chuỗi ngày học (Streak)** và thông báo Toast thành công. Không phủ nền xanh lá lên toàn bộ thẻ bài học hay nút hành động thông thường.
+4. **Màu Ngữ nghĩa Chuyên biệt khác**:
+   - **`cyan` & `teal`**: Dùng cho nhãn trạng thái `Đã thêm hôm nay` (`cyan`) và tiết học `Ở nhà` trên Thời khóa biểu (`teal`) để tách biệt rõ với `emerald` hoàn thành và `sky` của chủ đề lớp.
+   - **`violet`**: Biểu thị tính năng **Trợ lý AI** (Copy Prompt AI, Đọc JSON AI) và **Bài kiểm tra Trắc nghiệm**.
+   - **`amber`**: Biểu thị **Sao thưởng**, trạng thái `Bản nháp`, `Đang học`, `Chờ duyệt / Chờ xác nhận`, ghi chú riêng của giáo viên, và thẻ **Sắp quên / Cần ôn hôm nay**.
+   - **`rose`**: Biểu thị cảnh báo xóa, câu trả lời sai, lỗi hệ thống và thẻ **Hay quên (Cần ôn lại sau +1 ngày)**.
+   - **Vai trò thành viên (`RoleBadge`)**: `Chủ lớp` dùng `indigo`, `Người hướng dẫn` dùng `sky`, `Học sinh` dùng `amber` (tách `Chủ lớp` khỏi `emerald`).
+   - **Bảng màu Môn học trên Thời khóa biểu**: Tự động ánh xạ màu pastel dịu mắt theo tên môn (`SUBJECT_COLOR_PALETTE` trong `SchedulePage.tsx`).
 
 ### 4.3. Quy chuẩn Thiết kế Thời khóa biểu (`SchedulePage.tsx`)
 - **Thanh lọc môn học trên đầu**: Hiển thị đầy đủ các môn học đang thực sự có trong Thời khóa biểu kèm số tiết (ví dụ: `Tiếng Việt (7)`, `Toán (5)`, `Tiếng Anh (4)`...). Bấm vào môn nào sẽ lọc nổi bật các tiết của môn đó trên bảng tuần; bấm lại lần nữa để bỏ lọc.
@@ -128,13 +141,13 @@ src/
    - Hai anh em mở **Góc học hôm nay** (`ClassDashboardPage.tsx`) hoặc **Thư viện bài học** (`LessonsPage.tsx`).
    - Chọn Giáo trình từ Droplist (ví dụ: `Everybody Up`) $\rightarrow$ Chọn Unit (`Unit 1: First Day`) $\rightarrow$ Tạo hoặc mở bài học (`Lesson 1: School Supplies`).
 2. **Biên soạn nhanh bằng AI**:
-   - Người hướng dẫn gõ vài từ khóa ghi chú hoặc chụp ảnh trang sách $\rightarrow$ Bấm **Copy Prompt tạo Flashcard** $\rightarrow$ Dán JSON từ AI vào để tạo bộ thẻ Flashcard có phiên âm IPA và nút **Loa đọc phát âm 🔊**.
+   - Người hướng dẫn gõ vài từ khóa ghi chú hoặc chụp ảnh trang sách $\rightarrow$ Bấm **Copy Prompt tạo Flashcard** $\rightarrow$ Dán JSON từ AI vào để tạo bộ thẻ Flashcard có phiên âm IPA và nút **Loa đọc phát âm**.
    - Tích chọn **"Giao luôn bộ Flashcard này vào danh sách Nhiệm vụ của học sinh"** khi lưu.
 3. **Học sinh tự luyện tập & Đánh giá theo Đường cong quên lãng**:
-   - Học sinh bấm mở bộ Flashcard $\rightarrow$ Nghe phát âm chuẩn / Đọc chậm $\rightarrow$ Lật thẻ xem nghĩa và ví dụ $\rightarrow$ Tự bấm 1 trong 3 mức: **🔴 Chưa thuộc (+1 ngày)**, **🟡 Tạm nhớ (+3–7 ngày)**, **🟢 Đã nhớ kỹ (+14–30 ngày)**.
+   - Học sinh bấm mở bộ Flashcard $\rightarrow$ Nghe phát âm chuẩn / Đọc chậm $\rightarrow$ Lật thẻ xem nghĩa và ví dụ $\rightarrow$ Tự bấm 1 trong 3 mức: **Chưa thuộc (+1 ngày)**, **Tạm nhớ (+3–7 ngày)**, **Đã nhớ kỹ (+14–30 ngày)**.
 4. **Kiểm tra Trắc nghiệm cuối Unit & Tự động điều chỉnh SRS**:
    - Sau 1 Unit (hoặc khi có các thẻ sắp quên), người hướng dẫn bấm **Tạo Đề Trắc Nghiệm (AI)** $\rightarrow$ Copy Prompt đã gom sẵn toàn bộ từ vựng/mẫu câu trong Unit $\rightarrow$ Dán JSON, chỉnh sửa câu hỏi và giao đề thi.
-   - Học sinh làm bài trắc nghiệm trực tiếp trên web $\rightarrow$ Hệ thống chấm điểm ngay, giải thích đáp án và tự động đưa các từ làm sai về nhóm **🔴 Hay quên** để nhắc ôn lại vào tối hôm sau.
+   - Học sinh làm bài trắc nghiệm trực tiếp trên web $\rightarrow$ Hệ thống chấm điểm ngay, giải thích đáp án và tự động đưa các từ làm sai về nhóm **Hay quên** để nhắc ôn lại vào tối hôm sau.
 5. **Xác nhận & Trao thưởng**:
-   - Người hướng dẫn bấm **Xác nhận +⭐** để cộng sao thưởng và nối dài **Chuỗi ngày học (Streak)** cho học sinh.
+   - Người hướng dẫn bấm **Xác nhận & Tặng sao** để cộng sao thưởng và nối dài **Chuỗi ngày học (Streak)** cho học sinh.
 

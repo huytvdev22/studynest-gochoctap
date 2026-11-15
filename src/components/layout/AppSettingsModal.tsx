@@ -78,7 +78,7 @@ export function AppSettingsModal({
           {/* Header Modal */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
                 <Settings className="h-5 w-5" />
               </span>
               <div>
@@ -164,7 +164,7 @@ export function AppSettingsModal({
                     type="button"
                     onClick={() => void handleClearCacheAndReload()}
                     disabled={clearingCache}
-                    className="shrink-0 rounded-xl bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 active:scale-95 transition"
+                    className="shrink-0 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-brand-800 active:scale-95 transition"
                   >
                     {clearingCache ? 'Đang cập nhật...' : 'Cập nhật ngay'}
                   </button>
@@ -184,7 +184,7 @@ export function AppSettingsModal({
                 type="button"
                 onClick={() => void handleCheckUpdate()}
                 disabled={checkingUpdate}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-98 text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
               >
                 <RefreshCw
                   className={`h-4 w-4 ${

@@ -157,7 +157,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <a
         href="#main-content"
-        className="visually-hidden visually-hidden-focusable rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg"
+        className="visually-hidden visually-hidden-focusable rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg"
       >
         Bỏ qua đến nội dung chính
       </a>
@@ -182,8 +182,8 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
                     onClick={() => void signInAsDemoPersona(p.uid)}
                     className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                       active
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white text-slate-700 hover:bg-emerald-50 border border-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700'
+                        ? 'bg-brand-600 text-white shadow-sm'
+                        : 'bg-white text-slate-700 hover:bg-brand-50 border border-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700'
                     }`}
                     title={p.roleHint}
                   >
@@ -242,7 +242,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
                 to="/app/classes"
                 className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                <FolderKanban className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <FolderKanban className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                 Tất cả Workspace
               </Link>
             </nav>
@@ -255,11 +255,11 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
               onClick={() => void handlePageRefresh()}
               aria-label="Làm mới trang"
               title="Làm mới trang và đồng bộ dữ liệu mới nhất"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 transition"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-brand-400 transition"
             >
               <RotateCw
                 className={`h-4 w-4 transition-transform ${
-                  isPageRefreshing ? 'animate-spin text-emerald-600' : ''
+                  isPageRefreshing ? 'animate-spin text-brand-600' : ''
                 }`}
               />
             </button>
@@ -269,7 +269,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
               onClick={() => setShowSettingsModal(true)}
               aria-label="Cài đặt & Cập nhật ứng dụng (PWA)"
               title="Cài đặt & Cập nhật ứng dụng (PWA)"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 transition"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-brand-400 transition"
             >
               <Settings className="h-4 w-4" />
             </button>
@@ -342,7 +342,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setShowSettingsModal(true)}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 transition"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-brand-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-brand-400 dark:hover:bg-slate-800 transition"
               title="Mở bảng cài đặt và kiểm tra cập nhật ứng dụng PWA"
             >
               <Settings className="h-3 w-3" />
@@ -352,12 +352,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
               type="button"
               disabled={checkingUpdate}
               onClick={() => void handleManualCheckUpdate()}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 transition"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-brand-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-brand-400 dark:hover:bg-slate-800 transition"
               title="Kiểm tra xem có bản cập nhật mới trên máy chủ hay không"
             >
               <RefreshCw
                 className={`h-3 w-3 ${
-                  checkingUpdate ? 'animate-spin text-emerald-600' : ''
+                  checkingUpdate ? 'animate-spin text-brand-600' : ''
                 }`}
               />
               <span>{checkingUpdate ? 'Đang kiểm tra...' : 'Kiểm tra nhanh'}</span>

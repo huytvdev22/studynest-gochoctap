@@ -155,7 +155,7 @@ export function SubmissionDetailModal({
                     {record.studentName}
                   </h2>
                   {isFlashcard ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-bold text-brand-800 dark:bg-brand-950 dark:text-brand-300">
                       <Layers className="h-3 w-3" />
                       Bộ Flashcard
                     </span>
@@ -213,7 +213,7 @@ export function SubmissionDetailModal({
             <div
               className={`rounded-2xl p-4 text-xs ${
                 isFlashcard
-                  ? 'border border-emerald-200 bg-emerald-50/70 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                  ? 'border border-brand-200 bg-brand-50/70 text-brand-950 dark:border-brand-900/60 dark:bg-brand-950/30 dark:text-brand-200'
                   : isQuiz
                   ? 'border border-violet-200 bg-violet-50/70 text-violet-950 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200'
                   : 'border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200'
@@ -389,7 +389,7 @@ export function SubmissionDetailModal({
                           : effectiveRating === 'good' || srsBucket === 'due_soon'
                           ? 'border-amber-300 bg-amber-50/30 dark:border-amber-900/60 dark:bg-amber-950/20'
                           : effectiveRating === 'easy' || srsBucket === 'mastered'
-                          ? 'border-emerald-300 bg-emerald-50/30 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                          ? 'border-emerald-300 bg-white dark:border-emerald-900/60 dark:bg-slate-900'
                           : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 
                       return (
@@ -417,7 +417,7 @@ export function SubmissionDetailModal({
                               />
                             </div>
 
-                            <p className="mt-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                            <p className="mt-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
                               {card.meaning}
                             </p>
 
@@ -434,7 +434,7 @@ export function SubmissionDetailModal({
                               <button
                                 type="button"
                                 onClick={() => speakTextWithTts(card.term, cardLang, false)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                                className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-700 hover:bg-brand-100 dark:bg-brand-950 dark:text-brand-300 transition"
                               >
                                 <Volume2 className="h-3.5 w-3.5" />
                                 <span>Phát âm</span>
@@ -539,7 +539,7 @@ export function SubmissionDetailModal({
                     onClick={async () => {
                       await onConfirm(record, stars, comment);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50 shadow-xs transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50 shadow-xs transition"
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     <span>{isConfirming ? 'Đang lưu...' : 'Xác nhận & Tặng sao'}</span>

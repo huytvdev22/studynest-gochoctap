@@ -1,8 +1,21 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { ClassMember, ClassRole, StudyClass } from '@/types/domain';
+import type {
+  ClassMember,
+  ClassRole,
+  ClassThemeColor,
+  StudyClass,
+} from '@/types/domain';
 import { getClassContext } from '@/services/studyNestService';
 import { useAuth } from './AuthContext';
+
+const WORKSPACE_THEME_META_COLORS: Record<ClassThemeColor, string> = {
+  emerald: '#047857',
+  sky: '#0369a1',
+  amber: '#b45309',
+  violet: '#7c3aed',
+  rose: '#e11d48',
+};
 
 interface ClassContextValue {
   studyClass: StudyClass | null;
@@ -60,6 +73,31 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void loadContext();
   }, [loadContext]);
+
+  useEffect(() => {
+    const themeColor = studyClass?.color;
+    const metaTheme = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    );
+    if (themeColor && themeColor in WORKSPACE_THEME_META_COLORS) {
+      document.documentElement.dataset.workspaceTheme = themeColor;
+      if (metaTheme) {
+        metaTheme.content = WORKSPACE_THEME_META_COLORS[themeColor];
+      }
+    } else {
+      delete document.documentElement.dataset.workspaceTheme;
+      if (metaTheme) {
+        metaTheme.content = '#059669';
+      }
+    }
+
+    return () => {
+      delete document.documentElement.dataset.workspaceTheme;
+      if (metaTheme) {
+        metaTheme.content = '#059669';
+      }
+    };
+  }, [studyClass?.color]);
 
   const role = membership?.role ?? null;
   const isOwner = role === 'owner';

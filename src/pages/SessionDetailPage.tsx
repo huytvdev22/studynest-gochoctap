@@ -100,7 +100,7 @@ export function SessionDetailPage() {
         </h2>
         <Link
           to={`/app/classes/${studyClass.id}/sessions`}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại danh sách buổi học
@@ -238,8 +238,8 @@ export function SessionDetailPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Cột trái: Đồng hồ Focus Mode phía Client */}
         <div className="lg:col-span-5">
-          <div className="rounded-3xl border border-emerald-200 bg-gradient-to-b from-emerald-900 to-slate-900 p-6 sm:p-8 text-center text-white shadow-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
+          <div className="rounded-3xl border border-brand-200 bg-gradient-to-b from-brand-900 to-slate-900 p-6 sm:p-8 text-center text-white shadow-xl">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-bold text-brand-300">
               <Timer className="h-4 w-4" />
               Chế độ học tập trung (Focus Timer)
             </div>
@@ -265,7 +265,7 @@ export function SessionDetailPage() {
                   onClick={() => selectTimerPreset(preset.min)}
                   className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                     activePresetMinutes === preset.min
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-brand-600 text-white'
                       : 'bg-white/10 text-slate-200 hover:bg-white/20'
                   }`}
                 >
@@ -278,7 +278,7 @@ export function SessionDetailPage() {
               <button
                 type="button"
                 onClick={() => setTimerRunning((r) => !r)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-extrabold text-white shadow-md hover:bg-emerald-400"
+                className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-md hover:bg-brand-700"
               >
                 {timerRunning ? (
                   <>
@@ -311,7 +311,7 @@ export function SessionDetailPage() {
         <div className="space-y-6 lg:col-span-7">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">
                 {formatVietnameseDate(session.date)} • {session.durationMinutes} phút
               </span>
               <span className="text-xs font-bold text-slate-500">
@@ -324,7 +324,7 @@ export function SessionDetailPage() {
             </h1>
             {session.goal && (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                <Target className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <Target className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
                 <span>Mục tiêu: {session.goal}</span>
               </p>
             )}
@@ -339,7 +339,7 @@ export function SessionDetailPage() {
                   className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${
                     item.completed
                       ? 'border-emerald-400 bg-emerald-50/70 dark:border-emerald-800 dark:bg-emerald-950/30'
-                      : 'border-slate-200 bg-slate-50/60 hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-800/40'
+                      : 'border-slate-200 bg-slate-50/60 hover:border-brand-300 dark:border-slate-800 dark:bg-slate-800/40'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export function SessionDetailPage() {
                       e.stopPropagation();
                       selectTimerPreset(item.durationMinutes);
                     }}
-                    className="rounded-lg bg-white px-2.5 py-1 text-xs font-extrabold text-emerald-700 shadow-2xs hover:bg-emerald-50 dark:bg-slate-900 dark:text-emerald-400"
+                    className="rounded-lg bg-white px-2.5 py-1 text-xs font-extrabold text-brand-700 shadow-2xs hover:bg-brand-50 dark:bg-slate-900 dark:text-brand-400"
                   >
                     Hẹn {item.durationMinutes}p
                   </span>
@@ -377,7 +377,7 @@ export function SessionDetailPage() {
                 <button
                   type="button"
                   onClick={() => void handleStudentReportSessionDone()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-brand-700"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   Em đã hoàn thành buổi học hôm nay
@@ -386,7 +386,7 @@ export function SessionDetailPage() {
                 <button
                   type="button"
                   onClick={() => void handleInstructorCompleteSession()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-brand-700"
                 >
                   <Star className="h-4 w-4" />
                   Chốt hoàn thành buổi học 60 phút
@@ -398,7 +398,7 @@ export function SessionDetailPage() {
           {/* Bài học gắn với buổi học này */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white">
-              <BookOpen className="h-5 w-5 text-emerald-600" />
+              <BookOpen className="h-5 w-5 text-brand-600 dark:text-brand-400" />
               Bài học trong buổi tối nay ({attachedLessons.length})
             </h2>
 
@@ -412,9 +412,9 @@ export function SessionDetailPage() {
                   <Link
                     key={les.id}
                     to={`/app/classes/${studyClass.id}/lessons/${les.id}`}
-                    className="block rounded-2xl border border-slate-200 p-4 transition hover:border-emerald-400 dark:border-slate-800"
+                    className="block rounded-2xl border border-slate-200 p-4 transition hover:border-brand-400 dark:border-slate-800 dark:hover:border-brand-700"
                   >
-                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       {les.subject}
                     </span>
                     <div className="mt-1 text-base font-bold text-slate-900 dark:text-white">

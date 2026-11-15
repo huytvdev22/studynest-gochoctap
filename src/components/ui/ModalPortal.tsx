@@ -170,7 +170,7 @@ export function GlobalAlertDialogHost() {
           <button
             type="button"
             onClick={() => setQueue((prev) => prev.slice(1))}
-            className="rounded-xl bg-emerald-600 px-5 py-2 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700"
+            className="rounded-xl bg-brand-600 px-5 py-2 text-xs sm:text-sm font-bold text-white hover:bg-brand-700"
           >
             Đã hiểu
           </button>

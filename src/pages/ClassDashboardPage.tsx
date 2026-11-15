@@ -480,7 +480,7 @@ export function ClassDashboardPage() {
             <section className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
                     <Sparkles className="h-3.5 w-3.5" />
                   </span>
                   <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
@@ -493,7 +493,7 @@ export function ClassDashboardPage() {
                     Đã hoàn thành tất cả ({completedTodayTasksCount}/{todayTasks.length})
                   </span>
                 ) : (
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-800 dark:bg-brand-950 dark:text-brand-300">
                     {completedTodayTasksCount > 0
                       ? `Đã xong ${completedTodayTasksCount}/${todayTasks.length} bài`
                       : `${todayTasks.length} bài học & nhiệm vụ`}
@@ -509,7 +509,7 @@ export function ClassDashboardPage() {
                     onClick={() => setTodayTaskFilter('all')}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'all'
-                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        ? 'bg-brand-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
                     }`}
                   >
@@ -530,7 +530,7 @@ export function ClassDashboardPage() {
                     onClick={() => setTodayTaskFilter('pending')}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'pending'
-                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        ? 'bg-brand-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
                     }`}
                   >
@@ -551,7 +551,7 @@ export function ClassDashboardPage() {
                     onClick={() => setTodayTaskFilter('completed')}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                       todayTaskFilter === 'completed'
-                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        ? 'bg-brand-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750'
                     }`}
                   >
@@ -628,10 +628,10 @@ export function ClassDashboardPage() {
                         key={task.id}
                         className={`rounded-2xl border p-2.5 sm:p-3 transition shadow-2xs hover:shadow-xs ${
                           isConfirmed
-                            ? 'border-emerald-300 bg-emerald-50/35 dark:border-emerald-800 dark:bg-emerald-950/20'
+                            ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
                             : isSubmitted
                             ? 'border-amber-300 bg-amber-50/35 dark:border-amber-800 dark:bg-amber-950/20'
-                            : 'border-emerald-300/80 bg-white hover:border-emerald-400 dark:border-emerald-900/50 dark:bg-slate-900'
+                            : 'border-slate-200 bg-white hover:border-brand-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700'
                         }`}
                       >
                         {/* Dòng 1: Icon trạng thái + Chips môn, Unit, Sao, SRS + Badge hoàn thành */}
@@ -661,7 +661,7 @@ export function ClassDashboardPage() {
                             )}
 
                             {task.subject && (
-                              <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                 {task.subject}
                               </span>
                             )}
@@ -707,7 +707,7 @@ export function ClassDashboardPage() {
                             <h3
                               className={`text-xs sm:text-sm font-bold leading-snug truncate ${
                                 isConfirmed
-                                  ? 'text-emerald-950 dark:text-emerald-100'
+                                  ? 'text-slate-900 dark:text-white'
                                   : 'text-slate-900 dark:text-white'
                               }`}
                               title={task.title}
@@ -716,7 +716,7 @@ export function ClassDashboardPage() {
                             </h3>
 
                             {isConfirmed && rec?.instructorComment && (
-                              <p className="mt-0.5 text-[11px] text-emerald-800 font-medium dark:text-emerald-300 truncate">
+                              <p className="mt-0.5 text-[11px] text-slate-600 font-medium dark:text-slate-300 truncate">
                                 Lời khen: “{rec.instructorComment}”
                               </p>
                             )}
@@ -738,15 +738,15 @@ export function ClassDashboardPage() {
                                   onClick={() => setActiveFlashcardTask(task)}
                                   className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition active:scale-95 ${
                                     isConfirmed
-                                      ? 'border border-emerald-300 bg-white text-emerald-800 shadow-2xs hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300'
+                                      ? 'border border-brand-300 bg-white text-brand-700 shadow-2xs hover:bg-brand-50 dark:border-brand-700 dark:bg-slate-800 dark:text-brand-300'
                                       : isSubmitted
                                       ? 'border border-amber-300 bg-white text-amber-800 shadow-2xs hover:bg-amber-50 dark:border-amber-700 dark:bg-slate-800 dark:text-amber-300'
-                                      : 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+                                      : 'bg-brand-600 text-white shadow-xs hover:bg-brand-700'
                                   }`}
                                 >
                                   {isConfirmed ? (
                                     <>
-                                      <RotateCw className="h-3 w-3 text-emerald-600" />
+                                      <RotateCw className="h-3 w-3 text-brand-600 dark:text-brand-400" />
                                       Ôn lại ({task.flashcards.length})
                                     </>
                                   ) : isSubmitted ? (
@@ -804,7 +804,7 @@ export function ClassDashboardPage() {
                                 type="button"
                                 disabled={submittingTaskId === task.id}
                                 onClick={() => void handleStudentSubmitTask(task)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition"
+                                className="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-800 hover:bg-brand-100 active:scale-95 disabled:opacity-50 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300 transition"
                               >
                                 <Send className="h-3 w-3" />
                                 {submittingTaskId === task.id
@@ -838,7 +838,7 @@ export function ClassDashboardPage() {
                     <div className="mt-2 flex justify-center">
                       <Link
                         to={`/app/classes/${studyClass.id}/lessons`}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-brand-700"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         Vào Thư viện tự ôn tập
@@ -858,7 +858,7 @@ export function ClassDashboardPage() {
                   </h2>
                   <Link
                     to={`/app/classes/${studyClass.id}/sessions`}
-                    className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                    className="text-[11px] font-bold text-brand-700 hover:underline dark:text-brand-400"
                   >
                     Xem tất cả
                   </Link>
@@ -878,7 +878,7 @@ export function ClassDashboardPage() {
                         key={task.id}
                         className={`rounded-xl border p-2.5 sm:p-3 transition ${
                           isConfirmed
-                            ? 'border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20'
+                            ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
                             : isSubmitted
                             ? 'border-amber-200 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20'
                             : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-800/50'
@@ -917,7 +917,7 @@ export function ClassDashboardPage() {
                         </div>
 
                         {rec?.instructorComment && (
-                          <div className="mt-1.5 rounded-lg bg-white/80 p-1.5 text-[11px] text-slate-700 border border-emerald-200 dark:bg-slate-900 dark:border-emerald-800 dark:text-slate-200">
+                          <div className="mt-1.5 rounded-lg bg-slate-50 p-1.5 text-[11px] text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:border-slate-700 dark:text-slate-200">
                             <strong>Nhận xét:</strong> {rec.instructorComment}
                           </div>
                         )}
@@ -1039,7 +1039,7 @@ export function ClassDashboardPage() {
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                <p className="mt-0.5 text-[11px] text-brand-700 dark:text-brand-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1072,7 +1072,7 @@ export function ClassDashboardPage() {
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                <p className="mt-0.5 text-[11px] text-brand-700 dark:text-brand-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1105,7 +1105,7 @@ export function ClassDashboardPage() {
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                <p className="mt-0.5 text-[11px] text-brand-700 dark:text-brand-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1137,7 +1137,7 @@ export function ClassDashboardPage() {
                                 </span>
                               </div>
                               {sch.materialsNote && (
-                                <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                <p className="mt-0.5 text-[11px] text-brand-700 dark:text-brand-400 font-medium">
                                   Chuẩn bị: {sch.materialsNote}
                                 </p>
                               )}
@@ -1163,7 +1163,7 @@ export function ClassDashboardPage() {
                 </div>
                 <Link
                   to={`/app/classes/${studyClass.id}/lessons`}
-                  className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                  className="text-[11px] font-bold text-brand-700 hover:underline dark:text-brand-400"
                 >
                   Thư viện
                 </Link>
@@ -1173,7 +1173,7 @@ export function ClassDashboardPage() {
                   <Link
                     key={l.id}
                     to={`/app/classes/${studyClass.id}/lessons/${l.id}`}
-                    className="flex items-center justify-between rounded-xl border border-slate-200/80 px-2.5 py-1.5 transition hover:border-emerald-400 dark:border-slate-800 dark:hover:border-emerald-700"
+                    className="flex items-center justify-between rounded-xl border border-slate-200/80 px-2.5 py-1.5 transition hover:border-brand-400 dark:border-slate-800 dark:hover:border-brand-700"
                   >
                     <span className="text-xs font-bold text-slate-900 dark:text-white truncate pr-2">
                       {l.title}
@@ -1325,7 +1325,7 @@ export function ClassDashboardPage() {
           <div className="mt-2">
             <Link
               to={`/app/classes/${studyClass.id}/lessons`}
-              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
             >
               Chọn thêm từ Thư viện
               <ArrowRight className="h-3.5 w-3.5" />
@@ -1367,7 +1367,7 @@ export function ClassDashboardPage() {
           <div className="mt-2">
             <Link
               to={`/app/classes/${studyClass.id}/members`}
-              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
             >
               Quản lý thành viên & mã mời
               <ArrowRight className="h-3.5 w-3.5" />
@@ -1383,7 +1383,7 @@ export function ClassDashboardPage() {
         </span>
         <Link
           to={`/app/classes/${studyClass.id}/lessons`}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-brand-700"
         >
           <Plus className="h-3.5 w-3.5" />
           Soạn bài học mới
@@ -1418,14 +1418,14 @@ export function ClassDashboardPage() {
         <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-              <Users className="h-3.5 w-3.5 text-emerald-600" />
+              <Users className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
               Theo dõi & Đánh giá theo từng học sinh ({students.length}):
             </span>
             {activeSelectedStudent && (
               <button
                 type="button"
                 onClick={() => setSelectedStudentUid('')}
-                className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
               >
                 Xem tất cả học sinh
               </button>
@@ -1465,7 +1465,7 @@ export function ClassDashboardPage() {
                   onClick={() => setSelectedStudentUid(st.uid)}
                   className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     isSelected
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                      ? 'bg-brand-600 text-white shadow-xs'
                       : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
                   }`}
                 >
@@ -1479,7 +1479,7 @@ export function ClassDashboardPage() {
                     <span
                       className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
                         isSelected
-                          ? 'bg-white text-emerald-800'
+                          ? 'bg-white text-brand-800'
                           : 'bg-amber-500 text-white'
                       }`}
                     >
@@ -1502,7 +1502,7 @@ export function ClassDashboardPage() {
                 <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
                   Duyệt & Đánh giá bài nộp{' '}
                   {activeSelectedStudent ? (
-                    <span className="text-emerald-700 dark:text-emerald-400">
+                    <span className="text-brand-700 dark:text-brand-400">
                       • {activeSelectedStudent.displayName}
                     </span>
                   ) : (
@@ -1536,7 +1536,7 @@ export function ClassDashboardPage() {
                   onClick={() => setReviewTab('reviewed')}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                     reviewTab === 'reviewed'
-                      ? 'bg-white text-emerald-700 shadow-2xs dark:bg-slate-900 dark:text-emerald-400'
+                      ? 'bg-white text-brand-700 shadow-2xs dark:bg-slate-900 dark:text-brand-400'
                       : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
                   }`}
                 >
@@ -1593,12 +1593,12 @@ export function ClassDashboardPage() {
                                 size="sm"
                               />
                               <div>
-                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                <span className="text-xs font-bold text-brand-700 dark:text-brand-400">
                                   {rec.studentName} • {formatVietnameseDate(rec.date, false)}
                                 </span>
                                 <h3
                                   onClick={() => setViewingRecord(rec)}
-                                  className="text-base font-extrabold text-slate-900 hover:text-emerald-700 hover:underline cursor-pointer dark:text-white dark:hover:text-emerald-400 transition"
+                                  className="text-base font-extrabold text-slate-900 hover:text-brand-700 hover:underline cursor-pointer dark:text-white dark:hover:text-brand-400 transition"
                                   title="Bấm để xem chi tiết bài làm"
                                 >
                                   {rec.title}
@@ -1617,7 +1617,7 @@ export function ClassDashboardPage() {
                                 <span>Xem bài làm</span>
                               </button>
                               {isFlashcard ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-bold text-brand-800 dark:bg-brand-950/80 dark:text-brand-300">
                                   <Layers className="h-3 w-3" />
                                   Bộ Flashcard
                                 </span>
@@ -1653,7 +1653,7 @@ export function ClassDashboardPage() {
                               title="Bấm để xem chi tiết bài làm"
                               className={`mt-3 rounded-xl p-3 text-xs cursor-pointer hover:shadow-xs transition ${
                                 isFlashcard
-                                  ? 'border border-emerald-200/80 bg-emerald-50/70 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200'
+                                  ? 'border border-brand-200/80 bg-brand-50/70 text-brand-950 dark:border-brand-900/60 dark:bg-brand-950/40 dark:text-brand-200'
                                   : isQuiz
                                   ? 'border border-violet-200/80 bg-violet-50/70 text-violet-950 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200'
                                   : 'border border-slate-200/80 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
@@ -1722,7 +1722,7 @@ export function ClassDashboardPage() {
                                 type="button"
                                 disabled={confirmingRecordId === rec.id}
                                 onClick={() => void handleInstructorConfirm(rec)}
-                                className="w-full rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50 shadow-xs"
+                                className="w-full rounded-xl bg-brand-600 px-3 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50 shadow-xs"
                               >
                                 {confirmingRecordId === rec.id
                                   ? 'Đang lưu...'
@@ -1754,7 +1754,7 @@ export function ClassDashboardPage() {
                       return (
                         <div
                           key={rec.id}
-                          className="rounded-2xl border border-emerald-200/80 bg-emerald-50/20 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/10 space-y-2"
+                          className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
@@ -1776,13 +1776,13 @@ export function ClassDashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => setViewingRecord(rec)}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-2xs hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300 transition"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-brand-300 bg-white px-2.5 py-1 text-xs font-bold text-brand-700 shadow-2xs hover:bg-brand-50 dark:border-brand-800 dark:bg-slate-800 dark:text-brand-300 transition"
                                 title="Xem toàn bộ câu hỏi, từ vựng hoặc nội dung học sinh đã nộp"
                               >
                                 <Eye className="h-3.5 w-3.5" />
                                 <span>Xem bài làm</span>
                               </button>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-extrabold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
                                 <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
                                 +{rec.starsAwarded} sao
                               </span>
@@ -1791,7 +1791,7 @@ export function ClassDashboardPage() {
 
                           <div
                             onClick={() => setViewingRecord(rec)}
-                            className="text-sm font-bold text-slate-900 hover:text-emerald-700 hover:underline cursor-pointer dark:text-white dark:hover:text-emerald-400 transition"
+                            className="text-sm font-bold text-slate-900 hover:text-brand-700 hover:underline cursor-pointer dark:text-white dark:hover:text-brand-400 transition"
                             title="Bấm để xem chi tiết bài làm"
                           >
                             {rec.title}
@@ -1804,7 +1804,7 @@ export function ClassDashboardPage() {
                           )}
 
                           {rec.instructorComment && (
-                            <div className="rounded-xl border border-emerald-200 bg-white/90 p-2.5 text-xs text-emerald-950 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300">
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
                               <strong>Nhận xét của bạn:</strong> “{rec.instructorComment}”
                             </div>
                           )}
@@ -1827,14 +1827,14 @@ export function ClassDashboardPage() {
                   Bài học & Nhiệm vụ hôm nay ({instructorTodayTasks.length})
                 </h2>
                 {activeSelectedStudent && (
-                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                  <p className="text-xs text-brand-700 dark:text-brand-400 font-medium">
                     Đang xem bài của {activeSelectedStudent.displayName}
                   </p>
                 )}
               </div>
               <Link
                 to={`/app/classes/${studyClass.id}/lessons`}
-                className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
               >
                 + Thêm từ Thư viện
               </Link>
@@ -1855,7 +1855,7 @@ export function ClassDashboardPage() {
                       className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 space-y-2"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                           {task.subject || 'Tổng hợp'}
                         </span>
                         <div className="flex items-center gap-2">
@@ -1915,7 +1915,7 @@ export function ClassDashboardPage() {
                 <div className="flex flex-col gap-2">
                   <Link
                     to={`/app/classes/${studyClass.id}/lessons`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-700"
                   >
                     <BookOpen className="h-4 w-4" />
                     Chọn bài từ Thư viện để học hôm nay
@@ -1987,7 +1987,7 @@ export function ClassDashboardPage() {
                 </h3>
                 <Link
                   to={`/app/classes/${studyClass.id}/schedule`}
-                  className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                  className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
                 >
                   Xem cả tuần
                 </Link>
@@ -2013,7 +2013,7 @@ export function ClassDashboardPage() {
                       <span
                         className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
                           sch.type === 'tutoring'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
                             : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
                         }`}
                       >

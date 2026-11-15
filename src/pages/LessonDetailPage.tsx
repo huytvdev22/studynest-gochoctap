@@ -226,7 +226,7 @@ export function LessonDetailPage() {
         </p>
         <Link
           to={`/app/classes/${studyClass.id}/lessons`}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại Thư viện bài học
@@ -432,7 +432,7 @@ export function LessonDetailPage() {
             <button
               type="button"
               onClick={() => setShowFlashcardPlayer(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-700"
             >
               <Layers className="h-4 w-4" />
               Lật thẻ học bài này ({lesson.keywords.length} thẻ)
@@ -444,7 +444,7 @@ export function LessonDetailPage() {
               type="button"
               disabled={savingNote}
               onClick={() => void handleAssignFlashcardDeck()}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-300 bg-brand-50 px-3.5 py-2 text-xs font-bold text-brand-800 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/50 dark:text-brand-300"
             >
               <Plus className="h-3.5 w-3.5" />
               Thêm vào bài học hôm nay
@@ -472,7 +472,7 @@ export function LessonDetailPage() {
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                   lesson.status === 'published'
                     ? 'border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'bg-brand-600 text-white hover:bg-brand-700'
                 }`}
               >
                 {lesson.status === 'published' ? (
@@ -531,11 +531,11 @@ export function LessonDetailPage() {
 
       {/* Khung Chỉnh sửa bài học & Bộ thẻ Flashcard trực tiếp */}
       {isInstructorOrOwner && isEditing && (
-        <section className="rounded-3xl border-2 border-emerald-400 bg-white p-6 shadow-md space-y-5 dark:border-emerald-700 dark:bg-slate-900">
+        <section className="rounded-3xl border-2 border-brand-400 bg-white p-6 shadow-md space-y-5 dark:border-brand-700 dark:bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
             <div>
               <h2 className="flex items-center gap-2 text-lg font-extrabold text-slate-900 dark:text-white">
-                <Pencil className="h-5 w-5 text-emerald-600" />
+                <Pencil className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                 Chỉnh sửa Bài học & Bộ thẻ Flashcard
               </h2>
               <p className="text-xs text-slate-500">
@@ -787,7 +787,7 @@ export function LessonDetailPage() {
                     },
                   ])
                 }
-                className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
               >
                 <Plus className="h-3.5 w-3.5" /> Thêm thẻ mới
               </button>
@@ -865,7 +865,7 @@ export function LessonDetailPage() {
                           speakTextWithTts(kw.term, editTtsLang, false)
                         }
                         title="Nghe thử"
-                        className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50"
+                        className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
                       >
                         <Volume2 className="h-3.5 w-3.5" />
                       </button>
@@ -892,7 +892,7 @@ export function LessonDetailPage() {
           <div className="space-y-3">
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                <Target className="h-3.5 w-3.5 text-emerald-600" />
+                <Target className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
                 Mục tiêu bài học
               </label>
               <input
@@ -906,7 +906,7 @@ export function LessonDetailPage() {
 
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                <BookOpen className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
                 Hướng dẫn & Ghi chú ngữ pháp / kiến thức chi tiết
               </label>
               <textarea
@@ -941,7 +941,7 @@ export function LessonDetailPage() {
                 type="button"
                 disabled={savingNote}
                 onClick={() => void handleSaveEditedLesson(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-700"
               >
                 <Eye className="h-3.5 w-3.5" />
                 Lưu & Công bố cho học sinh
@@ -964,7 +964,7 @@ export function LessonDetailPage() {
             type="button"
             disabled={savingNote}
             onClick={() => void handleTogglePublish()}
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-brand-700"
           >
             <Eye className="h-3.5 w-3.5" /> Công bố cho học sinh ngay
           </button>
@@ -975,7 +975,7 @@ export function LessonDetailPage() {
       <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6 dark:border-slate-800 dark:bg-slate-900">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+            <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               Giáo trình: {lesson.subject}
             </span>
             {lesson.unitTitle && (
@@ -992,7 +992,7 @@ export function LessonDetailPage() {
               <span
                 className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold ${
                   lesson.status === 'published'
-                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                    ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                 }`}
               >
@@ -1014,9 +1014,9 @@ export function LessonDetailPage() {
           </h1>
 
           {lesson.goal && (
-            <div className="mt-4 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 text-sm sm:text-base text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
+            <div className="mt-4 rounded-2xl border border-brand-200/80 bg-brand-50/40 p-4 text-sm sm:text-base text-brand-950 dark:border-brand-900/50 dark:bg-brand-950/30 dark:text-brand-200">
               <strong className="inline-flex items-center gap-1.5 font-bold">
-                <Target className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                <Target className="h-4 w-4 text-brand-700 dark:text-brand-300" />
                 Mục tiêu bài học:
               </strong>{' '}
               {lesson.goal}
@@ -1039,7 +1039,7 @@ export function LessonDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowFlashcardPlayer(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-brand-700"
               >
                 <Layers className="h-3.5 w-3.5" />
                 Mở chế độ Lật thẻ & Tự đánh giá
@@ -1060,7 +1060,7 @@ export function LessonDetailPage() {
                     : bucket === 'due_soon'
                     ? 'border-amber-300 bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/20'
                     : bucket === 'mastered'
-                    ? 'border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                    ? 'border-emerald-300 bg-white dark:border-emerald-900/60 dark:bg-slate-900'
                     : 'border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/60';
 
                 return (
@@ -1072,7 +1072,7 @@ export function LessonDetailPage() {
                       <div>
                         <div
                           lang={cardLang || undefined}
-                          className="text-base font-extrabold text-emerald-700 dark:text-emerald-400"
+                          className="text-base font-extrabold text-brand-700 dark:text-brand-400"
                         >
                           {kw.term}
                         </div>
@@ -1096,7 +1096,7 @@ export function LessonDetailPage() {
                           onClick={() =>
                             speakTextWithTts(kw.term, cardLang, false)
                           }
-                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                          className="inline-flex items-center gap-1 rounded-lg bg-brand-100 px-2.5 py-1 text-xs font-bold text-brand-800 hover:bg-brand-200 dark:bg-brand-950 dark:text-brand-300"
                         >
                           <Volume2 className="h-3.5 w-3.5" /> Nghe phát âm
                         </button>
@@ -1134,7 +1134,7 @@ export function LessonDetailPage() {
             id="lesson-explanation-heading"
             className="flex items-center gap-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white"
           >
-            <BookOpen className="h-5 w-5 text-emerald-600" />
+            <BookOpen className="h-5 w-5 text-brand-600 dark:text-brand-400" />
             Hướng dẫn & Ghi chú ngữ pháp / kiến thức
           </h2>
           <div className="mt-3 whitespace-pre-line rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 text-base leading-relaxed text-slate-800 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-200">

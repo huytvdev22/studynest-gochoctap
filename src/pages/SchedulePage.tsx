@@ -579,7 +579,7 @@ export function SchedulePage() {
         {isInstructorOrOwner && (
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-3.5 mb-3.5 dark:border-slate-800">
             <div className="flex items-start gap-2.5">
-              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400" />
               <div>
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                   Lịch tuần trực quan (Bấm trực tiếp vào ô trên bảng hoặc Nhập tự động từ ảnh chụp TKB)
@@ -645,7 +645,7 @@ export function SchedulePage() {
                 onChange={(e) =>
                   setFilterType(e.target.value as 'all' | ScheduleType)
                 }
-                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-brand-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-brand-400"
               >
                 <option value="all">Tất cả lịch ({schedules.length})</option>
                 <option value="regular">
@@ -673,7 +673,7 @@ export function SchedulePage() {
                     e.target.value === 'ALL' ? null : e.target.value
                   )
                 }
-                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400"
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition focus:border-brand-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-brand-400"
               >
                 <option value="ALL">
                   Tất cả môn ({subjectBrushes.length} môn)
@@ -705,7 +705,7 @@ export function SchedulePage() {
 
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {filterSubject || filterType !== 'all' ? (
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="font-semibold text-brand-700 dark:text-brand-400">
                 Đang hiển thị {filteredSchedules.length} / {schedules.length} tiết
               </span>
             ) : (
@@ -741,7 +741,7 @@ export function SchedulePage() {
                       scope="col"
                       className={`border-r border-slate-200 px-3 py-3 text-center last:border-r-0 dark:border-slate-800 ${
                         isToday
-                          ? 'bg-emerald-50/90 dark:bg-emerald-950/40'
+                          ? 'bg-brand-50/90 dark:bg-brand-950/40'
                           : ''
                       }`}
                     >
@@ -750,7 +750,7 @@ export function SchedulePage() {
                           {DAY_OF_WEEK_LABELS[dow]}
                         </span>
                         {isToday && (
-                          <span className="mt-0.5 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                          <span className="mt-0.5 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white">
                             Hôm nay
                           </span>
                         )}
@@ -837,11 +837,11 @@ export function SchedulePage() {
                               isInstructorOrOwner ? 'cursor-pointer' : ''
                             } ${
                               isToday
-                                ? 'bg-emerald-50/20 dark:bg-emerald-950/10'
+                                ? 'bg-brand-50/20 dark:bg-brand-950/10'
                                 : ''
                             } ${
                               !primaryItem && isInstructorOrOwner
-                                ? 'hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30'
+                                ? 'hover:bg-brand-50/60 dark:hover:bg-brand-950/30'
                                 : ''
                             }`}
                           >
@@ -864,7 +864,7 @@ export function SchedulePage() {
                                         </span>
                                       )}
                                       {primaryItem.type === 'tutoring' && (
-                                        <span className="rounded bg-emerald-500/20 px-1 py-0.2 text-[9px] font-extrabold text-emerald-900 dark:text-emerald-200">
+                                        <span className="rounded bg-teal-500/20 px-1 py-0.2 text-[9px] font-extrabold text-teal-900 dark:text-teal-200">
                                           Ở nhà
                                         </span>
                                       )}
@@ -898,8 +898,8 @@ export function SchedulePage() {
                               </div>
                             ) : (
                               isInstructorOrOwner && (
-                                <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-transparent opacity-0 transition group-hover/row:border-slate-200 hover:!border-emerald-400 hover:!opacity-100 dark:group-hover/row:border-slate-800">
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-transparent opacity-0 transition group-hover/row:border-slate-200 hover:!border-brand-400 hover:!opacity-100 dark:group-hover/row:border-slate-800">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-600 dark:text-brand-400">
                                     <Plus className="h-3.5 w-3.5" />
                                     Thêm
                                   </span>
@@ -934,7 +934,7 @@ export function SchedulePage() {
           <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <div>
-                <span className="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <span className="rounded-lg bg-brand-100 px-2.5 py-0.5 text-xs font-extrabold text-brand-800 dark:bg-brand-950 dark:text-brand-300">
                   {DAY_OF_WEEK_LABELS[activeCell.dayOfWeek]} •{' '}
                   {activeCell.slot.label}
                 </span>
@@ -1064,7 +1064,7 @@ export function SchedulePage() {
                   <button
                     type="submit"
                     disabled={savingCell}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-5 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
                     {savingCell ? 'Đang lưu...' : 'Lưu vào ô'}
@@ -1176,7 +1176,7 @@ export function SchedulePage() {
                     setRawAiInput(SAMPLE_AI_RESPONSE);
                     handleParseAiResponse(SAMPLE_AI_RESPONSE);
                   }}
-                  className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                  className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-400"
                 >
                   + Thử với dữ liệu JSON mẫu
                 </button>
@@ -1228,7 +1228,7 @@ export function SchedulePage() {
                   <button
                     type="button"
                     onClick={handleAddBlankDraftRow}
-                    className="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+                    className="inline-flex items-center gap-1 rounded-xl border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-800 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Thêm 1 dòng
@@ -1392,7 +1392,7 @@ export function SchedulePage() {
                       type="checkbox"
                       checked={replaceAllExisting}
                       onChange={(e) => setReplaceAllExisting(e.target.checked)}
-                      className="rounded border-slate-300 text-emerald-600"
+                      className="rounded border-slate-300 text-brand-600 accent-brand-600"
                     />
                     <span>
                       Xóa toàn bộ thời khóa biểu cũ trước khi lưu danh sách mới này
@@ -1411,7 +1411,7 @@ export function SchedulePage() {
                       type="button"
                       disabled={importingBulk}
                       onClick={() => void handleSaveAllPreviewDrafts()}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
                     >
                       <Check className="h-4 w-4" />
                       {importingBulk
@@ -1427,9 +1427,9 @@ export function SchedulePage() {
       )}
 
       {/* Checklist Ngày mai học gì & Chuẩn bị sách vở */}
-      <section className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-6 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/20">
+      <section className="rounded-3xl border border-brand-200 bg-brand-50/60 p-6 shadow-xs dark:border-brand-900/50 dark:bg-brand-950/20">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-white">
             <Backpack className="h-5 w-5" />
           </div>
           <div>
@@ -1459,7 +1459,7 @@ export function SchedulePage() {
                   className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
                     checked
                       ? 'border-emerald-500 bg-emerald-100/70 dark:border-emerald-700 dark:bg-emerald-900/40'
-                      : 'border-slate-200 bg-white hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900'
+                      : 'border-slate-200 bg-white hover:border-brand-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700'
                   }`}
                 >
                   {checked ? (
@@ -1478,8 +1478,8 @@ export function SchedulePage() {
                       Tiết {item.periodNumber}: {item.subject}
                     </span>
                     {item.materialsNote && (
-                      <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                        <Backpack className="h-3 w-3 text-emerald-600 shrink-0" />
+                      <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-brand-800 dark:text-brand-300">
+                        <Backpack className="h-3 w-3 text-brand-600 dark:text-brand-400 shrink-0" />
                         <span>{item.materialsNote}</span>
                       </div>
                     )}

@@ -3,8 +3,76 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  :root[data-workspace-theme="emerald"] {
     color-scheme: light dark;
+    --brand-50: 236 253 245;
+    --brand-100: 209 250 229;
+    --brand-200: 167 243 208;
+    --brand-300: 110 231 183;
+    --brand-400: 52 211 153;
+    --brand-500: 16 185 129;
+    --brand-600: 4 120 87;
+    --brand-700: 6 95 70;
+    --brand-800: 6 78 59;
+    --brand-900: 4 60 46;
+    --brand-950: 2 44 34;
+  }
+
+  :root[data-workspace-theme="sky"] {
+    --brand-50: 240 249 255;
+    --brand-100: 224 242 254;
+    --brand-200: 186 230 253;
+    --brand-300: 125 211 252;
+    --brand-400: 56 189 248;
+    --brand-500: 14 165 233;
+    --brand-600: 3 105 161;
+    --brand-700: 7 89 133;
+    --brand-800: 12 74 110;
+    --brand-900: 10 58 88;
+    --brand-950: 8 47 73;
+  }
+
+  :root[data-workspace-theme="amber"] {
+    --brand-50: 255 251 235;
+    --brand-100: 254 243 199;
+    --brand-200: 253 230 138;
+    --brand-300: 252 211 77;
+    --brand-400: 251 191 36;
+    --brand-500: 245 158 11;
+    --brand-600: 180 83 9;
+    --brand-700: 146 64 14;
+    --brand-800: 120 53 15;
+    --brand-900: 92 40 12;
+    --brand-950: 69 26 3;
+  }
+
+  :root[data-workspace-theme="violet"] {
+    --brand-50: 245 243 255;
+    --brand-100: 237 233 254;
+    --brand-200: 221 214 254;
+    --brand-300: 196 181 253;
+    --brand-400: 167 139 250;
+    --brand-500: 139 92 246;
+    --brand-600: 124 58 237;
+    --brand-700: 109 40 217;
+    --brand-800: 91 33 182;
+    --brand-900: 76 29 149;
+    --brand-950: 46 16 101;
+  }
+
+  :root[data-workspace-theme="rose"] {
+    --brand-50: 255 241 242;
+    --brand-100: 255 228 230;
+    --brand-200: 254 205 211;
+    --brand-300: 253 164 175;
+    --brand-400: 251 113 133;
+    --brand-500: 244 63 94;
+    --brand-600: 225 29 72;
+    --brand-700: 190 18 60;
+    --brand-800: 159 18 57;
+    --brand-900: 136 19 55;
+    --brand-950: 76 5 25;
   }
 
   :root:has(> head > meta[name="color-scheme"][content="dark"]) {
@@ -30,7 +98,7 @@
   }
 
   *:focus-visible {
-    @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2 ring-offset-white dark:ring-brand-400 dark:ring-offset-slate-950;
   }
 }
 

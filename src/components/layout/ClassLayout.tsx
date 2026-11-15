@@ -151,7 +151,7 @@ function ClassLayoutInner() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             to="/app/classes"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
           >
             <ArrowLeft className="h-4 w-4" />
             Quay về danh sách Workspace
@@ -316,7 +316,7 @@ function ClassLayoutInner() {
                         onClick={() => handleSwitchWorkspace(cls.id)}
                         className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition ${
                           isCurrent
-                            ? 'bg-emerald-50/90 font-bold text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-200'
+                            ? 'bg-brand-50/90 font-bold text-brand-950 dark:bg-brand-950/50 dark:text-brand-200'
                             : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                         }`}
                       >
@@ -336,7 +336,7 @@ function ClassLayoutInner() {
                           </div>
                         </div>
                         {isCurrent && (
-                          <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <Check className="h-4 w-4 shrink-0 text-brand-600 dark:text-brand-400" />
                         )}
                       </button>
                     );
@@ -346,7 +346,7 @@ function ClassLayoutInner() {
                 <div className="mt-1 border-t border-slate-100 pt-1.5 dark:border-slate-800">
                   <Link
                     to="/app/classes"
-                    className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                    className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
                   >
                     <FolderKanban className="h-4 w-4" />
                     Danh sách góc học tập của tôi
@@ -384,7 +384,7 @@ function ClassLayoutInner() {
                               : 'gap-3 px-3 py-2.5'
                           } ${
                             isActive
-                              ? 'bg-emerald-600 text-white font-bold shadow-xs dark:bg-emerald-600 dark:text-white'
+                              ? 'bg-brand-600 text-white font-bold shadow-xs dark:bg-brand-600 dark:text-white'
                               : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white'
                           }`
                         }
@@ -397,7 +397,7 @@ function ClassLayoutInner() {
                               } ${
                                 isActive
                                   ? 'text-white'
-                                  : 'text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400'
+                                  : 'text-slate-500 group-hover:text-brand-600 dark:text-slate-400 dark:group-hover:text-brand-400'
                               }`}
                             />
                             {!isMini && (
@@ -424,7 +424,7 @@ function ClassLayoutInner() {
             onClick={() => void handleRefresh()}
             title="Làm mới trang và đồng bộ dữ liệu"
             aria-label="Làm mới trang và đồng bộ dữ liệu"
-            className={`inline-flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-emerald-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400 transition ${
+            className={`inline-flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-brand-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition ${
               isMini
                 ? 'mx-auto h-9 w-9 justify-center p-0'
                 : 'w-full gap-2 px-3 py-2 text-left'
@@ -432,7 +432,7 @@ function ClassLayoutInner() {
           >
             <RotateCw
               className={`h-4 w-4 shrink-0 transition-transform ${
-                isRefreshing ? 'animate-spin text-emerald-600' : ''
+                isRefreshing ? 'animate-spin text-brand-600' : ''
               }`}
             />
             {!isMini && <span>Làm mới dữ liệu</span>}
@@ -443,7 +443,7 @@ function ClassLayoutInner() {
             onClick={() => setSettingsOpen(true)}
             title="Cài đặt & Cập nhật ứng dụng (PWA)"
             aria-label="Cài đặt & Cập nhật ứng dụng (PWA)"
-            className={`inline-flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-emerald-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400 transition ${
+            className={`inline-flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-brand-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition ${
               isMini
                 ? 'mx-auto h-9 w-9 justify-center p-0'
                 : 'w-full gap-2 px-3 py-2 text-left'
@@ -527,7 +527,7 @@ function ClassLayoutInner() {
               </span>
               <RoleBadge role={role} />
             </div>
-            <p className="truncate text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <p className="truncate text-xs font-medium text-brand-700 dark:text-brand-400">
               {currentActiveItem?.label}
             </p>
           </div>
@@ -540,11 +540,11 @@ function ClassLayoutInner() {
             onClick={() => void handleRefresh()}
             aria-label="Làm mới trang"
             title="Làm mới trang và đồng bộ dữ liệu mới nhất"
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-emerald-400 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-brand-400 transition"
           >
             <RotateCw
               className={`h-4 w-4 transition-transform ${
-                isRefreshing ? 'animate-spin text-emerald-600' : ''
+                isRefreshing ? 'animate-spin text-brand-600' : ''
               }`}
             />
           </button>
@@ -621,7 +621,7 @@ function ClassLayoutInner() {
               {studyClass.name}
             </span>
             <span className="text-slate-300 dark:text-slate-700">/</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-800 dark:bg-brand-950/60 dark:text-brand-300">
               {currentActiveItem?.label}
             </span>
           </div>

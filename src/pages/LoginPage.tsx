@@ -46,18 +46,18 @@ export function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-emerald-50/70 via-slate-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-brand-50/70 via-slate-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Cột trái: Giới thiệu sản phẩm */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-100/80 px-3.5 py-1.5 text-xs font-bold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-100/80 px-3.5 py-1.5 text-xs font-bold text-brand-900 dark:border-brand-800 dark:bg-brand-950/80 dark:text-brand-200">
             <Sparkles className="h-3.5 w-3.5" />
             Góc học tập 60 phút mỗi tối cho gia đình & lớp kèm
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
             Đồng hành cùng em học tập mỗi tối thật{' '}
-            <span className="text-emerald-600 dark:text-emerald-400">
+            <span className="text-brand-600 dark:text-brand-400">
               nhẹ nhàng & kỷ luật
             </span>
           </h1>
@@ -70,7 +70,7 @@ export function LoginPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <Clock className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+              <Clock className="h-5 w-5 shrink-0 text-brand-600 mt-0.5" />
               <div>
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                   Buổi học 60 phút tập trung
@@ -123,7 +123,7 @@ export function LoginPage() {
         <div className="lg:col-span-5">
           <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md">
                 <BookOpen className="h-6 w-6" />
               </div>
               <div>
@@ -148,7 +148,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => void handleGoogleLogin()}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-brand-600 dark:hover:bg-brand-700"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -175,9 +175,9 @@ export function LoginPage() {
                       key={p.uid}
                       type="button"
                       onClick={() => void handlePersonaLogin(p.uid)}
-                      className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-left transition hover:border-emerald-400 hover:bg-emerald-50/40 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-emerald-700"
+                      className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-left transition hover:border-brand-400 hover:bg-brand-50/40 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-brand-700"
                     >
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600 dark:text-brand-400" />
                       <div>
                         <div className="text-sm font-bold text-slate-900 dark:text-white">
                           {p.displayName}

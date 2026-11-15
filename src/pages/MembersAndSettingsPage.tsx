@@ -261,7 +261,7 @@ export function MembersAndSettingsPage() {
                     <button
                       type="button"
                       onClick={() => void handleApproveRequest(req)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700"
                     >
                       <Check className="h-3.5 w-3.5" />
                       Chấp nhận làm Học sinh
@@ -287,7 +287,7 @@ export function MembersAndSettingsPage() {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2.5">
-              <KeyRound className="h-5 w-5 text-emerald-600" />
+              <KeyRound className="h-5 w-5 text-brand-600" />
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
                   Đường link lời mời & Mã tham gia
@@ -315,7 +315,7 @@ export function MembersAndSettingsPage() {
                 type="button"
                 disabled={creatingInvite}
                 onClick={() => void handleCreateInvite()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
               >
                 <UserPlus className="h-3.5 w-3.5" />
                 {creatingInvite ? 'Đang tạo...' : 'Tạo lời mời mới'}
@@ -375,7 +375,7 @@ export function MembersAndSettingsPage() {
                           `url-${invitation.id}`
                         )
                       }
-                      className="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                      className="inline-flex items-center gap-1 rounded-xl border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-800 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       {copiedKey === `url-${invitation.id}`
@@ -438,7 +438,7 @@ export function MembersAndSettingsPage() {
       {/* Phần 3: Danh sách Thành viên & Phân vai */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2.5">
-          <Users className="h-5 w-5 text-emerald-600" />
+          <Users className="h-5 w-5 text-brand-600" />
           <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
             Thành viên trong lớp ({members.length})
           </h2>
@@ -595,7 +595,7 @@ export function MembersAndSettingsPage() {
                       onClick={() => setIcon(ic)}
                       className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
                         icon === ic
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                          ? 'border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300'
                           : 'border-slate-200 text-slate-500'
                       }`}
                     >
@@ -618,7 +618,7 @@ export function MembersAndSettingsPage() {
                     onClick={() => toggleStudyDay(d)}
                     className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
                       studyDays.includes(d)
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-brand-600 text-white'
                         : 'border border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -632,7 +632,7 @@ export function MembersAndSettingsPage() {
               <button
                 type="submit"
                 disabled={savingSettings}
-                className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                className="rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50"
               >
                 {savingSettings ? 'Đang lưu...' : 'Lưu cài đặt lớp học'}
               </button>

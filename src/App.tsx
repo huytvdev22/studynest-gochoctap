@@ -62,7 +62,7 @@ function RouteLoadingFallback() {
       role="status"
       aria-live="polite"
     >
-      <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      <div className="h-9 w-9 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
       <span className="sr-only">Đang tải nội dung trang...</span>
     </div>
   );
@@ -79,7 +79,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
         role="status"
         aria-live="polite"
       >
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
         <span className="sr-only">Đang kiểm tra phiên đăng nhập...</span>
       </div>
     );

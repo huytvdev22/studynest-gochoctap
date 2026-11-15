@@ -138,7 +138,7 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
       >
         <div className="flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 shadow-xl backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/95">
           <RotateCw
-            className={`h-4 w-4 text-emerald-600 dark:text-emerald-400 transition-transform ${
+            className={`h-4 w-4 text-brand-600 dark:text-brand-400 transition-transform ${
               isRefreshing ? 'animate-spin' : ''
             }`}
             style={

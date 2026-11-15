@@ -404,7 +404,7 @@ export function FlashcardStudyModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">
               {currentCard.subject} • {currentCard.unitTitle}
             </span>
             <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
@@ -419,13 +419,13 @@ export function FlashcardStudyModal({
                 title={autoSpeechEnabled ? 'Tắt tự động đọc' : 'Bật tự động đọc phát âm'}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition active:scale-95 ${
                   autoSpeechEnabled
-                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                    ? 'border border-brand-300 bg-brand-50 text-brand-800 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/60 dark:text-brand-300'
                     : 'border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'
                 }`}
               >
                 {autoSpeechEnabled ? (
                   <>
-                    <Volume2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Volume2 className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
                     <span>Tự động đọc: Bật</span>
                   </>
                 ) : (
@@ -518,7 +518,7 @@ export function FlashcardStudyModal({
                 type="button"
                 disabled={saving}
                 onClick={() => void handleCompleteSession()}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand-700 active:scale-95 transition disabled:opacity-50"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {saving ? 'Đang lưu tiến độ...' : 'Hoàn thành & Lưu kết quả'}
@@ -539,7 +539,7 @@ export function FlashcardStudyModal({
             </div>
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300 shadow-xs"
+                className="h-full rounded-full bg-brand-500 transition-all duration-300 shadow-xs"
                 style={{
                   width: `${Math.round(((currentIndex + 1) / cards.length) * 100)}%`,
                 }}
@@ -601,7 +601,7 @@ export function FlashcardStudyModal({
                       </div>
 
                       {currentCard.keyword.pronunciation && (
-                        <div className="text-sm sm:text-base font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                        <div className="text-sm sm:text-base font-mono font-semibold text-brand-700 dark:text-brand-400">
                           {currentCard.keyword.pronunciation}
                         </div>
                       )}
@@ -621,7 +621,7 @@ export function FlashcardStudyModal({
                                 false
                               )
                             }
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-brand-700 active:scale-95 transition"
                           >
                             <Volume2 className="h-4 w-4" />
                             Nghe phát âm ({activeTtsLang})
@@ -635,7 +635,7 @@ export function FlashcardStudyModal({
                                 true
                               )
                             }
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50 active:scale-95 transition dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-brand-300 bg-white px-3 py-1.5 text-xs font-bold text-brand-800 hover:bg-brand-50 active:scale-95 transition dark:border-brand-800 dark:bg-slate-800 dark:text-brand-300"
                           >
                             <Turtle className="h-4 w-4" />
                             Đọc chậm
@@ -677,7 +677,7 @@ export function FlashcardStudyModal({
                       </div>
 
                       <div className="flex flex-wrap items-center justify-center gap-2">
-                        <span className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">
+                        <span className="text-2xl sm:text-3xl font-black text-brand-700 dark:text-brand-300">
                           {currentCard.keyword.meaning}
                         </span>
                         <button
@@ -691,7 +691,7 @@ export function FlashcardStudyModal({
                             );
                           }}
                           title="Nghe đọc nghĩa tiếng Việt (vi-VN)"
-                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 active:scale-95 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                          className="inline-flex items-center gap-1 rounded-lg bg-brand-100 px-2.5 py-1 text-xs font-bold text-brand-800 hover:bg-brand-200 active:scale-95 dark:bg-brand-950 dark:text-brand-300 transition"
                         >
                           <Volume2 className="h-3.5 w-3.5" />
                           <span>Đọc nghĩa</span>
@@ -722,7 +722,7 @@ export function FlashcardStudyModal({
                                     false
                                   );
                                 }}
-                                className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline active:scale-95 dark:text-emerald-400"
+                                className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-brand-700 hover:underline active:scale-95 dark:text-brand-400"
                               >
                                 <Volume2 className="h-3.5 w-3.5" />
                                 {isExampleVi
@@ -1005,7 +1005,7 @@ export function QuizTakeModal({
           <div className="relative shrink-0 flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 sm:px-6 py-4 dark:border-slate-800 dark:bg-slate-900/90 z-10">
             <div className="space-y-0.5 pr-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">
                   {subject} {unitTitle ? `• ${unitTitle}` : ''}
                 </span>
                 <span
@@ -1043,7 +1043,7 @@ export function QuizTakeModal({
             {/* Thanh tiến độ trực quan mỏng ở mép dưới Header */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-200/60 dark:bg-slate-800">
               <div
-                className="h-full bg-emerald-500 transition-all duration-300 ease-out"
+                className="h-full bg-brand-500 transition-all duration-300 ease-out"
                 style={{
                   width: `${Math.round((answeredCount / (questions.length || 1)) * 100)}%`,
                 }}
@@ -1096,7 +1096,7 @@ export function QuizTakeModal({
                       type="button"
                       onClick={() => void handleSubmitResult()}
                       disabled={submitting}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 transition"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-700 disabled:opacity-50 transition"
                     >
                       <CheckCircle2 className="h-4 w-4" />
                       {submitting ? 'Đang nộp...' : 'Nộp bài & Lưu kết quả'}
@@ -1128,7 +1128,7 @@ export function QuizTakeModal({
                           speakTextWithTts(q.relatedTerm!, effectiveTtsLang, false)
                         }
                         title={`Nghe phát âm: ${q.relatedTerm}`}
-                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 transition"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-brand-100 px-2.5 py-1 text-xs font-bold text-brand-800 hover:bg-brand-200 dark:bg-brand-950 dark:text-brand-300 transition"
                       >
                         <Volume2 className="h-3.5 w-3.5" />
                         Nghe
@@ -1140,11 +1140,11 @@ export function QuizTakeModal({
                     {q.options.map((opt, oIdx) => {
                       const isSelected = chosen === oIdx;
                       let optionStyle =
-                        'border-slate-200 bg-white text-slate-800 hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+                        'border-slate-200 bg-white text-slate-800 hover:border-brand-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
 
                       if (!isEvaluated && isSelected) {
                         optionStyle =
-                          'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/40 dark:bg-emerald-950/60 dark:text-emerald-200';
+                          'border-brand-600 bg-brand-50 text-brand-950 ring-2 ring-brand-500/40 dark:bg-brand-950/60 dark:text-brand-200';
                       } else if (isEvaluated) {
                         if (oIdx === q.correctIndex) {
                           optionStyle =
@@ -1245,7 +1245,7 @@ export function QuizTakeModal({
                       ? `Em cần trả lời tất cả ${questions.length} câu trước khi chấm điểm (còn ${remainingCount} câu)`
                       : 'Bấm để chấm điểm và xem giải thích chi tiết'
                   }
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-brand-700 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   Chấm điểm & Xem kết quả
@@ -1266,7 +1266,7 @@ export function QuizTakeModal({
                   type="button"
                   onClick={() => void handleSubmitResult()}
                   disabled={submitting}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-brand-700 active:scale-95 transition disabled:opacity-50"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {submitting ? 'Đang nộp bài...' : 'Nộp bài & Lưu kết quả'}

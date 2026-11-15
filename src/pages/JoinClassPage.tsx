@@ -118,7 +118,7 @@ export function JoinClassPage() {
   if (loading || authLoading) {
     return (
       <div className="mx-auto my-12 max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
         <p className="mt-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
           Đang kiểm tra thông tin lời mời...
         </p>
@@ -165,7 +165,7 @@ export function JoinClassPage() {
         </p>
         <Link
           to={`/app/classes/${invitation.classId}`}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700"
         >
           Vào lớp học ngay
           <ArrowRight className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function JoinClassPage() {
         </p>
         <Link
           to="/app/classes"
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700"
         >
           Về trang Lớp của tôi
         </Link>
@@ -234,11 +234,11 @@ export function JoinClassPage() {
   return (
     <div className="mx-auto my-8 max-w-md rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-lg dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white">
           <KeyRound className="h-6 w-6" />
         </div>
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">
             Lời mời tham gia lớp
           </span>
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
@@ -308,7 +308,7 @@ export function JoinClassPage() {
 
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3.5 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300">
           <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
             <span>
               Sau khi gửi mã hợp lệ, yêu cầu của bạn sẽ ở trạng thái{' '}
               <strong>Chờ duyệt (Pending)</strong>. Chủ lớp cần xác nhận trước khi
@@ -320,7 +320,7 @@ export function JoinClassPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+          className="w-full rounded-2xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
         >
           {submitting ? 'Đang kiểm tra & gửi yêu cầu...' : 'Gửi yêu cầu tham gia lớp'}
         </button>

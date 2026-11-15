@@ -57,14 +57,14 @@ export const UpdateNotification: React.FC = () => {
       aria-label="Thông báo bản cập nhật mới"
       className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-auto sm:w-[380px] z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
-      <div className="pointer-events-auto bg-slate-900 text-white border border-emerald-500/40 rounded-2xl p-4 shadow-2xl shadow-slate-950/50 flex flex-col gap-3 relative overflow-hidden dark:bg-slate-950 dark:border-emerald-600/50">
-        {/* Điểm nhấn dải màu ngọc lục bảo Emerald trên đỉnh */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" />
+      <div className="pointer-events-auto bg-slate-900 text-white border border-brand-500/40 rounded-2xl p-4 shadow-2xl shadow-slate-950/50 flex flex-col gap-3 relative overflow-hidden dark:bg-slate-950 dark:border-brand-600/50">
+        {/* Điểm nhấn dải màu thương hiệu trên đỉnh */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-500 via-brand-400 to-brand-600" />
 
         {/* TẦNG 1: THÔNG TIN BẢN CẬP NHẬT & NÚT ĐÓNG */}
         <div className="flex items-start justify-between gap-3 pt-0.5">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-emerald-950 text-emerald-400 border border-emerald-800/80 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-brand-950 text-brand-400 border border-brand-800/80 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
               <RefreshCw
                 className={`w-5 h-5 ${isUpdating ? 'animate-spin' : ''}`}
               />
@@ -77,7 +77,7 @@ export const UpdateNotification: React.FC = () => {
                   Bản cập nhật mới
                 </p>
                 {updateInfo.remoteHash && (
-                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 border border-emerald-800 text-emerald-300 px-1.5 py-0.2 rounded-md">
+                  <span className="text-[10px] font-mono font-bold bg-brand-950/90 border border-brand-800 text-brand-300 px-1.5 py-0.2 rounded-md">
                     #{updateInfo.remoteHash}
                   </span>
                 )}
@@ -116,7 +116,7 @@ export const UpdateNotification: React.FC = () => {
             type="button"
             onClick={() => void handleUpdateNow()}
             disabled={isUpdating}
-            className="flex-1 h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 text-xs font-bold flex items-center justify-center gap-2 shadow-md transition disabled:opacity-75"
+            className="flex-1 h-9 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition disabled:opacity-75"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`}
