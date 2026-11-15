@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
+  Activity,
   Ban,
   Check,
   Copy,
@@ -51,7 +53,8 @@ import {
 
 export function MembersAndSettingsPage() {
   const { user } = useAuth();
-  const { studyClass, isOwner, refreshClass } = useClassContext();
+  const { studyClass, isOwner, isInstructorOrOwner, refreshClass } =
+    useClassContext();
 
   const [members, setMembers] = useState<ClassMember[]>([]);
   const [invitations, setInvitations] = useState<
@@ -448,59 +451,91 @@ export function MembersAndSettingsPage() {
           <div className="mt-4 h-32 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
         ) : (
           <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-            {members.map((m) => (
-              <div
-                key={m.uid}
-                className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center"
-              >
-                <div className="flex items-center gap-3">
-                  <UserAvatar
-                    name={m.displayName}
-                    avatarUrl={
-                      m.avatarUrl || (m.uid === user.uid ? user.photoURL : '')
-                    }
-                    size="lg"
-                  />
-                  <div>
-                    <div className="text-sm font-extrabold text-slate-900 dark:text-white">
-                      {m.displayName} {m.uid === user.uid && '(Bạn)'}
-                    </div>
-                    <div className="mt-0.5">
-                      <RoleBadge role={m.role} />
-                    </div>
-                  </div>
-                </div>
+            {members.map((m) => {
+              const canViewStudentProfile =
+                m.role === 'student' && (isInstructorOrOwner || m.uid === user.uid);
+              const profilePath = isInstructorOrOwner
+                ? `/app/classes/${studyClass.id}/profile/${m.uid}`
+                : `/app/classes/${studyClass.id}/profile`;
 
-                {isOwner && m.role !== 'owner' && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void handleChangeRole(
-                          m.uid,
-                          m.role === 'instructor' ? 'student' : 'instructor'
-                        )
+              return (
+                <div
+                  key={m.uid}
+                  className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center"
+                >
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={m.displayName}
+                      avatarUrl={
+                        m.avatarUrl || (m.uid === user.uid ? user.photoURL : '')
                       }
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
-                    >
-                      <UserCheck className="h-3.5 w-3.5" />
-                      {m.role === 'instructor'
-                        ? 'Chuyển thành Học sinh'
-                        : 'Phân quyền Người hướng dẫn'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => void handleRemoveMember(m.uid)}
-                      className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100"
-                    >
-                      <UserMinus className="h-3.5 w-3.5" />
-                      Xóa khỏi lớp
-                    </button>
+                      size="lg"
+                    />
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        {canViewStudentProfile ? (
+                          <Link
+                            to={profilePath}
+                            className="hover:text-brand-700 hover:underline dark:hover:text-brand-400"
+                          >
+                            {m.displayName}
+                          </Link>
+                        ) : (
+                          m.displayName
+                        )}{' '}
+                        {m.uid === user.uid && '(Bạn)'}
+                      </div>
+                      <div className="mt-0.5">
+                        <RoleBadge role={m.role} />
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {(canViewStudentProfile || (isOwner && m.role !== 'owner')) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {canViewStudentProfile && (
+                        <Link
+                          to={profilePath}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/50 dark:text-brand-300"
+                        >
+                          <Activity className="h-3.5 w-3.5" />
+                          {m.uid === user.uid ? 'Hồ sơ của tôi' : 'Xem hồ sơ'}
+                        </Link>
+                      )}
+
+                      {isOwner && m.role !== 'owner' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleChangeRole(
+                                m.uid,
+                                m.role === 'instructor' ? 'student' : 'instructor'
+                              )
+                            }
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
+                          >
+                            <UserCheck className="h-3.5 w-3.5" />
+                            {m.role === 'instructor'
+                              ? 'Chuyển thành Học sinh'
+                              : 'Phân quyền Người hướng dẫn'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void handleRemoveMember(m.uid)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100"
+                          >
+                            <UserMinus className="h-3.5 w-3.5" />
+                            Xóa khỏi lớp
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

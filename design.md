@@ -35,6 +35,7 @@ src/
 ├── lib/
 │   ├── crypto.ts                    # Sinh mã mời 6 ký tự & băm SHA-256 bảo mật
 │   ├── date.ts                      # Xử lý ngày giờ chuẩn múi giờ Asia/Ho_Chi_Minh
+│   ├── learningProfile.ts           # Tổng hợp Heatmap 365 ngày, Activity theo tháng & Huy hiệu thành tích
 │   ├── scheduleAiParser.ts          # Prompt AI & bộ bóc tách JSON Thời khóa biểu từ ảnh chụp
 │   ├── streak.ts                    # Engine tính Chuỗi ngày học (Streak) & Sao thưởng (không đứt chuỗi ngày nghỉ)
 │   ├── studyAiAndSrs.ts             # Engine Đường cong quên lãng (SRS), TTS đa ngôn ngữ, AI Flashcard & Quiz Parser
@@ -50,6 +51,7 @@ src/
 │   ├── SessionsAndTasksPage.tsx     # Lịch buổi học 60 phút & Danh sách Nhiệm vụ (Flashcard / Quiz / Bài tập)
 │   ├── SessionRunPage.tsx           # Đồng hồ đếm ngược 60 phút & Checklist 4 bước trong giờ học tối
 │   ├── ProgressPage.tsx             # Bảng vàng Sao thưởng & Chuỗi ngày học (Streak)
+│   ├── StudentProfilePage.tsx       # Hồ sơ học tập kiểu GitHub (Heatmap 365 ngày, Activity theo tháng & Huy hiệu)
 │   └── MembersAndSettingsPage.tsx   # Quản lý thành viên, tạo mã mời & cài đặt lớp học
 ├── services/
 │   └── studyNestService.ts          # Tầng truy xuất dữ liệu hợp nhất (Firestore + LocalStorage Demo)
@@ -90,7 +92,7 @@ src/
 ### 4.1. Bố cục & Điều hướng Tối giản, Thân thiện Học sinh Tiểu học
 - **Sidebar (`ClassLayout.tsx`)**:
   - Chỉ hiển thị **Biểu tượng (Icon) + Tên mục ngắn gọn** (không hiển thị dòng mô tả phụ rườm rà bên dưới mỗi mục, không hiển thị hộp "Lịch sinh hoạt Workspace" ở chân sidebar).
-  - Các mục chính: `Góc học hôm nay`, `Thời khóa biểu`, `Buổi học & Nhiệm vụ`, `Thư viện bài học`, `Sao & Chuỗi ngày học`, `Thành viên & Cài đặt`.
+  - Các mục chính: `Góc học hôm nay`, `Thời khóa biểu`, `Buổi học & Nhiệm vụ`, `Thư viện bài học`, `Sao & Chuỗi ngày học`, `Hồ sơ học tập`, `Thành viên & Cài đặt`.
 - **Bo góc & Khoảng trắng**:
   - Sử dụng bo góc mềm mại (`rounded-2xl` cho thẻ con, `rounded-3xl` cho khung chính và Modal).
   - Font chữ rõ ràng, tiêu đề dùng `font-extrabold`, nút bấm có biểu tượng trực quan đi kèm.
@@ -120,7 +122,7 @@ Hệ thống áp dụng **4 vai trò màu sắc tách biệt** (đồng bộ đ�
 2. **Nền thẻ & Siêu dữ liệu Trung tính (`slate-*`)**:
    - Toàn bộ thẻ bài học (`LessonsPage`), thẻ nhiệm vụ (`ClassDashboardPage`), dòng lịch sử đã xác nhận (`ProgressPage`, `SessionsAndTasksPage`), nhãn giáo trình lặp lại ở Unit header (`Everybody Up`...), huy hiệu `Đã công bố` và nút đếm số thẻ (`X thẻ`) giữ nền trắng/xám Slate sạch sẽ, tránh tình trạng "tràn màu xanh lá" gây nhiễu thị giác.
 3. **Màu Hoàn thành & Đạt chuẩn Tiết chế (`emerald`)**:
-   - Giữ cố định màu xanh ngọc lục bảo (`emerald`) chỉ cho các dấu hiệu hoàn thành kích thước gọn: ô tích hoàn thành `bg-emerald-600`, thanh tiến độ `100%`, nhãn `Hoàn thành` / `Đã học (X/X)` / `Đã học xong Unit` / `Đã xong` / `Đã xác nhận`, mức SRS **Đã nhớ kỹ**, đáp án đúng trong Trắc nghiệm, thẻ **Chuỗi ngày học (Streak)** và thông báo Toast thành công. Không phủ nền xanh lá lên toàn bộ thẻ bài học hay nút hành động thông thường.
+   - Giữ cố định màu xanh ngọc lục bảo (`emerald`) chỉ cho các dấu hiệu hoàn thành kích thước gọn: ô tích hoàn thành `bg-emerald-600`, thanh tiến độ `100%`, nhãn `Hoàn thành` / `Đã học (X/X)` / `Đã học xong Unit` / `Đã xong` / `Đã xác nhận`, mức SRS **Đã nhớ kỹ**, đáp án đúng trong Trắc nghiệm, thẻ **Chuỗi ngày học (Streak)**, lưới **Heatmap 365 ngày** trên trang **Hồ sơ học tập**, và thông báo Toast thành công. Không phủ nền xanh lá lên toàn bộ thẻ bài học hay nút hành động thông thường.
 4. **Màu Ngữ nghĩa Chuyên biệt khác**:
    - **`cyan` & `teal`**: Dùng cho nhãn trạng thái `Đã thêm hôm nay` (`cyan`) và tiết học `Ở nhà` trên Thời khóa biểu (`teal`) để tách biệt rõ với `emerald` hoàn thành và `sky` của chủ đề lớp.
    - **`violet`**: Biểu thị tính năng **Trợ lý AI** (Copy Prompt AI, Đọc JSON AI) và **Bài kiểm tra Trắc nghiệm**.

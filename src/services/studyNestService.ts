@@ -1203,6 +1203,50 @@ export async function listLearningRecords(
     .slice(0, maxRecords);
 }
 
+/**
+ * Truy vấn đầy đủ nhật ký học tập của một học sinh (hỗ trợ lọc khoảng ngày)
+ * tận dụng composite index (studentUid ASC, date DESC) để dựng biểu đồ năm học.
+ */
+export async function listStudentLearningRecordsByDateRange(params: {
+  classId: string;
+  studentUid: string;
+  startDate?: string;
+  endDate?: string;
+  maxRecords?: number;
+}): Promise<LearningRecord[]> {
+  const { classId, studentUid, startDate, endDate, maxRecords = 800 } = params;
+
+  if (!isFirebaseConfigured) {
+    const state = loadDemoState();
+    return Object.values(state.learningRecords[classId] || {})
+      .filter((r) => {
+        if (r.id.startsWith('srs_') || r.studentUid !== studentUid) return false;
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        return true;
+      })
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, maxRecords);
+  }
+
+  const { db } = getFirebaseServices();
+  const ref = collection(db, 'classes', classId, 'learningRecords');
+  const q = query(
+    ref,
+    where('studentUid', '==', studentUid),
+    ...(startDate ? [where('date', '>=', startDate)] : []),
+    ...(endDate ? [where('date', '<=', endDate)] : []),
+    orderBy('date', 'desc'),
+    limit(maxRecords)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => d.data() as LearningRecord)
+    .filter((r) => !r.id.startsWith('srs_'))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, maxRecords);
+}
+
 export async function submitStudentCompletion(params: {
   classId: string;
   studentUid: string;

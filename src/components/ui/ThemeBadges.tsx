@@ -116,6 +116,7 @@ const AVATAR_SIZE_CLASSES = {
   sm: 'h-7 w-7 text-xs',
   md: 'h-9 w-9 text-xs',
   lg: 'h-10 w-10 text-sm',
+  xl: 'h-20 w-20 text-2xl',
 } as const;
 
 const AVATAR_SIZE_PX = {
@@ -123,6 +124,7 @@ const AVATAR_SIZE_PX = {
   sm: 28,
   md: 36,
   lg: 40,
+  xl: 80,
 } as const;
 
 export function UserAvatar({

@@ -260,6 +260,32 @@ export function computeNextSrsState(params: {
       ? keyword.ttsLang
       : inferDefaultTtsLang(subject, lessonTtsLang);
 
+  // Bảo toàn ngày ôn trước đó (nếu thẻ cũ chưa từng có mảng history) và lưu tối đa 60 mốc gần nhất
+  const prevHistory = Array.isArray(prev?.history)
+    ? prev.history.filter((item) => item && item.date)
+    : [];
+  if (
+    prevHistory.length === 0 &&
+    prev?.lastReviewedDate &&
+    prev.lastReviewedDate !== todayStr
+  ) {
+    prevHistory.push({
+      date: prev.lastReviewedDate,
+      rating: prev.lastRating || 'good',
+      intervalDays: prev.level === 3 ? 14 : prev.level === 2 ? 3 : 1,
+    });
+  }
+  const updatedHistory = [
+    ...prevHistory.filter((item) => item.date !== todayStr),
+    {
+      date: todayStr,
+      rating,
+      intervalDays,
+    },
+  ]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-60);
+
   return {
     key,
     lessonId,
@@ -274,6 +300,8 @@ export function computeNextSrsState(params: {
     streakCorrect: nextStreak,
     lastReviewedDate: todayStr,
     nextReviewDate,
+    lastRating: rating,
+    history: updatedHistory,
   };
 }
 

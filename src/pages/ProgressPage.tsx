@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
+  Activity,
   Award,
   CalendarCheck,
   CheckCircle2,
@@ -200,7 +202,36 @@ export function ProgressPage() {
                 </button>
               ))
             )}
+            {selectedStudentUid && (
+              <Link
+                to={`/app/classes/${studyClass.id}/profile/${selectedStudentUid}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50/70 px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/50 dark:text-brand-300"
+              >
+                <Activity className="h-3.5 w-3.5" />
+                Xem hồ sơ 365 ngày
+              </Link>
+            )}
           </div>
+        </div>
+      )}
+
+      {!isInstructorOrOwner && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+              Bảng Sao thưởng &amp; Chuỗi ngày học
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Xem chi tiết sao tích lũy, chuỗi streak và nhật ký từng buổi học.
+            </p>
+          </div>
+          <Link
+            to={`/app/classes/${studyClass.id}/profile`}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-700"
+          >
+            <Activity className="h-3.5 w-3.5" />
+            Xem Hồ sơ học tập (365 ngày)
+          </Link>
         </div>
       )}
 

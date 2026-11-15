@@ -45,8 +45,19 @@ import {
   parseQuizAiResponse,
   resolveCreateLessonModalDefaults,
 } from '@/lib/studyAiAndSrs';
+import {
+  buildLearningContributionCalendar,
+  buildMonthlyContributionActivity,
+  computeStudentAchievements,
+} from '@/lib/learningProfile';
 import { Timestamp } from 'firebase/firestore';
-import type { Lesson, SrsCardProgress } from '@/types/domain';
+import type {
+  Assignment,
+  LearningRecord,
+  Lesson,
+  ScheduleException,
+  SrsCardProgress,
+} from '@/types/domain';
 
 describe('Date & Timezone Helpers (Asia/Ho_Chi_Minh)', () => {
   it('chuyển đổi chính xác UTC sang ngày theo múi giờ Asia/Ho_Chi_Minh (+07:00)', () => {
@@ -795,6 +806,220 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     );
     expect(omittedSubjectParse.subject).toBe('');
     expect(omittedSubjectParse.unitTitle).toBe('');
+  });
+
+  it('lưu history theo ngày cho SRS và tổng hợp đúng Heatmap 365 ngày, Activity theo tháng & Huy hiệu', () => {
+    const nowTs = Timestamp.now();
+
+    // 1. Kiểm tra computeNextSrsState bảo toàn ngày cũ (thẻ legacy) và ghi history mới không trùng lặp trong ngày
+    const legacyCard: SrsCardProgress = {
+      key: makeSrsCardKey('les_1', 'lion'),
+      lessonId: 'les_1',
+      subject: 'Everybody Up',
+      unitTitle: 'Unit 6: The Zoo',
+      term: 'lion',
+      meaning: 'sư tử',
+      example: '',
+      level: 2,
+      streakCorrect: 1,
+      lastReviewedDate: '2026-11-10',
+      nextReviewDate: '2026-11-13',
+    };
+    const updatedToday = computeNextSrsState({
+      prev: legacyCard,
+      rating: 'easy',
+      todayStr: '2026-11-15',
+      lessonId: 'les_1',
+      subject: 'Everybody Up',
+      unitTitle: 'Unit 6: The Zoo',
+      keyword: { term: 'lion', meaning: 'sư tử', example: '' },
+      lessonTtsLang: 'en-US',
+    });
+    expect(updatedToday.history).toHaveLength(2);
+    expect(updatedToday.history?.map((h) => h.date)).toEqual([
+      '2026-11-10',
+      '2026-11-15',
+    ]);
+
+    // 2. Tạo dữ liệu mẫu qua 2 năm (2025 & 2026) để kiểm tra Heatmap + Activity + Milestones
+    const sampleLessons: Lesson[] = [
+      {
+        id: 'les_eu',
+        classId: 'cls_1',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 6: The Zoo',
+        title: 'Lesson 1',
+        goal: '',
+        keywords: [],
+        explanation: '',
+        resourceUrl: '',
+        status: 'published',
+        createdBy: 'gv_1',
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      },
+    ];
+    const sampleAssignments: Assignment[] = [
+      {
+        id: 'asg_quiz',
+        classId: 'cls_1',
+        sessionId: null,
+        lessonId: 'les_eu',
+        title: 'Quiz Unit 6',
+        description: '',
+        dueDate: '2026-11-15',
+        assignedStudentUids: ['ALL'],
+        starsReward: 5,
+        taskType: 'quiz',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 6: The Zoo',
+        createdBy: 'gv_1',
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      },
+    ];
+    const sampleRecords: LearningRecord[] = [
+      {
+        id: 'asg_quiz_hs1',
+        classId: 'cls_1',
+        studentUid: 'hs1',
+        studentName: 'Thiện Tâm',
+        type: 'assignment',
+        assignmentId: 'asg_quiz',
+        sessionId: null,
+        title: 'Quiz Unit 6',
+        date: '2026-11-15',
+        studentStatus: 'submitted',
+        studentNote: 'Làm đúng hết!',
+        submittedAt: nowTs,
+        instructorStatus: 'confirmed',
+        instructorComment: 'Xuất sắc!',
+        starsAwarded: 5,
+        confirmedBy: 'gv_1',
+        confirmedAt: nowTs,
+        quizScore: 10,
+        quizTotal: 10,
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      },
+      {
+        id: 'session_old_hs1',
+        classId: 'cls_1',
+        studentUid: 'hs1',
+        studentName: 'Thiện Tâm',
+        type: 'session',
+        assignmentId: null,
+        sessionId: 'ses_old',
+        title: 'Buổi học năm trước',
+        date: '2025-12-20',
+        studentStatus: 'submitted',
+        studentNote: '',
+        submittedAt: nowTs,
+        instructorStatus: 'confirmed',
+        instructorComment: '',
+        starsAwarded: 3,
+        confirmedBy: 'gv_1',
+        confirmedAt: nowTs,
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      },
+    ];
+    const sampleExceptions: ScheduleException[] = [
+      {
+        id: '2026-11-14',
+        classId: 'cls_1',
+        date: '2026-11-14',
+        reason: 'Nghỉ cuối tuần',
+        isDayOff: true,
+        createdBy: 'gv_1',
+        createdAt: nowTs,
+      },
+    ];
+    const sampleSrsMap: Record<string, SrsCardProgress> = {
+      [updatedToday.key]: updatedToday,
+      // Thẻ đã học năm 2025 chưa từng có history (chỉ có lastReviewedDate)
+      'les_1::tiger': {
+        key: 'les_1::tiger',
+        lessonId: 'les_1',
+        subject: 'Everybody Up',
+        unitTitle: 'Unit 6: The Zoo',
+        term: 'tiger',
+        meaning: 'con hổ',
+        example: '',
+        level: 3,
+        streakCorrect: 3,
+        lastReviewedDate: '2025-10-05',
+        nextReviewDate: '2025-11-05',
+      },
+    };
+
+    const lastYearCal = buildLearningContributionCalendar({
+      records: sampleRecords,
+      srsStates: sampleSrsMap,
+      lessons: sampleLessons,
+      assignments: sampleAssignments,
+      todayDateStr: '2026-11-15',
+      selectedPeriod: 'last_year',
+      scheduleExceptions: sampleExceptions,
+    });
+
+    expect(lastYearCal.weeks).toHaveLength(53);
+    expect(lastYearCal.weeks.every((w) => w.length === 7)).toBe(true);
+    expect(lastYearCal.availableYears).toEqual([2026, 2025]);
+    // Ngày 2026-11-15: 1 quiz + 1 lượt ôn SRS = 2 hoạt động, +5 sao
+    const todayCell = lastYearCal.dayLookup['2026-11-15'];
+    expect(todayCell.activityCount).toBe(2);
+    expect(todayCell.confirmedCount).toBe(1);
+    expect(todayCell.flashcardCount).toBe(1);
+    expect(todayCell.starsAwarded).toBe(5);
+    expect(todayCell.intensityLevel).toBe(1);
+    expect(lastYearCal.dayLookup['2026-11-14'].isDayOff).toBe(true);
+    // 2025-10-05 nằm ngoài khung 53 tuần tính đến 2026-11-15, còn 2025-12-20 + 2026-11-10 + 2026-11-15 nằm trong khung
+    expect(lastYearCal.totalActivities).toBe(4);
+
+    // Kiểm tra chế độ lọc riêng năm 2025
+    const cal2025 = buildLearningContributionCalendar({
+      records: sampleRecords,
+      srsStates: sampleSrsMap,
+      lessons: sampleLessons,
+      assignments: sampleAssignments,
+      todayDateStr: '2026-11-15',
+      selectedPeriod: 2025,
+    });
+    expect(cal2025.totalActivities).toBe(2); // 2025-12-20 + 2025-10-05
+
+    // Kiểm tra gom Activity theo tháng & Milestones
+    const monthly = buildMonthlyContributionActivity({
+      calendar: lastYearCal,
+      allTimeRecords: sampleRecords,
+      srsStates: sampleSrsMap,
+      lessons: sampleLessons,
+      assignments: sampleAssignments,
+    });
+    expect(monthly[0].monthKey).toBe('2026-11');
+    expect(monthly[0].subjectGroups[0].subject).toBe('Everybody Up');
+    expect(monthly[0].flashcardGroups[0].reviewCount).toBe(2); // 11-15 (easy) + 11-10 (good)
+    expect(monthly[0].milestones.some((m) => m.kind === 'perfect_quiz')).toBe(
+      true
+    );
+
+    // Kiểm tra Huy hiệu thành tích
+    const achievements = computeStudentAchievements({
+      longestStreak: 8,
+      totalStars: 52,
+      confirmedDaysCount: 10,
+      records: sampleRecords,
+      srsStates: sampleSrsMap,
+      totalYearlyActivities: 120,
+    });
+    expect(achievements.find((a) => a.id === 'first_day')?.unlocked).toBe(true);
+    expect(achievements.find((a) => a.id === 'streak_7')?.unlocked).toBe(true);
+    expect(achievements.find((a) => a.id === 'streak_30')?.unlocked).toBe(false);
+    expect(achievements.find((a) => a.id === 'stars_50')?.unlocked).toBe(true);
+    expect(achievements.find((a) => a.id === 'perfect_quiz')?.unlocked).toBe(
+      true
+    );
+    expect(achievements.find((a) => a.id === 'yearly_100')?.unlocked).toBe(true);
   });
 });
 

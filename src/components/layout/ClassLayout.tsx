@@ -7,6 +7,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import {
+  Activity,
   ArrowLeft,
   BookOpen,
   Calendar,
@@ -203,6 +204,12 @@ function ClassLayoutInner() {
           end: false,
           label: 'Sao & Chuỗi ngày học',
           icon: Trophy,
+        },
+        {
+          to: `${baseUrl}/profile`,
+          end: false,
+          label: 'Hồ sơ học tập',
+          icon: Activity,
         },
       ],
     },

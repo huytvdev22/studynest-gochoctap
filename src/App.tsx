@@ -49,6 +49,11 @@ const SessionDetailPage = lazy(() =>
 const ProgressPage = lazy(() =>
   import('@/pages/ProgressPage').then((m) => ({ default: m.ProgressPage }))
 );
+const StudentProfilePage = lazy(() =>
+  import('@/pages/StudentProfilePage').then((m) => ({
+    default: m.StudentProfilePage,
+  }))
+);
 const MembersAndSettingsPage = lazy(() =>
   import('@/pages/MembersAndSettingsPage').then((m) => ({
     default: m.MembersAndSettingsPage,
@@ -121,6 +126,8 @@ function RouteTitleUpdater() {
       pageTitle = 'Nhiệm vụ & Bài tập – StudyNest';
     } else if (/^\/app\/classes\/[^/]+\/progress/.test(pathname)) {
       pageTitle = 'Sao & Chuỗi ngày học – StudyNest';
+    } else if (/^\/app\/classes\/[^/]+\/profile/.test(pathname)) {
+      pageTitle = 'Hồ sơ học tập – StudyNest';
     } else if (/^\/app\/classes\/[^/]+\/members/.test(pathname)) {
       pageTitle = 'Thành viên & Cài đặt – StudyNest';
     } else if (/^\/app\/classes\/[^/]+/.test(pathname)) {
@@ -176,6 +183,11 @@ export function App() {
                   element={<SessionDetailPage />}
                 />
                 <Route path="progress" element={<ProgressPage />} />
+                <Route path="profile" element={<StudentProfilePage />} />
+                <Route
+                  path="profile/:studentUid"
+                  element={<StudentProfilePage />}
+                />
                 <Route path="members" element={<MembersAndSettingsPage />} />
               </Route>
             </Route>
