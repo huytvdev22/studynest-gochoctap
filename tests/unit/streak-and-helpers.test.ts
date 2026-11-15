@@ -31,16 +31,19 @@ import {
 } from '@/services/versionService';
 import {
   buildCurriculumSummaries,
+  buildFlashcardAiPrompt,
   classifySrsCardBucket,
   computeNextSrsState,
   detectTextTtsLang,
   doesLessonMatchSearch,
   getLessonStudyStats,
+  getUniqueUnitTitlesForSubject,
   inferDefaultTtsLang,
   isVietnameseText,
   makeSrsCardKey,
   parseFlashcardAiResponse,
   parseQuizAiResponse,
+  resolveCreateLessonModalDefaults,
 } from '@/lib/studyAiAndSrs';
 import { Timestamp } from 'firebase/firestore';
 import type { Lesson, SrsCardProgress } from '@/types/domain';
@@ -694,6 +697,104 @@ Hy vọng thông tin này giúp ích cho bạn!`;
     expect(filteredByWord).toHaveLength(1);
     expect(filteredByWord[0].subject).toBe('Toán Lớp 3');
     expect(filteredByWord[0].matchingLessonsCount).toBe(1);
+  });
+
+  it('không tự động fill giáo trình hoặc Unit ngoài màn hình tổng, chỉ điền khi đang ở trong giáo trình đó hoặc bấm đúng ngữ cảnh', () => {
+    // 1. Đang ở màn hình tổng /lessons (chưa vào giáo trình nào) -> bấm "+ Thêm Bài học & Flashcard (AI)"
+    expect(
+      resolveCreateLessonModalDefaults({
+        currentCurriculumFilter: 'ALL',
+        currentUnitFilter: 'ALL',
+      })
+    ).toEqual({ subject: '', unitTitle: '' });
+
+    // 2. Đang ở trong giáo trình "Everybody Up" nhưng chưa lọc Unit cụ thể
+    expect(
+      resolveCreateLessonModalDefaults({
+        currentCurriculumFilter: 'Everybody Up',
+        currentUnitFilter: 'ALL',
+      })
+    ).toEqual({ subject: 'Everybody Up', unitTitle: '' });
+
+    // 3. Đang ở trong giáo trình "Everybody Up" và đang lọc theo "Unit 5: The Park"
+    expect(
+      resolveCreateLessonModalDefaults({
+        currentCurriculumFilter: 'Everybody Up',
+        currentUnitFilter: 'Unit 5: The Park',
+      })
+    ).toEqual({ subject: 'Everybody Up', unitTitle: 'Unit 5: The Park' });
+
+    // 4. Đang ở trong giáo trình nhưng lọc nhóm "Chưa phân Unit" -> không gán chuỗi giả vào ô Unit
+    expect(
+      resolveCreateLessonModalDefaults({
+        currentCurriculumFilter: 'Everybody Up',
+        currentUnitFilter: 'Chưa phân Unit',
+      })
+    ).toEqual({ subject: 'Everybody Up', unitTitle: '' });
+
+    // 5. Bấm "+ Thêm bài" trên thẻ giáo trình cụ thể hoặc "+ Thêm bài vào Unit này"
+    expect(
+      resolveCreateLessonModalDefaults({
+        defaultSubject: 'Everybody Up',
+        currentCurriculumFilter: 'ALL',
+        currentUnitFilter: 'ALL',
+      })
+    ).toEqual({ subject: 'Everybody Up', unitTitle: '' });
+    expect(
+      resolveCreateLessonModalDefaults({
+        defaultSubject: 'Everybody Up',
+        defaultUnit: 'Unit 6: The Zoo',
+        currentCurriculumFilter: 'Everybody Up',
+        currentUnitFilter: 'ALL',
+      })
+    ).toEqual({ subject: 'Everybody Up', unitTitle: 'Unit 6: The Zoo' });
+
+    // Lọc danh sách Unit theo giáo trình
+    expect(
+      getUniqueUnitTitlesForSubject(
+        [
+          { subject: 'Everybody Up', unitTitle: 'Unit 6: The Zoo' },
+          { subject: 'Everybody Up', unitTitle: 'Unit 5: The Park' },
+          { subject: 'Everybody Up', unitTitle: 'Unit 6: The Zoo' },
+          { subject: 'Toán Lớp 3', unitTitle: 'Chương 1' },
+        ],
+        'Everybody Up'
+      )
+    ).toEqual(['Unit 6: The Zoo', 'Unit 5: The Park']);
+    expect(getUniqueUnitTitlesForSubject([], '')).toEqual([]);
+
+    // Prompt AI khi chưa chọn giáo trình/Unit không được tự chèn "Everybody Up" / "Unit 1"
+    const openPrompt = buildFlashcardAiPrompt({
+      subject: '',
+      unitTitle: '',
+      lessonTitle: '',
+      ttsLang: '',
+      rawNotes: 'Bảng nhân 6',
+    });
+    expect(openPrompt).not.toContain('Everybody Up');
+    expect(openPrompt).not.toContain('Unit 1: First Day');
+
+    const scopedPrompt = buildFlashcardAiPrompt({
+      subject: 'Everybody Up',
+      unitTitle: 'Unit 6: The Zoo',
+      lessonTitle: 'Lesson 1',
+      ttsLang: 'en-US',
+      rawNotes: 'tiger, monkey',
+    });
+    expect(scopedPrompt).toContain('"Everybody Up"');
+    expect(scopedPrompt).toContain('"Unit 6: The Zoo"');
+
+    // Parse JSON khi AI không trả "subject"/"unitTitle" và người dùng cũng chưa chọn sẵn
+    const omittedSubjectParse = parseFlashcardAiResponse(
+      `\`\`\`json
+{
+  "title": "Bảng nhân 6",
+  "keywords": [{ "term": "6 x 7", "meaning": "42" }]
+}
+\`\`\``
+    );
+    expect(omittedSubjectParse.subject).toBe('');
+    expect(omittedSubjectParse.unitTitle).toBe('');
   });
 });
 

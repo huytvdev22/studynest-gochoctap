@@ -553,6 +553,71 @@ export function buildCurriculumSummaries(params: {
 }
 
 // ============================================================================
+// Modal Tạo Bài học: Xác định giá trị mặc định Giáo trình / Unit theo ngữ cảnh
+// ============================================================================
+
+/**
+ * Lấy danh sách tên Unit duy nhất thuộc một giáo trình từ danh sách bài học.
+ */
+export function getUniqueUnitTitlesForSubject(
+  lessons: ReadonlyArray<Pick<Lesson, 'subject' | 'unitTitle'>>,
+  targetSubject: string
+): string[] {
+  const normalizedTarget = targetSubject.trim();
+  if (!normalizedTarget) return [];
+  const list = lessons
+    .filter(
+      (l) => ((l.subject || '').trim() || 'Giáo trình chung') === normalizedTarget
+    )
+    .map((l) => (l.unitTitle || '').trim())
+    .filter(Boolean);
+  return Array.from(new Set(list));
+}
+
+/**
+ * Xác định Giáo trình và Unit mặc định khi mở modal Tạo Bài học & Flashcard.
+ * Không tự động điền Giáo trình hoặc Unit khi đang ở màn hình tổng danh sách
+ * giáo trình, trừ khi người dùng đang đứng bên trong giáo trình đó hoặc bấm từ
+ * nút gắn với giáo trình / Unit cụ thể.
+ */
+export function resolveCreateLessonModalDefaults(params: {
+  defaultSubject?: string;
+  defaultUnit?: string;
+  currentCurriculumFilter: string;
+  currentUnitFilter: string;
+}): { subject: string; unitTitle: string } {
+  const {
+    defaultSubject,
+    defaultUnit,
+    currentCurriculumFilter,
+    currentUnitFilter,
+  } = params;
+
+  const subject =
+    defaultSubject && defaultSubject !== 'ALL'
+      ? defaultSubject.trim()
+      : currentCurriculumFilter && currentCurriculumFilter !== 'ALL'
+      ? currentCurriculumFilter.trim()
+      : '';
+
+  const unitTitle = !subject
+    ? ''
+    : defaultUnit &&
+      defaultUnit !== 'ALL' &&
+      defaultUnit !== 'Chưa phân Unit'
+    ? defaultUnit.trim()
+    : currentCurriculumFilter &&
+      currentCurriculumFilter !== 'ALL' &&
+      currentUnitFilter &&
+      currentUnitFilter !== 'ALL' &&
+      currentUnitFilter !== 'Chưa phân Unit'
+    ? currentUnitFilter.trim()
+    : '';
+
+  return { subject, unitTitle };
+}
+
+// ============================================================================
 // AI Prompt & JSON Parser #1: Tạo Bài học + Bộ thẻ Flashcard
 // ============================================================================
 
@@ -564,16 +629,20 @@ export function buildFlashcardAiPrompt(params: {
   rawNotes: string;
 }): string {
   const { subject, unitTitle, lessonTitle, ttsLang, rawNotes } = params;
+  const trimmedSubject = subject.trim();
+  const trimmedUnit = unitTitle.trim();
+  const trimmedLesson = lessonTitle.trim();
+  const hasSubject = Boolean(trimmedSubject);
   const hasForeignTts = Boolean(ttsLang);
 
   return `Bạn là trợ lý biên soạn bài học và thẻ ghi nhớ (Flashcard) cho học sinh tiểu học trên hệ thống StudyNest.
 Hãy dựa vào thông tin buổi học (và ảnh chụp trang sách nếu có đính kèm) để tạo nội dung bài học và danh sách thẻ Flashcard.
 
 THÔNG TIN BÀI HỌC:
-- Giáo trình / Môn học: "${subject || 'Everybody Up'}"
-- Chương / Unit: "${unitTitle || 'Unit 1'}"
-- Tên bài học (Lesson): "${lessonTitle || 'Lesson 1'}"
-- Mã ngôn ngữ phát âm (ttsLang): "${ttsLang}"
+- Giáo trình / Môn học: ${trimmedSubject ? `"${trimmedSubject}"` : '(Chưa chỉ định — hãy tự xác định từ ghi chú hoặc ảnh chụp trang sách)'}
+- Chương / Unit: ${trimmedUnit ? `"${trimmedUnit}"` : '(Chưa chỉ định — hãy tự xác định từ ghi chú hoặc ảnh chụp trang sách, hoặc để "" nếu không chia Unit)'}
+- Tên bài học (Lesson): ${trimmedLesson ? `"${trimmedLesson}"` : '(Hãy tự đặt tên bài học ngắn gọn từ ghi chú hoặc ảnh chụp)'}
+- Mã ngôn ngữ phát âm (ttsLang): ${hasSubject ? `"${ttsLang}"` : 'Tự xác định theo môn học ("en-US" nếu Tiếng Anh, "zh-CN" nếu Tiếng Trung, "ja-JP" nếu Tiếng Nhật, "ko-KR" nếu Tiếng Hàn, "fr-FR" nếu Tiếng Pháp, hoặc "" nếu Tiếng Việt / Toán / Khoa học)'}
 - Ghi chú buổi học / Từ mới / Mẫu câu cần nhớ:
 """
 ${rawNotes.trim() || 'Hãy trích xuất toàn bộ từ vựng mới, mẫu câu hỏi - đáp và điểm ngữ pháp quan trọng từ ảnh chụp trang sách đính kèm.'}
@@ -584,16 +653,16 @@ Chỉ trả về duy nhất 1 khối codeblock \`\`\`json hợp lệ theo đúng
 
 \`\`\`json
 {
-  "subject": "${subject || 'Everybody Up'}",
-  "unitTitle": "${unitTitle || 'Unit 1: First Day'}",
-  "title": "${lessonTitle || 'Lesson 1: School Supplies'}",
+  "subject": "${trimmedSubject || 'Tên giáo trình hoặc môn học'}",
+  "unitTitle": "${trimmedUnit || 'Tên Unit / Chương (hoặc để trống nếu không có)'}",
+  "title": "${trimmedLesson || 'Tên bài học ngắn gọn'}",
   "ttsLang": "${ttsLang}",
   "goal": "Mục tiêu ngắn gọn học sinh cần nắm được sau bài học",
   "explanation": "Tóm tắt kiến thức / mẫu câu / ngữ pháp trọng tâm trình bày rõ ràng, dễ hiểu cho học sinh",
   "keywords": [
     {
-      "term": "${hasForeignTts ? 'Từ mới hoặc Mẫu câu ngoại ngữ (VD: eraser / What is it? - It\'s a pen.)' : 'Câu hỏi / Khái niệm / Công thức mặt trước'}",
-      "pronunciation": "${hasForeignTts ? 'Phiên âm IPA / Pinyin / Romaji (VD: /ɪˈreɪ.zər/)' : ''}",
+      "term": "${hasForeignTts || !hasSubject ? 'Từ mới hoặc Mẫu câu / Câu hỏi mặt trước' : 'Câu hỏi / Khái niệm / Công thức mặt trước'}",
+      "pronunciation": "${hasForeignTts ? 'Phiên âm IPA / Pinyin / Romaji (VD: /ɪˈreɪ.zər/)' : !hasSubject ? 'Phiên âm IPA / Pinyin / Romaji nếu là ngoại ngữ, hoặc để ""' : ''}",
       "meaning": "Nghĩa tiếng Việt hoặc Đáp án mặt sau ngắn gọn, dễ nhớ",
       "example": "Câu ví dụ minh họa hoặc mẹo ghi nhớ nhanh",
       "cardType": "vocab"
@@ -604,7 +673,7 @@ Chỉ trả về duy nhất 1 khối codeblock \`\`\`json hợp lệ theo đúng
 
 QUY TẮC:
 1. Bao gồm cả các từ vựng mới ("cardType": "vocab") VÀ các mẫu câu quan trọng cần học thuộc ("cardType": "sentence") hoặc khái niệm/công thức ("cardType": "concept").
-2. Giữ ngôn từ trong sáng, ngắn gọn, phù hợp học sinh tiểu học.`;
+2. Giữ ngôn từ trong sáng, ngắn gọn, phù hợp học sinh tiểu học.${!hasSubject ? '\n3. Nếu chưa chỉ định sẵn giáo trình/môn học, hãy điền chính xác "subject", "unitTitle" (nếu có) và mã "ttsLang" phù hợp ("en-US", "zh-CN", "ja-JP", "ko-KR", "fr-FR", "vi-VN", hoặc "" nếu không cần đọc ngoại ngữ).' : ''}`;
 }
 
 export interface ParsedFlashcardLessonResult {
@@ -634,8 +703,8 @@ function extractJsonBlock(rawText: string): string {
 
 export function parseFlashcardAiResponse(
   rawText: string,
-  fallbackSubject = 'Everybody Up',
-  fallbackUnit = 'Unit 1'
+  fallbackSubject = '',
+  fallbackUnit = ''
 ): ParsedFlashcardLessonResult {
   if (!rawText || !rawText.trim()) {
     return {

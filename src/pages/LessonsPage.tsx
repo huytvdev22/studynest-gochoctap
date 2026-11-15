@@ -59,10 +59,12 @@ import {
   buildQuizAiPrompt,
   doesLessonMatchSearch,
   getLessonStudyStats,
+  getUniqueUnitTitlesForSubject,
   inferDefaultTtsLang,
   makeSrsCardKey,
   parseFlashcardAiResponse,
   parseQuizAiResponse,
+  resolveCreateLessonModalDefaults,
   speakTextWithTts,
   TTS_LANGUAGE_OPTIONS,
 } from '@/lib/studyAiAndSrs';
@@ -120,10 +122,10 @@ export function LessonsPage() {
   const [unitInputMode, setUnitInputMode] = useState<'select' | 'custom'>(
     'select'
   );
-  const [subject, setSubject] = useState<string>('Everybody Up');
-  const [unitTitle, setUnitTitle] = useState<string>('Unit 1: First Day');
-  const [title, setTitle] = useState<string>('Lesson 1: School Supplies');
-  const [ttsLang, setTtsLang] = useState<SupportedTtsLang>('en-US');
+  const [subject, setSubject] = useState<string>('');
+  const [unitTitle, setUnitTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [ttsLang, setTtsLang] = useState<SupportedTtsLang>('');
   const [goal, setGoal] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
   const [resourceUrl] = useState<string>('');
@@ -257,42 +259,54 @@ export function LessonsPage() {
   }, [lessons, subjectFilter]);
 
   // Danh sách Unit đã tồn tại của Giáo trình đang chọn trong Modal tạo bài mới
-  const unitsInModalSubject = useMemo(() => {
-    const list = lessons
-      .filter((l) => l.subject === subject)
-      .map((l) => (l.unitTitle || '').trim())
-      .filter(Boolean);
-    return Array.from(new Set(list));
-  }, [lessons, subject]);
+  const unitsInModalSubject = useMemo(
+    () => getUniqueUnitTitlesForSubject(lessons, subject),
+    [lessons, subject]
+  );
 
   const openCreateLessonModal = (defaultSubject?: string, defaultUnit?: string) => {
     setLessonCreationMode('ai');
     setFormError(null);
-    const chosenSubject =
-      defaultSubject && defaultSubject !== 'ALL'
-        ? defaultSubject
-        : subjectFilter !== 'ALL'
-        ? subjectFilter
-        : curriculums[0] || 'Everybody Up';
-    handleSubjectInputChange(chosenSubject);
-    setSubjectInputMode(curriculums.length > 0 ? 'select' : 'custom');
+    setAiRawNotes('');
+    setAiPastedJson('');
+    setCopiedFlashcardPrompt(false);
+    setTitle('');
+    setGoal('');
+    setExplanation('');
+    setKeywords([{ term: '', pronunciation: '', meaning: '', example: '' }]);
 
-    const existingUnits = Array.from(
-      new Set(
-        lessons
-          .filter((l) => l.subject === chosenSubject)
-          .map((l) => (l.unitTitle || '').trim())
-          .filter(Boolean)
-      )
-    );
-    const chosenUnit =
-      defaultUnit && defaultUnit !== 'ALL'
-        ? defaultUnit
-        : unitFilter !== 'ALL'
-        ? unitFilter
-        : existingUnits[0] || 'Unit 1: First Day';
-    setUnitTitle(chosenUnit);
-    setUnitInputMode(existingUnits.length > 0 ? 'select' : 'custom');
+    const { subject: chosenSubject, unitTitle: chosenUnit } =
+      resolveCreateLessonModalDefaults({
+        defaultSubject,
+        defaultUnit,
+        currentCurriculumFilter: subjectFilter,
+        currentUnitFilter: unitFilter,
+      });
+
+    handleSubjectInputChange(chosenSubject);
+    if (!chosenSubject) {
+      setSubjectInputMode(curriculums.length > 0 ? 'select' : 'custom');
+      setUnitInputMode('custom');
+      setUnitTitle('');
+    } else {
+      setSubjectInputMode(
+        curriculums.length > 0 && curriculums.includes(chosenSubject)
+          ? 'select'
+          : 'custom'
+      );
+      const existingUnits = getUniqueUnitTitlesForSubject(
+        lessons,
+        chosenSubject
+      );
+      setUnitTitle(chosenUnit);
+      setUnitInputMode(
+        existingUnits.length > 0 &&
+          (!chosenUnit || existingUnits.includes(chosenUnit))
+          ? 'select'
+          : 'custom'
+      );
+    }
+
     setShowLessonModal(true);
   };
 
@@ -423,8 +437,32 @@ export function LessonsPage() {
       setFormError(parsed.error);
       return;
     }
-    setSubject(parsed.subject);
-    setUnitTitle(parsed.unitTitle);
+    const nextSubject = parsed.subject;
+    const nextUnit = parsed.unitTitle;
+    setSubject(nextSubject);
+    if (
+      curriculums.length > 0 &&
+      (!nextSubject || curriculums.includes(nextSubject))
+    ) {
+      setSubjectInputMode('select');
+    } else {
+      setSubjectInputMode('custom');
+    }
+
+    const unitsForNextSubject = getUniqueUnitTitlesForSubject(
+      lessons,
+      nextSubject
+    );
+    setUnitTitle(nextUnit);
+    if (
+      unitsForNextSubject.length > 0 &&
+      (!nextUnit || unitsForNextSubject.includes(nextUnit))
+    ) {
+      setUnitInputMode('select');
+    } else {
+      setUnitInputMode('custom');
+    }
+
     setTitle(parsed.title);
     setTtsLang(parsed.ttsLang);
     setGoal(parsed.goal);
@@ -1272,7 +1310,7 @@ export function LessonsPage() {
                         onClick={() =>
                           openCreateLessonModal(
                             firstLes.subject,
-                            firstLes.unitTitle?.trim() || 'Unit 1: First Day'
+                            firstLes.unitTitle?.trim() || ''
                           )
                         }
                         className="inline-flex items-center gap-1 rounded-xl border border-brand-300 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:bg-slate-900 dark:text-brand-300"
@@ -1733,34 +1771,34 @@ export function LessonsPage() {
                     <div className="mt-1 flex gap-2">
                       <select
                         id="les-subject"
-                        value={
-                          curriculums.includes(subject)
-                            ? subject
-                            : curriculums[0]
-                        }
+                        required
+                        value={curriculums.includes(subject) ? subject : ''}
                         onChange={(e) => {
                           if (e.target.value === '__NEW_CURRICULUM__') {
                             setSubjectInputMode('custom');
-                            setSubject('');
+                            handleSubjectInputChange('');
                             setUnitInputMode('custom');
-                            setUnitTitle('Unit 1: First Day');
+                            setUnitTitle('');
                           } else {
                             const nextSub = e.target.value;
                             handleSubjectInputChange(nextSub);
-                            const nextUnits = lessons
-                              .filter((l) => l.subject === nextSub)
-                              .map((l) => (l.unitTitle || '').trim())
-                              .filter(Boolean);
-                            if (nextUnits.length > 0) {
-                              setUnitInputMode('select');
-                              setUnitTitle(nextUnits[0]);
-                            } else {
-                              setUnitInputMode('custom');
-                            }
+                            const nextUnits = getUniqueUnitTitlesForSubject(
+                              lessons,
+                              nextSub
+                            );
+                            setUnitTitle('');
+                            setUnitInputMode(
+                              nextUnits.length > 0 ? 'select' : 'custom'
+                            );
                           }
                         }}
-                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800"
+                        className={`flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 ${
+                          subject
+                            ? 'font-bold text-slate-900 dark:text-white'
+                            : 'font-normal text-slate-500 dark:text-slate-400'
+                        }`}
                       >
+                        <option value="">-- Chọn giáo trình / môn học --</option>
                         {curriculums.map((c) => (
                           <option key={c} value={c}>
                             {c}
@@ -1787,7 +1825,9 @@ export function LessonsPage() {
                           type="button"
                           onClick={() => {
                             setSubjectInputMode('select');
-                            handleSubjectInputChange(curriculums[0]);
+                            handleSubjectInputChange('');
+                            setUnitInputMode('custom');
+                            setUnitTitle('');
                           }}
                           className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
                         >
@@ -1812,7 +1852,7 @@ export function LessonsPage() {
                         value={
                           unitsInModalSubject.includes(unitTitle)
                             ? unitTitle
-                            : unitsInModalSubject[0]
+                            : ''
                         }
                         onChange={(e) => {
                           if (e.target.value === '__NEW_UNIT__') {
@@ -1822,8 +1862,15 @@ export function LessonsPage() {
                             setUnitTitle(e.target.value);
                           }
                         }}
-                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800"
+                        className={`flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 ${
+                          unitTitle
+                            ? 'font-bold text-slate-900 dark:text-white'
+                            : 'font-normal text-slate-500 dark:text-slate-400'
+                        }`}
                       >
+                        <option value="">
+                          -- Chọn Unit / Chương (hoặc tạo mới) --
+                        </option>
                         {unitsInModalSubject.map((u) => (
                           <option key={u} value={u}>
                             {u}
@@ -1849,7 +1896,7 @@ export function LessonsPage() {
                           type="button"
                           onClick={() => {
                             setUnitInputMode('select');
-                            setUnitTitle(unitsInModalSubject[0]);
+                            setUnitTitle('');
                           }}
                           className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
                         >
